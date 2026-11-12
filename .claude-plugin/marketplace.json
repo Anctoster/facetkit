@@ -3,7 +3,9 @@
   "owner": {
     "name": "Anctoster"
   },
-  "repository": "https://github.com",
+  "metadata": {
+    "description": "Evidence-first engineering for teams of AI agents: composable skill facets, measuring tools, and one append-only journal."
+  },
   "plugins": [
     {
       "name": "facetkit",
@@ -12,3 +14,4 @@
     }
   ]
 }
+
