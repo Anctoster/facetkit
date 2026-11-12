@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- `facet scan` no longer blocks on removing a forbidden path from the repository (`git rm`, or `git rm --cached` with the file ignored) — that is what the rule asks for. Editing or adding the path, or untracking it without ignoring it, still blocks.
+
 ## [0.5.0] — 2026-11-12
 
 ### Added

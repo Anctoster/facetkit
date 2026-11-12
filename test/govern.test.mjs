@@ -174,6 +174,23 @@ test('secscan: the scan of a repository looks at what changed — forbidden path
     assert.equal(scan(root, { forbidden: ['.env'] }).blocking, 1);
 });
 
+test('secscan: removing a forbidden path from tracking is not a change of it; editing it still is', () => {
+    const root = tmp();
+    write(root, 'data/customers.json', '[]\n');
+    gitInit(root);
+    const git = (...args) => spawnSync('git', args, { cwd: root, encoding: 'utf-8' });
+    write(root, 'data/customers.json', '[{"name":"x"}]\n');
+    assert.equal(scan(root, { forbidden: ['data/*.json'] }).blocking, 1, 'an edit of a forbidden path blocks');
+    git('rm', '-q', '--cached', 'data/customers.json');
+    assert.equal(scan(root, { forbidden: ['data/*.json'] }).blocking, 1, 'untracked but not ignored: the next "git add -A" adds it back');
+    write(root, '.gitignore', 'data/customers.json\n');
+    assert.deepEqual(scan(root, { forbidden: ['data/*.json'] }).findings, [], 'untracked and ignored (file kept on disk) does not block');
+    git('reset', '-q');
+    git('checkout', '-q', '--', 'data/customers.json');
+    git('rm', '-q', 'data/customers.json');
+    assert.deepEqual(scan(root, { forbidden: ['data/*.json'] }).findings, [], 'deleting it does not block');
+});
+
 test('router: cheaper only with evidence; probation gathers it; a model that fell short is not retried', () => {
     const rows = [{ agent: 'mapper', model: 'haiku', n: 6, low: 0.8, high: 1 }, { agent: 'builder', model: 'haiku', n: 6, low: 0.1, high: 0.4 }];
     assert.equal(route({ agent: 'mapper', base: 'sonnet', rows }).model, 'haiku');
