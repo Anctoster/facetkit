@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+- `/facet-item`: when the agent tool can only run agents in the background, the coordinator waits for the completion notice and then runs `flow end` and `flow next` in the same turn; it never waits for a separate token report (`facet cost import` fills the gaps).
+- Team rules: an agent compares its handoff with the template before reporting `DONE`. The proof template lists the allowed rework causes and says that the commit and the progress record are later steps of the flow, not fixes.
+
 ### Fixed
 - `facet scan` no longer blocks on removing a forbidden path from the repository (`git rm`, or `git rm --cached` with the file ignored) — that is what the rule asks for. Editing or adding the path, or untracking it without ignoring it, still blocks.
 - An assist no longer finishes the helper's own step: after a rework, an inspector called to unblock another step left the proof of the round looking done.

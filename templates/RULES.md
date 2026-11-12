@@ -8,7 +8,7 @@ Every agent reads this file first. Put your project's own rules at the top; keep
 ## Protocol
 - One item at a time per person. Work for item `<ITEM>` lives in `.work/<ITEM>/` (not in git).
 - You receive the item id and the handoffs named in your agent file. Read those, then only the files they point to.
-- You produce exactly one handoff, within its line limit, with every claim backed by an evidence line: `$ <command> → exit <code>`.
+- You produce exactly one handoff, within its line limit, with every claim backed by an evidence line: `$ <command> → exit <code>`. Before you report `DONE`, compare it with its template: every section present, nothing left from the template, within the limit — a handoff that fails costs the whole item a rework round.
 - Your final message is at most 8 lines: status (`DONE`, `BLOCKED` or `NEEDS-USER`), the path of your handoff, the one fact the next agent must know.
 - You touch only the paths your agent file allows. A fix in someone else's territory goes under `## For <agent>` in your handoff.
 - Unsure, or the code contradicts the request? Do not guess: `BLOCKED` with the question in one sentence.
