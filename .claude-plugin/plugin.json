@@ -2,7 +2,7 @@
   "name": "facetkit",
   "displayName": "facetkit",
   "version": "0.5.0",
-   "icon": "./.claude-plugin/icon.png",
+   "icon": ".claude-plugin/icon.png",
   "description": "Evidence-first engineering for teams of AI agents: composable skill facets, measuring tools, and one journal from which state, cost, evaluation and the trust in a result are computed.",
   "author": {
     "name": "Anctoster"
