@@ -1,5 +1,9 @@
 # facetkit
 
+<p align="center">
+  <img src="docs/assets/banner.png" alt="facetkit — evidence-first engineering for teams of AI agents" width="380" />
+</p>
+
 **English** · [Polski](README.pl.md)
 
 **Evidence-first engineering for teams of AI agents.** Skills that are small enough to follow, tools that measure instead of asking, and a journal from which the state of the work, its cost, and how far its result can be trusted are computed — not asserted.
