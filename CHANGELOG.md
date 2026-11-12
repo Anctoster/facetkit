@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 - `facet scan` no longer blocks on removing a forbidden path from the repository (`git rm`, or `git rm --cached` with the file ignored) — that is what the rule asks for. Editing or adding the path, or untracking it without ignoring it, still blocks.
+- `/facet-item` calls each agent in the foreground and waits for it: a background call ended the coordinator's turn and the flow stalled after every step.
 
 ## [0.5.0] — 2026-11-12
 
