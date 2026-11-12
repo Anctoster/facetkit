@@ -1,0 +1,231 @@
+{
+  "note": "Which facets a role reads in which phase, the word budget of one loadout, and the cheapest model that should run the phase. `always` is added to every phase of the role. Escalate one step (haiku → sonnet → opus) only on a trigger named in thrift-loop:cheapest-capable-model. The orchestrator is the main session, not an agent: its model is whatever the session runs on.",
+  "budgetWords": 900,
+  "roles": {
+    "orchestrator": {
+      "budgetWords": 800,
+      "model": {
+        "default": "inherit"
+      },
+      "phases": {
+        "run": [
+          "journal-flow:next-is-computed",
+          "journal-flow:report-every-end",
+          "journal-flow:resume-by-card",
+          "journal-flow:session-budget"
+        ],
+        "close": [
+          "assured-work:gate-before-close",
+          "assured-work:waiver-is-a-record",
+          "assured-work:report-the-level"
+        ]
+      }
+    },
+    "route-conductor": {
+      "budgetWords": 450,
+      "model": {
+        "default": "haiku"
+      },
+      "phases": {
+        "open": [
+          "thrift-loop:cheapest-capable-model",
+          "anchored-handoff:parked-questions"
+        ],
+        "close": [
+          "claim-ledger:skip-is-not-pass",
+          "thrift-loop:no-replay"
+        ]
+      }
+    },
+    "context-cartographer": {
+      "budgetWords": 800,
+      "model": {
+        "default": "haiku"
+      },
+      "phases": {
+        "map": [
+          "anchored-handoff:seal-on-write",
+          "slice-seams:seam-map",
+          "thrift-loop:digest-runs",
+          "anchored-handoff:resume-line",
+          "earned-memory:recall-by-territory",
+          "assured-work:atlas-first"
+        ]
+      }
+    },
+    "blueprint-architect": {
+      "budgetWords": 800,
+      "model": {
+        "default": "opus"
+      },
+      "phases": {
+        "design": [
+          "anchored-handoff:verify-on-read",
+          "doc-receipts:reuse-before-fetch",
+          "doc-receipts:primary-first",
+          "doc-receipts:write-receipt",
+          "anchored-handoff:parked-questions",
+          "earned-memory:hint-not-authority"
+        ]
+      }
+    },
+    "spec-falsifier": {
+      "budgetWords": 1000,
+      "model": {
+        "default": "sonnet"
+      },
+      "always": [
+        "thrift-loop:hard-caps"
+      ],
+      "phases": {
+        "plan": [
+          "anchored-handoff:verify-on-read",
+          "spec-trace:numbered-clauses",
+          "spec-trace:sourced-clauses",
+          "spec-trace:verification-first",
+          "earned-memory:hint-not-authority"
+        ],
+        "red": [
+          "spec-trace:claim-by-id",
+          "falsifiable-tests:right-reason-red",
+          "falsifiable-tests:independent-oracle",
+          "falsifiable-tests:assertion-liveness",
+          "slice-seams:contract-pin",
+          "slice-seams:real-edge-mocks"
+        ],
+        "probe": [
+          "falsifiable-tests:mutant-probe",
+          "falsifiable-tests:flake-screen",
+          "spec-trace:example-replay",
+          "spec-trace:spec-moves-first",
+          "journal-flow:checkpoint-notes",
+          "earned-memory:write-what-cost-you"
+        ],
+        "seams": [
+          "slice-seams:seam-map",
+          "slice-seams:neighbour-run",
+          "slice-seams:walking-thread",
+          "slice-seams:shared-state-sweep",
+          "journal-flow:checkpoint-notes"
+        ]
+      }
+    },
+    "red-first-specifier": {
+      "budgetWords": 850,
+      "model": {
+        "default": "sonnet",
+        "green": "haiku"
+      },
+      "always": [
+        "claim-ledger:skip-is-not-pass"
+      ],
+      "phases": {
+        "red": [
+          "anchored-handoff:verify-on-read",
+          "falsifiable-tests:right-reason-red",
+          "falsifiable-tests:independent-oracle",
+          "evidence-browser:budgets-as-asserts"
+        ],
+        "green": [
+          "claim-ledger:threshold-guard"
+        ]
+      }
+    },
+    "slice-builder": {
+      "budgetWords": 900,
+      "model": {
+        "default": "sonnet"
+      },
+      "always": [
+        "thrift-loop:digest-runs",
+        "thrift-loop:hard-caps",
+        "journal-flow:checkpoint-notes"
+      ],
+      "phases": {
+        "build": [
+          "anchored-handoff:verify-on-read",
+          "thrift-loop:anchored-reads",
+          "doc-receipts:staleness-triggers",
+          "claim-ledger:claim-evidence-pairs"
+        ],
+        "ui": [
+          "evidence-browser:probe-digest",
+          "evidence-browser:text-hash-diff",
+          "evidence-browser:interface-rules",
+          "evidence-browser:two-viewports-only"
+        ],
+        "rework": [
+          "anchored-handoff:delta-only",
+          "spec-trace:spec-moves-first",
+          "claim-ledger:claim-evidence-pairs",
+          "earned-memory:write-what-cost-you"
+        ]
+      }
+    },
+    "release-pilot": {
+      "budgetWords": 800,
+      "model": {
+        "default": "sonnet"
+      },
+      "always": [
+        "thrift-loop:digest-runs",
+        "thrift-loop:hard-caps"
+      ],
+      "phases": {
+        "ops": [
+          "doc-receipts:reuse-before-fetch",
+          "doc-receipts:primary-first",
+          "claim-ledger:claim-evidence-pairs",
+          "anchored-handoff:resume-line",
+          "doc-receipts:experiment-over-opinion"
+        ]
+      }
+    },
+    "proof-inspector": {
+      "budgetWords": 900,
+      "model": {
+        "default": "sonnet"
+      },
+      "phases": {
+        "proof": [
+          "anchored-handoff:verify-on-read",
+          "claim-ledger:reproduce-not-quote",
+          "claim-ledger:skip-is-not-pass",
+          "claim-ledger:threshold-guard",
+          "claim-ledger:verdict-form",
+          "thrift-loop:digest-runs",
+          "evidence-browser:probe-digest"
+        ]
+      }
+    },
+    "facet-warden": {
+      "budgetWords": 800,
+      "model": {
+        "default": "sonnet"
+      },
+      "phases": {
+        "forge": [
+          "facet-forge:one-rule-one-facet",
+          "facet-forge:trial-before-trust",
+          "facet-forge:originality-gate",
+          "facet-forge:earn-your-tokens",
+          "facet-forge:bounded-by-default"
+        ],
+        "retro": [
+          "hindsight-retro:beliefs-not-grades",
+          "hindsight-retro:blame-the-escape",
+          "hindsight-retro:change-must-earn-keep",
+          "hindsight-retro:demote-by-replay",
+          "earned-memory:stale-means-recheck"
+        ],
+        "skills": [
+          "skill-sense:diagnose-before-rewrite",
+          "skill-sense:graduate-to-tool",
+          "skill-sense:harvest-the-trial",
+          "skill-sense:withhold-to-know",
+          "skill-sense:footprint-or-faith"
+        ]
+      }
+    }
+  }
+}

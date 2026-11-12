@@ -1,0 +1,14 @@
+{
+  "name": "facetkit",
+  "owner": {
+    "name": "Anctoster"
+  },
+  "repository": "https://github.com",
+  "plugins": [
+    {
+      "name": "facetkit",
+      "source": "./",
+      "description": "Skills as composable facets, a nine-agent team, and the `facet` command: flow, evidence, assurance levels, skill intelligence."
+    }
+  ]
+}

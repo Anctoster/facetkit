@@ -1,0 +1,58 @@
+# Changelog
+
+All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
+
+## [0.5.0] — 2026-11-12
+
+### Added
+- **The whole team, project-neutral**: nine agent definitions, three commands (`/facet-item`, `/facet-session`, `/facet-retro`), team rules and handoff templates. Agents answer in the language they are addressed in.
+- **Claude Code plugin** packaging (`.claude-plugin/`, `bin/facet` on the PATH).
+- **`facet init`** (`--minimal`, `--claude`) and **`facet.json`**: configuration no longer needs a `package.json`. A minimal four-step flow preset.
+- **Python, Go and Java** in the import graph, seams, atlas, mutation probe and requirement trace (`facetkit/lang`).
+- **`facet demo`**: a board from a synthetic journal. **`facet hypotheses`** and `HYPOTHESES.md`: every facet as an untested claim with its trials; `trials/results.json` for reported results.
+- `docs/dogfood.md`: the kit's tools run on the kit; tests added for what the mutation probe found.
+- Polish README, an animated diagram, `RELEASING.md`, a composite GitHub Action (`action.yml`).
+
+### Changed
+- In typed languages the mutation probe uses only type-preserving operators.
+- `facet flow next` prints `facet compose …` as the rules of a step when no rendered loadout file exists.
+
+## [0.4.0] — 2026-11-11
+
+### Added
+- **Skill intelligence** (`facetkit/skillint`, `facet skill report | coverage | modes`): per facet — exposure, adherence by a declared footprint, effect on the failure modes it guards — with a diagnosis and one action; failure-mode coverage with trials harvested from real incidents; optional seeded withholding of one non-safety rule per step.
+- Facet front matter: `guards`, `footprint`, `ablatable`. Every shipped facet names what it guards; `facet audit` checks both fields.
+- Every `facet` command used with `--item` is logged in the item's ledger; `step.start` records the facets a step was given.
+- `facet flow verdict --fix agent:cause` and `facet retro hindsight --mode` record a failure mode; `"skillint": { "requireCause": true }` makes it mandatory.
+- Skill `skill-sense`; a Skills tab on the board.
+
+## [0.3.0] — 2026-11-11
+
+### Added
+- **Segmented journal** for many people and teams: a directory in which every writer appends to its own hash-chained file; events are ordered by a logical clock; merging is copying files. Double claims of an item are detected and resolved by `facet flow yield`. The memory store uses the same scheme.
+- **Governance as proof-carrying work** (`facetkit/govern`): evidence events recorded by the measuring tools, a declarative policy over the journal, assurance levels L0–L4, human waivers and approvals on record, attestations that can be recomputed (`facet assure`, `waive`, `approve`, `attest`, `trust`). `facet flow close` enforces the policy.
+- **Guard calibration** with planted defects (`facet canary`).
+- **Security checks** (`facetkit/secscan`, `facet scan`): secrets in added lines, forbidden paths, new dependencies needing approval, dangerous commands in the run ledger, injected instructions in the text agents read.
+- **Evidence-based model routing** (`facetkit/router`): cheaper models only where they have earned it, optional probation.
+- **Extensions**: modules that add checks, policy rules, a router or commands.
+- **Atlas** (`facetkit/atlas`, `facet atlas`): exports, named imports, tests behind a file, hidden coupling from git history, hot spots, word-budgeted cards.
+- **Board** (`facet board`): the whole system on one self-contained HTML page.
+- Skill `assured-work`; repository files for release.
+
+### Changed
+- `facet journal` reports segments and conflicts; "one item at a time" now holds per writer.
+- Memory is append-only (uses, credits and retirements are lines), so it merges without conflicts.
+
+## [0.2.0] — 2026-11-11
+
+### Added
+- The journal and everything computed from it: orchestration (`facet flow`), resume cards and checkpoints (`facet note`), territory-bound memory (`facet mem`), timeline and anomalies, cost by step (`facet cost`), the agent × model matrix with replays (`facet eval`), belief-based retrospectives with hindsight (`facet retro`), session schedule (`facet plan`).
+- Skills `journal-flow`, `earned-memory`, `hindsight-retro`.
+
+## [0.1.0] — 2026-11-11
+
+### Added
+- Facets, loadouts and `facet compose` / `render` / `audit`.
+- Tools: `run`, `read`, `ledger`, `capsule`, `mutate`, `seams`, `trace`, `receipt`, `ui`.
+- Skills `spec-trace`, `falsifiable-tests`, `slice-seams`, `thrift-loop`, `anchored-handoff`, `doc-receipts`, `evidence-browser`, `claim-ledger`, `facet-forge`.
+- Agent definitions `spec-falsifier` and `facet-warden`.

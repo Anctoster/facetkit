@@ -1,0 +1,44 @@
+{
+  "steps": [
+    {
+      "id": "spec",
+      "agent": "spec-falsifier",
+      "mode": "SPEC",
+      "phase": "red"
+    },
+    {
+      "id": "build",
+      "agent": "slice-builder",
+      "phase": "build"
+    },
+    {
+      "id": "probe",
+      "agent": "spec-falsifier",
+      "mode": "PROBE",
+      "phase": "probe"
+    },
+    {
+      "id": "proof",
+      "agent": "proof-inspector",
+      "phase": "proof",
+      "verdict": true
+    },
+    {
+      "id": "commit",
+      "manual": "commit with the message from the build report; do not push"
+    }
+  ],
+  "rework": {
+    "max": 2,
+    "rerun": [
+      "proof"
+    ]
+  },
+  "ladder": [
+    "haiku",
+    "sonnet",
+    "opus"
+  ],
+  "tiers": {},
+  "escalateAfter": 2
+}

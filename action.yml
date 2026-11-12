@@ -1,0 +1,45 @@
+name: facetkit evidence
+description: Scan a pull request and, optionally, trace requirements and probe the tests with mutants. Writes the findings to the job summary.
+inputs:
+  base:
+    description: Ref to compare with (the pull request's base by default)
+    default: ${{ github.event.pull_request.base.sha || 'HEAD~1' }}
+  spec:
+    description: Specification file(s) for `facet trace`, comma-separated (optional)
+    default: ''
+  tests:
+    description: Test directories for `facet trace` (comma-separated)
+    default: tests
+  mutate-files:
+    description: Files for `facet mutate`, comma-separated (optional)
+    default: ''
+  mutate-test:
+    description: Test command for `facet mutate`
+    default: ''
+  fail-on-findings:
+    description: Fail the job when the scan has blocking findings or the trace has uncovered clauses
+    default: 'true'
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        FACET: node ${{ github.action_path }}/bin/facet.mjs
+        BASE: ${{ inputs.base }}
+        SPEC: ${{ inputs.spec }}
+        TESTS: ${{ inputs.tests }}
+        MUTATE_FILES: ${{ inputs.mutate-files }}
+        MUTATE_TEST: ${{ inputs.mutate-test }}
+        STRICT: ${{ inputs.fail-on-findings }}
+      run: |
+        status=0
+        {
+          echo "## facetkit evidence"
+          echo
+          echo '```text'
+          $FACET scan --ref "$BASE" || status=1
+          if [ -n "$SPEC" ]; then echo; $FACET trace --spec "$SPEC" --tests "$TESTS" || status=1; fi
+          if [ -n "$MUTATE_FILES" ] && [ -n "$MUTATE_TEST" ]; then echo; $FACET mutate --files "$MUTATE_FILES" --test "$MUTATE_TEST" --ref "$BASE" --allow 99 || true; fi
+          echo '```'
+        } | tee -a "$GITHUB_STEP_SUMMARY"
+        if [ "$STRICT" = "true" ]; then exit $status; fi

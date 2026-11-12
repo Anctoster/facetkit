@@ -1,0 +1,53 @@
+{
+  "name": "facetkit",
+  "version": "0.5.0",
+  "author": "anctoster",
+  "description": "Evidence-first engineering for teams of AI agents: composable skill facets, measuring tools, and one journal from which state, cost, evaluation and the trust in a result are computed.",
+  "type": "module",
+  "license": "MIT",
+    "repository": {
+    "type": "git",
+    "url": "https://github.com"
+  },
+  "homepage": "https://github.com",
+  "bugs": {
+    "url": "https://github.com"
+  },
+  "bin": { "facet": "bin/facet" },
+  "exports": {
+    "./facets": "./lib/facets.mjs",
+    "./audit": "./lib/audit.mjs",
+    "./thrift": "./lib/thrift.mjs",
+    "./capsule": "./lib/capsule.mjs",
+    "./mutaprobe": "./lib/mutaprobe.mjs",
+    "./seams": "./lib/seams.mjs",
+    "./receipts": "./lib/receipts.mjs",
+    "./uiprobe": "./lib/uiprobe.mjs",
+    "./trace": "./lib/trace.mjs",
+    "./journal": "./lib/journal.mjs",
+    "./flow": "./lib/flow.mjs",
+    "./memory": "./lib/memory.mjs",
+    "./cost": "./lib/cost.mjs",
+    "./eval": "./lib/evalx.mjs",
+    "./observe": "./lib/observe.mjs",
+    "./retro": "./lib/retro.mjs",
+    "./schedule": "./lib/schedule.mjs",
+    "./govern": "./lib/govern.mjs",
+    "./secscan": "./lib/secscan.mjs",
+    "./router": "./lib/router.mjs",
+    "./atlas": "./lib/atlas.mjs",
+    "./board": "./lib/board.mjs",
+    "./skillint": "./lib/skillint.mjs",
+    "./lang": "./lib/lang.mjs"
+  },
+  "files": ["bin", "lib", "skills", "agents", "commands", "templates", "presets", "trials", ".claude-plugin", "docs", "examples", "HYPOTHESES.md", "loadouts.json", "README.md", "CHANGELOG.md", "AUDIT.md", "LICENSE"],
+  "engines": { "node": ">=20" },
+  "facetkit": { "govern": { "scanIgnore": ["test/**"] } },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "audit": "node bin/facet.mjs audit"
+  },
+  "peerDependencies": { "playwright": ">=1.40" },
+  "peerDependenciesMeta": { "playwright": { "optional": true } },
+  "keywords": ["claude", "agents", "skills", "tdd", "mutation-testing", "handoff", "token-budget"]
+}

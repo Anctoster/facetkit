@@ -1,0 +1,13 @@
+[
+  { "id": "verdict", "level": 1, "fact": "verdict", "equals": "PASS", "why": "an inspector re-ran the checks and passed the item" },
+  { "id": "independent", "level": 1, "fact": "independent", "equals": true, "why": "the agent that judged did not produce the work" },
+  { "id": "no-forced-steps", "level": 1, "fact": "forced", "max": 0, "why": "no step of the flow was skipped" },
+  { "id": "journal-intact", "level": 1, "fact": "journalIntact", "equals": true, "why": "the history was not edited" },
+  { "id": "scan", "level": 1, "evidence": ["scan"], "ok": true, "why": "no secret, forbidden path, dangerous command or injected instruction" },
+  { "id": "approvals", "level": 1, "fact": "missingApprovals", "max": 0, "why": "changes that need a human approval have one" },
+  { "id": "specified", "level": 2, "evidence": ["trace", "accept"], "ok": true, "why": "every requirement is claimed by a test or a scenario" },
+  { "id": "checks", "level": 2, "fact": "failedChecks", "max": 0, "why": "the configured checks pass on the final state" },
+  { "id": "falsified", "level": 3, "evidence": ["mutate"], "min": 0.9, "why": "a stricter kill rate than the default 0.8" },
+  { "id": "seams", "level": 3, "evidence": ["neighbours"], "ok": true, "why": "neighbour tests were run after the change" },
+  { "id": "falsified-when-tested", "level": 2, "evidence": ["mutate"], "min": 0.6, "when": { "route": "spec-falsifier" }, "why": "applies only to items the test engineer worked on" }
+]

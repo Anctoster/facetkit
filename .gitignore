@@ -1,0 +1,7 @@
+node_modules/
+.work/
+.facet/
+facet-board.html
+*.log
+.DS_Store
+facet-demo.html

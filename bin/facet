@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+// `facet` as a bare command: on PATH when facetkit is installed as a Claude Code plugin or through npm.
+import './facet.mjs';

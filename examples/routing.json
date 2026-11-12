@@ -1,0 +1,6 @@
+{
+  "items": {
+    "T1": { "version": "v1", "deps": [], "tier": "normal", "route": ["context-cartographer", "red-first-specifier", "slice-builder", "proof-inspector"], "gates": [] },
+    "T2": { "version": "v1", "deps": ["T1"], "tier": "hard", "route": ["context-cartographer", "blueprint-architect", "spec-falsifier", "red-first-specifier", "slice-builder", "proof-inspector"], "gates": ["code-reviewer"] }
+  }
+}
