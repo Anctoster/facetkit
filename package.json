@@ -5,13 +5,13 @@
   "description": "Evidence-first engineering for teams of AI agents: composable skill facets, measuring tools, and one journal from which state, cost, evaluation and the trust in a result are computed.",
   "type": "module",
   "license": "MIT",
-    "repository": {
+  "repository": {
     "type": "git",
-    "url": "https://github.com"
+    "url": "git+https://github.com/Anctoster/facetkit.git"
   },
-  "homepage": "https://github.com",
+  "homepage": "https://github.com/Anctoster/facetkit#readme",
   "bugs": {
-    "url": "https://github.com"
+    "url": "https://github.com/Anctoster/facetkit/issues"
   },
   "bin": { "facet": "bin/facet" },
   "exports": {
