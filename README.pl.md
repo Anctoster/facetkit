@@ -1,5 +1,9 @@
 # facetkit
 
+<p align="center">
+  <img src="docs/assets/banner.png" alt="facetkit — evidence-first engineering for teams of AI agents" width="380" />
+</p>
+
 [English](README.md) · **Polski**
 
 **Inżynieria oparta na dowodach dla zespołów agentów AI.** Umiejętności na tyle małe, że da się ich przestrzegać, narzędzia, które mierzą zamiast pytać, oraz dziennik, z którego wylicza się — a nie deklaruje — stan pracy, jej koszt i to, na ile można ufać wynikowi.
