@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 - `facet scan` no longer blocks on removing a forbidden path from the repository (`git rm`, or `git rm --cached` with the file ignored) — that is what the rule asks for. Editing or adding the path, or untracking it without ignoring it, still blocks.
+- An assist no longer finishes the helper's own step: after a rework, an inspector called to unblock another step left the proof of the round looking done.
+- `facet flow verdict` refuses until the judging step and every step before it are done in the current round; a forced verdict is recorded and fails `no-forced-steps`.
+- `facet flow next` on an interrupted gates step names the gate agents instead of "Call undefined", and a blocked gates step is named in the question to the user instead of "undefined".
 - `/facet-item` calls each agent in the foreground and waits for it: a background call ended the coordinator's turn and the flow stalled after every step.
 
 ## [0.5.0] — 2026-11-12

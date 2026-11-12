@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { attribute, costReport, fold, parseTranscript, renderCost, totalTokens } from '../lib/cost.mjs';
 import { compareModels, judge, matrix, observations, renderMatrix, replaySetup, snapshot } from '../lib/evalx.mjs';
-import { DEFAULT_FLOW, itemState, modelFor, next, planSteps, resumeCard, statusLines } from '../lib/flow.mjs';
+import { DEFAULT_FLOW, itemState, modelFor, next, planSteps, resumeCard, statusLines, verdictBlocker } from '../lib/flow.mjs';
 import { buildAtlas, card, findSymbol, hiddenCoupling, hotspots, pathBetween, stats as atlasStats } from '../lib/atlas.mjs';
 import { boardData, renderBoard } from '../lib/board.mjs';
 import { attest, calibration, DEFAULT_POLICY, digestOf, evaluate, gate, renderEvaluation, renderTrust, trust } from '../lib/govern.mjs';
@@ -106,7 +106,7 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
         if (n.action === 'gates') return `CALL IN PARALLEL (${n.item} / ${n.step}): ${n.agents.join(', ')} — save each report to the item folder\nbefore: facet flow start ${n.step} ${at}   after: facet flow end ${n.step} ${at} --status DONE|BLOCKED --for <agent that must fix>`;
         if (n.action === 'resume') {
             const state = itemState(events(), n.item);
-            return `RESUME — the step was started and never ended. Call ${n.agent}${n.mode ? ` (mode ${n.mode})` : ''}${n.model ? ` on ${n.model}` : ''} with this card instead of the full context:\n\n${resumeCard(state, n.step, { runs: ledgerOf(n.item), changed: changedFiles() })}\n\nafter: facet flow end ${n.step} ${at} --status DONE|BLOCKED|NEEDS-USER [--tokens N]`;
+            return `RESUME — the step was started and never ended. ${n.agents ? `Run the gates again (${n.agents.join(', ')}), in parallel,` : `Call ${n.agent}`}${n.mode ? ` (mode ${n.mode})` : ''}${n.model ? ` on ${n.model}` : ''} with this card instead of the full context:\n\n${resumeCard(state, n.step, { runs: ledgerOf(n.item), changed: changedFiles() })}\n\nafter: facet flow end ${n.step} ${at} --status DONE|BLOCKED|NEEDS-USER [--tokens N]`;
         }
         return [
             `CALL ${n.agent}${n.mode ? ` · mode ${n.mode}` : ''}${n.model ? ` · model ${n.model}${n.routed && n.routed !== 'configured' ? ` (${n.routed})` : ''}` : ''} · ${n.item} / ${n.step}${n.attempt > 1 ? ` · attempt ${n.attempt}` : ''}${n.assist ? ` · to unblock ${n.assist}` : ''}`,
@@ -184,15 +184,15 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             const verdict = positional[1];
             if (!['PASS', 'REWORK'].includes(verdict)) fail('flow verdict: facet flow verdict PASS|REWORK [--fix agent,agent] [--score agent=8,agent=7]');
             if (verdict === 'REWORK' && !list(opt('fix')).length) fail('flow verdict: REWORK needs --fix <agent,…> — a rework without an owner is nobody\'s');
-            const judgeStep = itemState(events(), item)?.steps.find((x) => x.verdict);
-            if (judgeStep && judgeStep.status !== 'done' && !flag('force')) fail(`flow verdict: the step that gives the verdict (${judgeStep.id}) has not finished`);
+            const blocker = verdictBlocker(itemState(events(), item));
+            if (blocker && !flag('force')) fail(`flow verdict: ${blocker}`);
             const scores = Object.fromEntries(list(opt('score')).map((s) => [s.split('=')[0], Number(s.split('=')[1])]));
             const fixes = list(opt('fix')).map((f) => ({ agent: f.split(':')[0], mode: f.split(':')[1] }));
             for (const f of fixes) {
                 if (f.mode && !MODES.includes(f.mode)) fail(`flow verdict: unknown cause "${f.mode}" (one of: ${MODES.join(', ')})`);
                 if (!f.mode && project.skillint?.requireCause) fail(`flow verdict: name the cause of each fix as --fix ${f.agent}:<cause> (one of: ${MODES.join(', ')})`);
             }
-            say({ kind: 'verdict', item, verdict, fixes, scores });
+            say({ kind: 'verdict', item, verdict, fixes, scores, forced: (blocker && flag('force')) || undefined });
             console.log(`${item}: ${verdict}\n\n${describe(upcoming(item))}`);
         },
         answer() {

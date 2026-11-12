@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
-import { DEFAULT_FLOW, itemState, next, planSteps, resumeCard } from '../lib/flow.mjs';
+import { DEFAULT_FLOW, itemState, next, planSteps, resumeCard, verdictBlocker } from '../lib/flow.mjs';
 import { brokenAt, readJournal, record } from '../lib/journal.mjs';
 import { anomalies, timeline } from '../lib/observe.mjs';
 import { STEPS, story, tmp } from './helpers.mjs';
@@ -77,6 +77,38 @@ test('blocked: the agent named in the block is called once; a second block goes 
     assert.equal(itemState(s.events, 'A').steps.find((x) => x.id === 'map').attempts, 1, 'an assist is not a new attempt of the helper');
     s.run('A', 'build', 'builder', { status: 'BLOCKED', for: 'mapper' });
     assert.equal(at(s).action, 'ask');
+});
+
+test('assist after a rework: helping does not finish the helper\'s own step, and no verdict is taken until the round is done', () => {
+    const s = story();
+    s.open('A', STEPS);
+    s.run('A', 'map', 'mapper');
+    s.run('A', 'build', 'builder');
+    s.run('A', 'proof', 'inspector');
+    assert.equal(verdictBlocker(itemState(s.events, 'A')), null);
+    s.say({ kind: 'verdict', item: 'A', verdict: 'REWORK', fixes: [{ agent: 'builder' }] });
+    s.run('A', 'build', 'builder', { status: 'BLOCKED', for: 'inspector' });
+    assert.deepEqual([at(s).step, at(s).assist], ['proof', 'build']);
+    s.say({ kind: 'step.start', item: 'A', step: 'proof', agent: 'inspector', assist: 'build' });
+    s.say({ kind: 'step.end', item: 'A', step: 'proof', agent: 'inspector', status: 'DONE' });
+    const state = itemState(s.events, 'A');
+    assert.equal(state.steps.find((x) => x.id === 'proof').status, 'pending', 'the proof of this round has not been run');
+    assert.match(verdictBlocker(state), /build \(pending\), proof \(pending\)/);
+    assert.deepEqual([at(s).step, at(s).attempt], ['build', 3]);
+    s.run('A', 'build', 'builder');
+    assert.match(verdictBlocker(itemState(s.events, 'A')), /proof \(pending\)/, 'the builder is done, the proof is not');
+    s.run('A', 'proof', 'inspector');
+    assert.equal(verdictBlocker(itemState(s.events, 'A')), null);
+});
+
+test('resume of the gates names the gate agents, not an agent of its own', () => {
+    const s = story();
+    s.open('A', [{ id: 'gates', gates: true, agents: ['code-reviewer', 'security-auditor'] }, ...STEPS]);
+    s.say({ kind: 'step.start', item: 'A', step: 'gates' });
+    const n = at(s);
+    assert.deepEqual([n.action, n.step, n.agent, n.agents], ['resume', 'gates', undefined, ['code-reviewer', 'security-auditor']]);
+    s.say({ kind: 'step.end', item: 'A', step: 'gates', status: 'BLOCKED' });
+    assert.match(at(s).question, /^the gates \(code-reviewer, security-auditor\) are blocked/);
 });
 
 test('needs-user: the flow waits for an answer and then repeats the step', () => {
