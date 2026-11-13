@@ -14,8 +14,8 @@ facet init --minimal     # in your project
 
 - **Runs:** the `facet` command from the npm package `facetkit@0.5.1` (pinned; no dependencies), and the
   commands of your own project that you list as checks in `facet.json` (tests, build, lint).
-- **Reads and writes:** files in your project only — the journal (`docs/journal` or what `facet.json` names),
-  `.work/` for the handoffs of the item in progress, `.facet/`, and `facet-board.html`. `facet cost import`
+- **Reads and writes:** files in your project only — the journal and memory (`.facet/` after `facet init`, or
+  what `facet.json` names), `.work/` for the handoffs of the item in progress, and `facet-board.html`. `facet cost import`
   reads a Claude Code session transcript only when you pass its path.
 - **Sends:** nothing. facetkit has no server, no telemetry and no network calls; the only download is npm
   fetching the package when `npx` runs it.
