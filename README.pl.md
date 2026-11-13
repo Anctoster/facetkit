@@ -114,12 +114,14 @@ Dziennik może być katalogiem: **każdy piszący dopisuje wyłącznie do własn
 
 ## Jak zacząć
 
-**Jako wtyczka Claude Code** (umiejętności, dziewięciu agentów, polecenia i `facet` w PATH):
+**Jako wtyczka Claude Code** (dziewięciu agentów, polecenia i umiejętności):
 
 ```text
 /plugin marketplace add anctoster/facetkit
 /plugin install facetkit@facetkit
 ```
+
+Wtyczka nie zawiera kodu (to folder [`plugin/`](plugin/)). Polecenie `facet` pochodzi z npm — `npm i -g facetkit`, a gdy nie jest zainstalowane, agenci uruchamiają `npx --yes facetkit`.
 
 **Jako polecenie** w dowolnym projekcie:
 
@@ -196,7 +198,7 @@ Części działają osobno: same umiejętności bez dziennika, `facet mutate` i 
 - Prób zapisanych w każdym `SKILL.md` nie uruchomiono jeszcze na modelach. Do tego czasu każda faseta jest hipotezą — zob. [HYPOTHESES.md](HYPOTHESES.md).
 - Przydział modeli, progi retrospektywy, okres połowicznego zaniku dowodów, założenia harmonogramu i próg 80 % zabitych mutantów to wartości domyślne przyjęte rozumowo, nie dostrojone na danych.
 - Żaden projekt nie zamknął jeszcze elementów przez ten przepływ; stwierdzenia o zaufaniu były ćwiczone tylko w testach.
-- Manifest wtyczki jest zgodny z opublikowanym układem, ale nie instalowano jej jeszcze z marketplace'u; przed użyciem uruchom `claude plugin validate .`.
+- Manifest wtyczki jest zgodny z opublikowanym układem, ale nie instalowano jej jeszcze z marketplace'u; przed użyciem uruchom `claude plugin validate plugin`.
 
 Raporty z rzeczywistego użycia to najcenniejszy wkład: zob. [CONTRIBUTING.md](CONTRIBUTING.md).
 

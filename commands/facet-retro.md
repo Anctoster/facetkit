@@ -2,7 +2,7 @@
 description: Retrospective of the agent team — which rules work, beliefs, late defects, model comparison, one change at a time
 ---
 
-Hold a retrospective. Answer me in the language I write in. Optional argument: a fix commit to trace (`$ARGUMENTS`).
+Hold a retrospective. Answer me in the language I write in. `facet` is the facetkit command; if it is not on the PATH, run `npx --yes facetkit` instead. Optional argument: a fix commit to trace (`$ARGUMENTS`).
 
 1. If a fix commit is given: `facet retro hindsight --fix <commit>`; show me the origin items; with my consent repeat with `--record --mode <cause>`.
 2. `facet skill report`, `facet skill coverage`, `facet retro report`, `facet eval compare`, `facet trust`. Show me: the facets with a diagnosis other than thin, the gaps, the proposals with their evidence, the model comparisons that are not "thin".

@@ -1,6 +1,6 @@
 {
   "name": "facetkit",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "author": "anctoster",
   "description": "Evidence-first engineering for teams of AI agents: composable skill facets, measuring tools, and one journal from which state, cost, evaluation and the trust in a result are computed.",
   "type": "module",
@@ -45,6 +45,7 @@
   "facetkit": { "govern": { "scanIgnore": ["test/**"] } },
   "scripts": {
     "test": "node --test test/*.test.mjs",
+    "build:plugin": "node scripts/build-plugin.mjs",
     "audit": "node bin/facet.mjs audit"
   },
   "peerDependencies": { "playwright": ">=1.40" },

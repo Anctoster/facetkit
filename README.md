@@ -152,12 +152,14 @@ A journal can be a directory: **each writer appends only to its own segment**, s
 
 ## Getting started
 
-**As a Claude Code plugin** (skills, the nine agents, the commands and `facet` on the PATH):
+**As a Claude Code plugin** (the nine agents, the commands and the skills; the plugin is the [`plugin/`](plugin/) folder):
 
 ```text
 /plugin marketplace add anctoster/facetkit
 /plugin install facetkit@facetkit
 ```
+
+The plugin carries no code. The `facet` command comes from npm — `npm i -g facetkit`, or the agents run `npx --yes facetkit` when it is not installed.
 
 **As a command** in any project:
 
@@ -253,7 +255,7 @@ Parts are usable alone: the skills without the journal, `facet mutate` and `face
 ## What is not proven
 
 - The trials in each `SKILL.md` are written but have not been run against models. Every facet is, until then, a hypothesis about agent behaviour — see [HYPOTHESES.md](HYPOTHESES.md).
-- The plugin manifest follows the published layout but has not been installed from a marketplace yet; run `claude plugin validate .` before relying on it.
+- The plugin manifest follows the published layout but has not been installed from a marketplace yet; run `claude plugin validate plugin` before relying on it.
 - Model assignments, retro thresholds, the half-life of evidence, schedule priors and the 80 % kill-rate rule are defaults chosen by reasoning, not tuned on data.
 - No project has yet closed items through the flow; the trust statements have been exercised only in tests.
 - The similarity measure of `facet audit` is lexical: it catches rewording, not borrowed ideas — those are credited below.

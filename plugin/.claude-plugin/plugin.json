@@ -1,20 +1,20 @@
 {
   "name": "facetkit",
-  "displayName": "facetkit",
-  "version": "0.5.0",
-   "icon": ".claude-plugin/icon.png",
+  "version": "0.5.1",
   "description": "Evidence-first engineering for teams of AI agents: composable skill facets, measuring tools, and one journal from which state, cost, evaluation and the trust in a result are computed.",
   "author": {
-    "name": "Anctoster"
+    "name": "anctoster"
   },
-  "repository": "https://github.com",
+  "homepage": "https://github.com/Anctoster/facetkit#readme",
+  "repository": "https://github.com/Anctoster/facetkit",
   "license": "MIT",
   "keywords": [
-    "skills",
+    "claude",
     "agents",
+    "skills",
     "tdd",
     "mutation-testing",
-    "governance",
-    "evaluation"
+    "handoff",
+    "token-budget"
   ]
 }

@@ -4,8 +4,8 @@ A checklist for the first public release and for every later one. Commands assum
 
 ## Before the first release (once)
 
-1. **Decide the names.** Check that `facetkit` is free on GitHub (your account or organisation) and on npm (`npm view facetkit`). If it is taken, rename in: `package.json` (`name`), `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, both READMEs.
-2. **Put your name in.** `LICENSE` (copyright line), `package.json` (`author`, `repository`, `homepage`, `bugs`), `.claude-plugin/plugin.json` and `marketplace.json` (`author`, `owner`, `repository`). Replace `<owner>` / `<właściciel>` in `README.md` and `README.pl.md`.
+1. **Decide the names.** Check that `facetkit` is free on GitHub (your account or organisation) and on npm (`npm view facetkit`). If it is taken, rename in: `package.json` (`name`), `.claude-plugin/marketplace.json`, both READMEs (the plugin manifest is generated from `package.json`).
+2. **Put your name in.** `LICENSE` (copyright line), `package.json` (`author`, `repository`, `homepage`, `bugs`), `marketplace.json` (`owner`). Replace `<owner>` / `<właściciel>` in `README.md` and `README.pl.md`.
 3. **Look for anything private.** This repository must not contain a journal, a memory store, attestations, transcripts or a `.work/` folder from a real project:
    ```bash
    git status --ignored
@@ -15,7 +15,7 @@ A checklist for the first public release and for every later one. Commands assum
 4. **Create the repository** (public, no template, no auto-generated README or licence), then:
    ```bash
    git init -b main && git add -A
-   git update-index --chmod=+x bin/facet          # the plugin puts bin/ on the PATH; the file must be executable
+   git update-index --chmod=+x bin/facet          # npm puts bin/ on the PATH; the file must be executable
    git commit -m "feat: facetkit 0.5.0"
    git remote add origin git@github.com:<owner>/facetkit.git && git push -u origin main
    ```
@@ -39,10 +39,10 @@ npm test                                   # the library (Python and Go probes r
 npm run audit                              # the skill collection
 node bin/facet hypotheses --write HYPOTHESES.md
 node bin/facet scan                        # nothing blocking in what changed
-claude plugin validate .                   # the plugin manifest (needs Claude Code)
+npm run build:plugin && claude plugin validate plugin   # the plugin folder (needs Claude Code)
 ```
 
-1. Update `CHANGELOG.md`; bump the version in `package.json` **and** `.claude-plugin/plugin.json` (a test fails when they differ).
+1. Update `CHANGELOG.md`; bump the version in `package.json` and run `npm run build:plugin` (a test fails when `plugin/` is out of date). The plugin directory accepts from an unverified publisher only Markdown, JSON/YAML and images in the submitted folder: submit `plugin/`, never the repository root.
 2. If skills changed, re-run the audit against the collections named in the README and commit `AUDIT.md`.
 3. If the library changed materially, refresh `docs/dogfood.md` (the commands are in the file).
 4. Commit, tag and push: `git tag v0.5.0 && git push --tags`.

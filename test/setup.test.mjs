@@ -47,7 +47,7 @@ test('the shipped team: every agent has a loadout, a boundary and no hard-coded 
     }
     const command = fs.readFileSync(path.join(KIT, 'commands', 'facet-item.md'), 'utf-8');
     for (const needle of ['facet flow next', 'facet flow start', 'facet flow end', 'facet flow verdict', 'facet flow close', '--phase run', '--phase close']) assert.ok(command.includes(needle), needle);
-    const plugin = JSON.parse(fs.readFileSync(path.join(KIT, '.claude-plugin', 'plugin.json'), 'utf-8'));
+    const plugin = JSON.parse(fs.readFileSync(path.join(KIT, 'plugin', '.claude-plugin', 'plugin.json'), 'utf-8'));
     assert.equal(plugin.version, JSON.parse(fs.readFileSync(path.join(KIT, 'package.json'), 'utf-8')).version);
 });
 

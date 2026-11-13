@@ -9,9 +9,8 @@
   "plugins": [
     {
       "name": "facetkit",
-      "source": "./",
-      "description": "Skills as composable facets, a nine-agent team, and the `facet` command: flow, evidence, assurance levels, skill intelligence."
+      "source": "./plugin",
+      "description": "Skills as composable facets, a nine-agent team and three commands; the `facet` command comes from npm (npm i -g facetkit)."
     }
   ]
 }
-
