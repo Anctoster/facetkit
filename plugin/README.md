@@ -6,7 +6,7 @@ commands `/facet-item`, `/facet-session` and `/facet-retro`, and the fourteen sk
 The agents and commands call the `facet` command. It is not part of the plugin; install it once:
 
 ```bash
-npm i -g facetkit        # or let the agents run `npx --yes facetkit …`
+npm i -g facetkit@0.5.1        # or let the agents run `npx --yes facetkit@0.5.1 …`
 facet init --minimal     # in your project
 ```
 

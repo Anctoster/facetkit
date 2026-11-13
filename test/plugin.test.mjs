@@ -27,5 +27,13 @@ test('plugin: only Markdown, the manifest and the licence — what the directory
 test('plugin: the marketplace points at plugin/, and every agent and command says where `facet` comes from', () => {
     const market = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude-plugin', 'marketplace.json'), 'utf-8'));
     assert.equal(market.plugins[0].source, './plugin');
-    for (const dir of ['agents', 'commands']) for (const f of fs.readdirSync(path.join(PLUGIN, dir))) assert.match(fs.readFileSync(path.join(PLUGIN, dir, f), 'utf-8'), /npx --yes facetkit/, `${dir}/${f}`);
+    for (const dir of ['agents', 'commands']) for (const f of fs.readdirSync(path.join(PLUGIN, dir))) assert.match(fs.readFileSync(path.join(PLUGIN, dir, f), 'utf-8'), /npx --yes facetkit@/, `${dir}/${f}`);
+});
+
+test('plugin: every package launcher and install names an exact version (the directory blocks unpinned npx)', () => {
+    const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8')).version;
+    for (const f of files(PLUGIN)) {
+        const text = fs.readFileSync(f, 'utf-8');
+        for (const m of text.matchAll(/\b(?:npx|bunx|pnpm dlx|yarn dlx|npm i(?:nstall)?(?: -g)?)\b[^`\n]*?\bfacetkit(@[^\s`]*)?/g)) assert.equal(m[1], `@${version}`, `${path.relative(PLUGIN, f)}: ${m[0]}`);
+    }
 });
