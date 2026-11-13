@@ -40,7 +40,7 @@
     "./skillint": "./lib/skillint.mjs",
     "./lang": "./lib/lang.mjs"
   },
-  "files": ["bin", "lib", "skills", "agents", "commands", "templates", "presets", "trials", ".claude-plugin", "docs", "examples", "HYPOTHESES.md", "loadouts.json", "README.md", "CHANGELOG.md", "AUDIT.md", "LICENSE"],
+  "files": ["bin", "lib", "skills", "agents", "commands", "templates", "presets", "trials", "docs", "examples", "HYPOTHESES.md", "loadouts.json", "README.md", "CHANGELOG.md", "AUDIT.md", "LICENSE"],
   "engines": { "node": ">=20" },
   "facetkit": { "govern": { "scanIgnore": ["test/**"] } },
   "scripts": {
