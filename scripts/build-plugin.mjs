@@ -71,6 +71,8 @@ function planned() {
     };
     for (const dir of ['agents', 'commands', 'skills']) walk(dir);
     files.set('LICENSE', fs.readFileSync(path.join(ROOT, 'LICENSE')));
+    // the listing icon: a square PNG of 512–2048 px in its default place, so plugin.json needs no icon field
+    files.set(path.join('.claude-plugin', 'icon.png'), fs.readFileSync(path.join(ROOT, '.claude-plugin', 'icon.png')));
     files.set('README.md', Buffer.from(readme));
     files.set(path.join('.claude-plugin', 'plugin.json'), Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`));
     return files;

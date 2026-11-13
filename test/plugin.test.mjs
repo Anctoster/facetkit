@@ -14,11 +14,16 @@ test('plugin: plugin/ is generated from agents, commands and skills and is up to
     assert.equal(r.status, 0, r.stdout + r.stderr);
 });
 
-test('plugin: only Markdown, the manifest and the licence — what the directory accepts from any publisher', () => {
+test('plugin: only Markdown, the manifest, the licence and the icon — what the directory accepts from any publisher', () => {
     const rel = files(PLUGIN).map((f) => path.relative(PLUGIN, f));
-    assert.deepEqual(rel.filter((f) => !f.endsWith('.md') && f !== 'LICENSE' && f !== path.join('.claude-plugin', 'plugin.json')), []);
+    const allowed = ['LICENSE', path.join('.claude-plugin', 'plugin.json'), path.join('.claude-plugin', 'icon.png')];
+    assert.deepEqual(rel.filter((f) => !f.endsWith('.md') && !allowed.includes(f)), []);
     assert.ok(!fs.existsSync(path.join(PLUGIN, 'bin')));
-    for (const f of files(PLUGIN)) assert.ok(!fs.readFileSync(f).includes(0), `${f}: NUL byte`);
+    const icon = fs.readFileSync(path.join(PLUGIN, '.claude-plugin', 'icon.png'));
+    assert.equal(icon.subarray(1, 4).toString(), 'PNG');
+    const [w, h] = [icon.readUInt32BE(16), icon.readUInt32BE(20)];
+    assert.ok(w === h && w >= 512 && w <= 2048 && icon.length < 2 * 1024 * 1024, `icon: ${w}×${h}, ${icon.length} B — the directory wants a square PNG of 512–2048 px under 2 MB`);
+    for (const f of files(PLUGIN).filter((x) => !x.endsWith('.png'))) assert.ok(!fs.readFileSync(f).includes(0), `${f}: NUL byte`);
     const manifest = JSON.parse(fs.readFileSync(path.join(PLUGIN, '.claude-plugin', 'plugin.json'), 'utf-8'));
     assert.deepEqual(Object.keys(manifest).filter((k) => !['name', 'version', 'description', 'author', 'homepage', 'repository', 'license', 'keywords'].includes(k)), []);
     assert.equal(manifest.version, JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8')).version);
