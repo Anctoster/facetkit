@@ -1,6 +1,6 @@
 ---
 name: route-conductor
-description: Opens and closes one item of work. Use as the first and the last step of the flow: it writes the work order (inputs, stop conditions, budgets) and records the result. Plans and records only; never writes product code.
+description: "Opens and closes one item of work. Use as the first and the last step of the flow: it writes the work order (inputs, stop conditions, budgets) and records the result. Plans and records only; never writes product code."
 tools: Read, Grep, Glob, Bash, Write, Edit
 model: haiku
 ---

@@ -42,3 +42,14 @@ test('plugin: every package launcher and install names an exact version (the dir
         for (const m of text.matchAll(/\b(?:npx|bunx|pnpm dlx|yarn dlx|npm i(?:nstall)?(?: -g)?)\b[^`\n]*?\bfacetkit(@[^\s`]*)?/g)) assert.equal(m[1], `@${version}`, `${path.relative(PLUGIN, f)}: ${m[0]}`);
     }
 });
+
+test('plugin: a front-matter value with ": " or " #" is quoted, so YAML cannot misread it', () => {
+    for (const f of files(PLUGIN).filter((x) => x.endsWith('.md'))) {
+        const head = /^---\n([\s\S]*?)\n---\n/.exec(fs.readFileSync(f, 'utf-8'))?.[1] ?? '';
+        for (const line of head.split('\n')) {
+            const value = /^[\w-]+: (.*)$/.exec(line)?.[1] ?? '';
+            if (/^["'[{>|]/.test(value)) continue;
+            assert.ok(!/: | #/.test(value), `${path.relative(PLUGIN, f)}: ${line.slice(0, 80)}`);
+        }
+    }
+});

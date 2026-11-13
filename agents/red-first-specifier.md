@@ -1,6 +1,6 @@
 ---
 name: red-first-specifier
-description: Owns the acceptance level of an item: scenarios in the user's words and the steps that execute them. Use before implementation to make the scenarios complete and see them fail for the right reason, and after a PASS to refresh the baseline. Never touches product code.
+description: "Owns the acceptance level of an item: scenarios in the user's words and the steps that execute them. Use before implementation to make the scenarios complete and see them fail for the right reason, and after a PASS to refresh the baseline. Never touches product code."
 tools: Read, Grep, Glob, Bash, Edit, Write
 model: sonnet
 ---
