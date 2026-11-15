@@ -52,7 +52,8 @@
     "build:plugin": "node scripts/build-plugin.mjs",
     "audit": "node bin/facet.mjs audit",
     "benchmark": "node bin/facet.mjs benchmark",
-    "test:viz": "python3 -m unittest discover -s domains/viz/tests"
+    "test:viz": "python3 -m unittest discover -s domains/viz/tests",
+    "test:arch": "python3 -m unittest discover -s domains/arch/tests"
   },
   "peerDependencies": { "playwright": ">=1.40" },
   "peerDependenciesMeta": { "playwright": { "optional": true } },

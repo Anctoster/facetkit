@@ -363,7 +363,7 @@ def actor(root, step):
     """Who runs the step now: the operator when the project has a registered script for it, else the builder."""
     if step.get("script") and step.get("else"):
         scripts = load_json(os.path.join(root, "project.json"), {}).get("scripts", {})
-        if not scripts.get(step["script"]) and step["script"] not in ("pack", "preview", "render"):
+        if not scripts.get(step["script"]) and step["script"] not in BUILTIN_MODES:
             return step["else"]["agent"], step["else"].get("model", "sonnet"), "no registered script for '%s' yet" % step["script"]
     return step["agent"], step.get("model", "sonnet"), "route default"
 
@@ -585,6 +585,19 @@ def cmd_plan(j, routes, a):
         print("  %-8s %-13s %-9s %s" % (p["item"], p["route"], st if len(st) < 9 else "waits", p["title"] + ("" if len(st) < 9 else "  (%s)" % st)))
     if nxt and not (opened - closed):
         print("NEXT: vizflow.py open %s" % nxt["item"])
+
+
+BUILTIN_MODES = ("pack", "preview", "render")  # modes whose tool ships with the plugin
+# A domain file next to this script replaces the routes, the checks and the project template:
+# the same journal engine serves any kind of work whose result can be checked.
+_DOMAIN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "domain.json")
+if os.path.exists(_DOMAIN):
+    with open(_DOMAIN, encoding="utf-8") as _f:
+        _d = json.load(_f)
+    DEFAULT_ROUTES = _d.get("routes", DEFAULT_ROUTES)
+    KNOWN_CHECKS = _d.get("checks", KNOWN_CHECKS)
+    PROJECT_TEMPLATE = _d.get("project", PROJECT_TEMPLATE)
+    BUILTIN_MODES = tuple(_d.get("builtin_modes", BUILTIN_MODES))
 
 
 def main():

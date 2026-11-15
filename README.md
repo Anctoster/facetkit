@@ -161,7 +161,7 @@ From record to knowledge — hypotheses with computed verdicts, lessons whose co
 
 ## Beyond code: domains
 
-The method does not depend on the work being code. [`domains/viz`](domains/viz) applies it to architectural visualization — Archicad → Blender → renders → website images — as a second, self-contained plugin (`viz-flow`): a brief with checkable acceptance criteria instead of a specification, measured stage checks instead of tests, and a quality report that tells agent defects, missing criteria and new wishes apart.
+The method does not depend on the work being code. [`domains/arch`](domains/arch) applies it to architectural production in Archicad — source texts and raster drawings into a checked model description, a model on the right layers, complete drawing sets and a schedule with quantified risk (`arch-flow`). [`domains/viz`](domains/viz) applies it to architectural visualization — Archicad → Blender → renders → website images — as a second, self-contained plugin (`viz-flow`): a brief with checkable acceptance criteria instead of a specification, measured stage checks instead of tests, and a quality report that tells agent defects, missing criteria and new wishes apart.
 
 ## Many developers, many teams
 

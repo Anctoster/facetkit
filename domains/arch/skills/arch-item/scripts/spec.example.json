@@ -1,0 +1,251 @@
+{
+ "units": "m",
+ "sources": [
+  {
+   "id": "zadanie.txt",
+   "kind": "text"
+  },
+  {
+   "id": "rzut-parteru.png",
+   "kind": "raster"
+  }
+ ],
+ "scale_proofs": [
+  {
+   "source": "rzut-parteru.png",
+   "known_m": 10.0,
+   "measured_px": 1200
+  },
+  {
+   "source": "rzut-parteru.png",
+   "known_m": 6.0,
+   "measured_px": 721
+  }
+ ],
+ "layers": {
+  "walls_ext": "A-SC-ZEWN",
+  "walls_int": "A-SC-WEWN",
+  "slabs": "A-STROP",
+  "doors": "A-DRZWI",
+  "windows": "A-OKNA",
+  "zones": "A-STREFY"
+ },
+ "stories": [
+  {
+   "id": "P0",
+   "name": "Parter",
+   "elevation": 0.0,
+   "height": 3.0
+  }
+ ],
+ "walls": [
+  {
+   "id": "W1",
+   "story": "P0",
+   "from": [
+    0,
+    0
+   ],
+   "to": [
+    10,
+    0
+   ],
+   "thickness": 0.4,
+   "height": 3.0,
+   "layer": "walls_ext",
+   "source": "rzut-parteru.png",
+   "conf": 0.95
+  },
+  {
+   "id": "W2",
+   "story": "P0",
+   "from": [
+    10,
+    0
+   ],
+   "to": [
+    10,
+    6
+   ],
+   "thickness": 0.4,
+   "height": 3.0,
+   "layer": "walls_ext",
+   "source": "rzut-parteru.png",
+   "conf": 0.95
+  },
+  {
+   "id": "W3",
+   "story": "P0",
+   "from": [
+    10,
+    6
+   ],
+   "to": [
+    0,
+    6
+   ],
+   "thickness": 0.4,
+   "height": 3.0,
+   "layer": "walls_ext",
+   "source": "rzut-parteru.png",
+   "conf": 0.95
+  },
+  {
+   "id": "W4",
+   "story": "P0",
+   "from": [
+    0,
+    6
+   ],
+   "to": [
+    0,
+    0
+   ],
+   "thickness": 0.4,
+   "height": 3.0,
+   "layer": "walls_ext",
+   "source": "rzut-parteru.png",
+   "conf": 0.95
+  },
+  {
+   "id": "W5",
+   "story": "P0",
+   "from": [
+    6,
+    0
+   ],
+   "to": [
+    6,
+    6
+   ],
+   "thickness": 0.12,
+   "height": 3.0,
+   "layer": "walls_int",
+   "source": "rzut-parteru.png",
+   "conf": 0.7
+  }
+ ],
+ "openings": [
+  {
+   "id": "D1",
+   "wall": "W1",
+   "type": "door",
+   "offset": 2.0,
+   "width": 1.0,
+   "height": 2.1,
+   "sill": 0,
+   "layer": "doors",
+   "source": "rzut-parteru.png",
+   "conf": 0.9
+  },
+  {
+   "id": "O1",
+   "wall": "W3",
+   "type": "window",
+   "offset": 1.5,
+   "width": 1.5,
+   "height": 1.5,
+   "sill": 0.9,
+   "layer": "windows",
+   "source": "rzut-parteru.png",
+   "conf": 0.9
+  }
+ ],
+ "slabs": [
+  {
+   "id": "S1",
+   "story": "P0",
+   "outline": [
+    [
+     0,
+     0
+    ],
+    [
+     10,
+     0
+    ],
+    [
+     10,
+     6
+    ],
+    [
+     0,
+     6
+    ]
+   ],
+   "thickness": 0.25,
+   "layer": "slabs",
+   "source": "zadanie.txt",
+   "conf": 0.9
+  }
+ ],
+ "zones": [
+  {
+   "id": "Z1",
+   "story": "P0",
+   "name": "Salon",
+   "number": "0.01",
+   "outline": [
+    [
+     0.2,
+     0.2
+    ],
+    [
+     5.94,
+     0.2
+    ],
+    [
+     5.94,
+     5.8
+    ],
+    [
+     0.2,
+     5.8
+    ]
+   ],
+   "stated_area_m2": 32.1,
+   "layer": "zones",
+   "source": "rzut-parteru.png",
+   "conf": 0.9
+  },
+  {
+   "id": "Z2",
+   "story": "P0",
+   "name": "Pokoj",
+   "number": "0.02",
+   "outline": [
+    [
+     6.06,
+     0.2
+    ],
+    [
+     9.8,
+     0.2
+    ],
+    [
+     9.8,
+     5.8
+    ],
+    [
+     6.06,
+     5.8
+    ]
+   ],
+   "stated_area_m2": 20.9,
+   "layer": "zones",
+   "source": "rzut-parteru.png",
+   "conf": 0.9
+  }
+ ],
+ "questions": [
+  {
+   "id": "Q1",
+   "text": "Sciana W5: grubosc 12 cm odczytana niepewnie (kreska niewyrazna). Przyjac 12 cm?",
+   "default": "0.12",
+   "blocks": [
+    "W5"
+   ],
+   "answer": "0.12"
+  }
+ ]
+}
