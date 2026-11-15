@@ -43,6 +43,7 @@ Shared rules:
 - Measure with the scripts in `tools/` (`tools/LAUNCH.md` shows how); work from their digest lines. Never print a whole object list, log or JSON file: open the details file only for the key that failed.
 - Record every Blender, Archicad, render or shell operation: `vizflow.py tick "<label>" [--fail] --sec <seconds>`. Exit code 3 means a cap is spent or the same thing failed three times: stop and report BLOCKED. Do not go on outside the meter.
 - Before anything you expect to take over two minutes: `vizflow.py note "done: <fact>; next: <action>"`.
+- Every change of a scene is a transaction (`tools/COMPLEX.md`): run headless on the current checkpoint with `tools/blender/txn.py`, declaring beforehand which objects and zones it may touch. A refused transaction saved nothing - read its report, fix the script or the declaration, never edit the open scene by hand to get past it.
 - One heavy operation at a time. Never start a second one while Blender or Archicad is busy. Work on the copy named in the brief; the working scene, the approved material library and the original Archicad project are never written.
 - A check that did not run is "skipped (reason)", never "passed".
 - Cite earlier handoffs by file name; do not repeat them. Your handoff stays within its line limit.

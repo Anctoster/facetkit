@@ -9,7 +9,7 @@ import bpy, json, math, os, sys, tempfile, datetime
 from mathutils import Vector
 
 HERE = globals().get("VIZ_TOOLS") or (os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd())
-SRC = globals().get("VIZ_SOURCES") or {n: open(os.path.join(HERE, n), encoding="utf-8").read() for n in ("vizcore.py", "stage_checks.py", "scene_checks.py", "scene_digest.py")}
+SRC = globals().get("VIZ_SOURCES") or {n: open(os.path.join(HERE, n), encoding="utf-8").read() for n in ("vizcore.py", "stage_checks.py", "scene_checks.py", "scene_digest.py", "scene_index.py", "txn.py")}
 CORE = {}
 exec(compile(SRC["vizcore.py"], "vizcore.py", "exec"), CORE)
 
@@ -141,8 +141,36 @@ good, good_text = run("stage_checks.py", stage_args())
 expect("good", good, {k: "OK" for k in ("export.scale", "export.position", "export.ids", "export.surfaces", "export.counts", "export.duplicates", "export.budget",
                                          "junction.step", "junction.gap", "environment.unchanged", "materials.etalon", "materials.uv", "materials.tile_size",
                                          "cameras.required", "cameras.lens", "cameras.frame", "cameras.clip", "cameras.orbit", "render.settings", "render.sun")})
-sc, sc_text = run("scene_checks.py", {"out": os.path.join(TMP, "checks.json"), "terrain": "ENV_*", "expected_holes": 1, "height_limit": 10.0, "height_pattern": "BLD_*", "designed": "BLD_*", "etalon_materials": ["Brick"]})
-expect("scene good", sc, {"terrain_holes": "OK", "height_limit": "OK", "missing_textures": "OK", "etalon_materials": "OK", "negative_scale": "OK"})
+HYG = {"core_source": SRC["vizcore.py"], "closed": "BLD_*", "grounded": "BLD_*", "support": "SITE_*", "gap_tolerance": 0.02, "clash_a": "BLD_*", "clash_b": "REF_*", "max_orphans": 0}
+sc, sc_text = run("scene_checks.py", dict(HYG, out=os.path.join(TMP, "checks.json"), terrain="ENV_*", expected_holes=1, height_limit=10.0, height_pattern="BLD_*", designed="BLD_*", etalon_materials=["Brick"]))
+expect("scene good", sc, {"terrain_holes": "OK", "height_limit": "OK", "missing_textures": "OK", "etalon_materials": "OK", "negative_scale": "OK",
+                          "inverted_normals": "OK", "floating": "OK", "intersections": "OK", "orphans": "OK"})
+# ---- the index and a transaction: a declared change commits, a stray one does not ----------------
+ix, ix_text = run("scene_index.py", {"core_source": SRC["vizcore.py"], "tile": 20.0, "out": os.path.join(TMP, "index.json")})
+expect("index", ix, {"index": "OK"})
+MOVE_C = "import bpy\nbpy.data.objects['BLD_C'].location.x += 1.0\n"
+STRAY = MOVE_C + "bpy.data.objects['ENV_terrain'].location.z += 0.2\n"
+
+
+def txn(op, declares, save=None):
+    g = {"VIZ_TXN": {"sources": SRC, "op_source": op, "declares": declares, "tile": 20.0, "save_as": save, "report": os.path.join(TMP, "txn.json")}, "__name__": "viz_txn"}
+    exec(compile(SRC["txn.py"], "txn.py", "exec"), g)
+    return g["VIZ_TXN_REPORT"]
+
+
+ok_txn = txn(MOVE_C, {"objects": ["BLD_C"], "added": 0, "removed": 0}, os.path.join(TMP, "next.blend"))
+bpy.data.objects["BLD_C"].location.x -= 1.0
+bpy.context.view_layer.update()
+bad_txn = txn(STRAY, {"objects": ["BLD_C"]}, os.path.join(TMP, "never.blend"))
+bpy.data.objects["BLD_C"].location.x -= 1.0
+bpy.data.objects["ENV_terrain"].location.z -= 0.2
+bpy.context.view_layer.update()
+none_txn = txn("pass\n", {"objects": ["*"]})
+err_txn = txn("raise RuntimeError('boom')\n", {"objects": ["*"]})
+expect("txn", {"declared": ok_txn["committed"] and os.path.exists(os.path.join(TMP, "next.blend")), "changed": sorted(ok_txn["changed"]) == ["BLD_C"],
+               "stray": bad_txn["committed"] or os.path.exists(os.path.join(TMP, "never.blend")), "stray_named": any("ENV_terrain" in p for p in bad_txn["problems"]),
+               "noop": none_txn["committed"], "error": err_txn["committed"]},
+       {"declared": True, "changed": True, "stray": False, "stray_named": True, "noop": False, "error": False})
 
 # ---- now break one thing per check and see that each of them notices ---------------------------
 env.location.z += 0.5                                   # a visible step at the seam, and changed surroundings
@@ -165,8 +193,13 @@ expect("bad", bad, {k: "FAIL" for k in ("export.scale", "export.position", "expo
 zoned = stage_args()
 zoned["environment"]["zone"] = {"min": [-100, -100], "max": [100, 100]}
 expect("zone", run("stage_checks.py", {"core_source": SRC["vizcore.py"], "environment": zoned["environment"]})[0], {"environment.unchanged": "OK"})
-sc2, _ = run("scene_checks.py", {"terrain": "ENV_*", "expected_holes": 0, "height_limit": 3.0, "height_pattern": "BLD_*", "designed": "BLD_*", "etalon_materials": ["Brick"]})
-expect("scene bad", sc2, {"terrain_holes": "FAIL", "height_limit": "FAIL", "etalon_materials": "FAIL"})
+c.location.z += 0.3                                      # BLD_C now hangs above the site
+a.data.flip_normals()                                   # BLD_A faces inward
+box("REF_clash", 5, 0, 2, 2, 2)                         # a box standing inside BLD_C
+bpy.data.meshes.new("leftover")                         # unused data
+bpy.context.view_layer.update()
+sc2, _ = run("scene_checks.py", dict(HYG, terrain="ENV_*", expected_holes=0, height_limit=3.0, height_pattern="BLD_*", designed="BLD_*", etalon_materials=["Brick"]))
+expect("scene bad", sc2, {"terrain_holes": "FAIL", "height_limit": "FAIL", "etalon_materials": "FAIL", "inverted_normals": "FAIL", "floating": "FAIL", "intersections": "FAIL", "orphans": "FAIL"})
 expect("skip", run("stage_checks.py", {"core_source": SRC["vizcore.py"], "junction": {"model_terrain": "NOPE_*", "env_terrain": "ENV_*"}, "render": {}})[0],
        {"junction.step": "SKIP", "render.settings": "SKIP", "render.sun": "SKIP"})
 

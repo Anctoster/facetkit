@@ -52,4 +52,5 @@ When the user asks how the agents are doing: `vizflow.py quality`, relayed in th
 
 - `references/setup.md` - first-time setup of a project (only when `_viz/` is missing).
 - `references/method.md` - why the method is built this way and how to tune routes, caps and models.
+- `scripts/COMPLEX.md` - how large scenes are handled: the index, zones, headless transactions on checkpoints.
 - `references/brief.md` - the brief format with a worked example, for when the user wants to write briefs themselves.

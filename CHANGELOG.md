@@ -15,7 +15,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - **Trust decay** (`facet proof decay`, `facet check --stale`): per-check scopes (`covers` plus import closure), evidence bound to its scope digest, per-state snapshots, blind spots named.
 - **Ownership** (`facet owners`, `facetkit/ownership`): most-specific-pattern resolution, with unowned files, equal claims and foreign edits refused.
 - **Guard benchmark** (`facet benchmark [--write]`, `facetkit/benchmark`): adversarial fixtures under `benchmark/fixtures`, expectations in `benchmark/expected.json`, results per version in `benchmark/results/`, regressions named.
-- **`domains/viz`** — the method applied to architectural visualization, as a second plugin (`viz-flow`) in the marketplace.
+- **`domains/viz`** — the method applied to architectural visualization, as a second plugin (`viz-flow`) in the marketplace. For large scenes: an object index instead of the scene, zones so that cost follows the change, and headless copy-on-write transactions that commit only what an operation declared (`domains/viz/skills/viz-item/scripts/COMPLEX.md`).
 
 ### Changed
 - **Governance is fail-closed.** `journalIntact` is unknown unless the caller established it, and unknown does not pass (`evaluate` marks such rules `unknown`). Library callers that evaluated in-memory events must now pass `project: { journalIntact: true }` after verifying the journal; `facet` does so itself.

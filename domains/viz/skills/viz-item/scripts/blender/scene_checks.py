@@ -4,7 +4,10 @@ Run inside Blender with VIZ_ARGS defined first, for example:
               "designed": "Bud*", "etalon_materials": ["BRICK_RED", "GLASS_CLEAR"], "max_polys": 3000000}
 Each check prints one line: OK / FAIL / SKIP(reason). A skipped check is not a passed one.
 Checks: holes and non-manifold edges in terrain meshes, objects above a height limit, missing textures,
-        designed objects using materials outside the etalon list, objects with no material, negative scale."""
+        designed objects using materials outside the etalon list, objects with no material, negative scale,
+        closed solids that face inward ("closed"), objects not resting on their support ("grounded", "support",
+        "gap_tolerance"), bounding-box clashes between two groups ("clash_a", "clash_b"), unused data ("max_orphans").
+        The last four need "tools": the folder of vizcore.py."""
 import bpy, fnmatch, json, os
 import numpy as np
 from mathutils import Vector
@@ -127,6 +130,95 @@ bare = [o.name for o in meshes if len(o.data.polygons) and not any(s.material fo
 report("no_material", "FAIL" if bare else "OK", "%d mesh objects without material %s" % (len(bare), bare[:4]), bare[:200])
 neg = [o.name for o in meshes if o.matrix_world.determinant() < 0]
 report("negative_scale", "FAIL" if neg else "OK", "%d mirrored objects (flipped normals risk) %s" % (len(neg), neg[:4]), neg[:200])
+
+# 6. large-scene hygiene: inside-out meshes, objects hanging above their support, clashes, leftovers --------
+def _core():
+    src = A.get("core_source") or (open(os.path.join(A["tools"], "vizcore.py"), encoding="utf-8").read() if A.get("tools") else None)
+    if not src:
+        return None
+    g = {}
+    exec(compile(src, "vizcore.py", "exec"), g)
+    return g
+
+
+def _coords(o):
+    co = np.empty(len(o.data.vertices) * 3, dtype=np.float64)
+    o.data.vertices.foreach_get("co", co)
+    m = np.array(o.matrix_world, dtype=np.float64)
+    return co.reshape(-1, 3) @ m[:3, :3].T + m[:3, 3]
+
+
+def _box(objs):
+    lo, hi = [], []
+    for o in objs:
+        pts = np.array([o.matrix_world @ Vector(c) for c in o.bound_box], dtype=float)
+        lo.append(pts.min(axis=0)); hi.append(pts.max(axis=0))
+    return np.array(lo), np.array(hi)
+
+
+try:
+    core = _core()
+    closed_pat = A.get("closed")
+    if not core or not closed_pat:
+        report("inverted_normals", "SKIP", "needs 'tools' and a 'closed' name pattern (objects that are closed solids)")
+    else:
+        inside_out, looked = [], 0
+        for o in [o for o in meshes if fnmatch.fnmatch(o.name, closed_pat)]:
+            me = o.data
+            if len(me.polygons) == 0 or len(me.polygons) > A.get("max_polys", 3000000) or boundary_loops(me)[0]:
+                continue  # an open mesh has no inside
+            looked += 1
+            co = _coords(o)
+            lv = np.empty(len(me.loops), dtype=np.int32); me.loops.foreach_get("vertex_index", lv)
+            ls = np.empty(len(me.polygons), dtype=np.int32); me.polygons.foreach_get("loop_start", ls)
+            lt = np.empty(len(me.polygons), dtype=np.int32); me.polygons.foreach_get("loop_total", lt)
+            tris = []
+            for k in range(1, int(lt.max()) - 1):  # fan triangles, one layer of the fan at a time
+                sel = lt > k + 1
+                tris.append(np.stack([co[lv[ls[sel]]], co[lv[ls[sel] + k]], co[lv[ls[sel] + k + 1]]], axis=1))
+            vol = core["signed_volume"](np.concatenate(tris)) * (-1.0 if o.matrix_world.determinant() < 0 else 1.0)
+            if vol < 0:
+                inside_out.append(o.name)
+        report("inverted_normals", "FAIL" if inside_out else ("OK" if looked else "SKIP"), "%d closed solids looked at, %d face inward %s" % (looked, len(inside_out), inside_out[:4]), inside_out[:200])
+    gp, sp = A.get("grounded"), A.get("support")
+    if not gp or not sp:
+        report("floating", "SKIP", "needs 'grounded' (objects that must stand on something) and 'support' (what they stand on) patterns")
+    else:
+        from mathutils.bvhtree import BVHTree
+        sup = [o for o in meshes if fnmatch.fnmatch(o.name, sp) and len(o.data.polygons) <= A.get("max_polys", 3000000)]
+        gr = [o for o in meshes if fnmatch.fnmatch(o.name, gp)]
+        if not sup or not gr:
+            report("floating", "SKIP", "%d objects to check, %d support objects found" % (len(gr), len(sup)))
+        else:
+            verts, polys, base = [], [], 0
+            for o in sup:
+                co = _coords(o)
+                verts.extend(map(tuple, co)); polys.extend([[base + i for i in p.vertices] for p in o.data.polygons]); base += len(co)
+            tree = BVHTree.FromPolygons(verts, polys)
+            tol, off = A.get("gap_tolerance", 0.02), []
+            lo, hi = _box(gr)
+            for o, l, h in zip(gr, lo, hi):
+                hit = tree.ray_cast(Vector(((l[0] + h[0]) / 2, (l[1] + h[1]) / 2, h[2] + 1.0)), Vector((0, 0, -1)))[0]
+                if hit is None:
+                    off.append((None, o.name))
+                elif abs(l[2] - hit.z) > tol:
+                    off.append((round(float(l[2] - hit.z), 3), o.name))
+            report("floating", "FAIL" if off else "OK", "%d objects checked; %d do not rest on their support within %.3f m (gap, name) %s" % (len(gr), len(off), tol, off[:4]), off[:200])
+    ap, bp = A.get("clash_a"), A.get("clash_b")
+    if not core or not ap or not bp:
+        report("intersections", "SKIP", "needs 'tools' and the patterns 'clash_a' and 'clash_b'")
+    else:
+        ao, bo = [o for o in meshes if fnmatch.fnmatch(o.name, ap)], [o for o in meshes if fnmatch.fnmatch(o.name, bp) and not fnmatch.fnmatch(o.name, ap)]
+        if not ao or not bo or len(ao) * len(bo) > 4000000:
+            report("intersections", "SKIP", "%d x %d objects: nothing to compare, or too many pairs - narrow the patterns" % (len(ao), len(bo)))
+        else:
+            pairs = core["boxes_overlap"](*_box(ao), *_box(bo), margin=A.get("clash_margin", 0.05))
+            names = [(ao[i].name, bo[j].name) for i, j in pairs]
+            report("intersections", "FAIL" if names else "OK", "%d pairs of bounding boxes overlap by more than %.2f m %s" % (len(names), A.get("clash_margin", 0.05), names[:3]), names[:200])
+except Exception as e:  # a check that broke has not passed
+    report("hygiene.error", "SKIP", "stopped with %s: %s" % (type(e).__name__, str(e)[:160]))
+orph = {k: sum(1 for d in getattr(bpy.data, k) if d.users == 0) for k in ("meshes", "materials", "images", "node_groups")}
+report("orphans", "FAIL" if sum(orph.values()) > A.get("max_orphans", 0) else "OK", "unused data left in the file: %s" % orph, orph)
 
 path = A.get("out")
 if path:

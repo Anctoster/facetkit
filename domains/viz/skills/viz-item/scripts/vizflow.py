@@ -269,7 +269,8 @@ def brief_state(j, root, item, events):
 KNOWN_CHECKS = ["export.scale", "export.position", "export.ids", "export.surfaces", "export.counts", "export.duplicates", "export.budget",
                 "junction.step", "junction.gap", "environment.unchanged", "materials.etalon", "materials.uv", "materials.tile_size",
                 "cameras.required", "cameras.lens", "cameras.frame", "cameras.clip", "cameras.orbit", "render.settings", "render.sun",
-                "terrain_holes", "height_limit", "missing_textures", "etalon_materials", "no_material", "negative_scale", "images", "invariants"]
+                "terrain_holes", "height_limit", "missing_textures", "etalon_materials", "no_material", "negative_scale", "images", "invariants",
+                "inverted_normals", "floating", "intersections", "orphans", "txn.contract", "index"]
 
 
 # ---- state, computed by replaying the journal ---------------------------------------------------

@@ -225,6 +225,40 @@ class Core(unittest.TestCase):
         self.assertIsNone(vizcore.compare(None, "<=", 1))
 
 
+class LargeScenes(unittest.TestCase):
+    BEFORE = {"road": {"geometry": "g1", "transform": "t1", "materials": ["asphalt"], "zones": ["0_0"]},
+              "tree": {"geometry": "g2", "transform": "t", "materials": [], "zones": ["1_0"]},
+              "far": {"geometry": "g9", "transform": "t", "materials": [], "zones": ["5_5"]}}
+
+    def test_zones_follow_the_ground_plan(self):
+        self.assertEqual(vizcore.zone_of(-0.1, 49.9, 50), "-1_0")
+        self.assertEqual(vizcore.zones_of_box([40, 40, 0], [110, 60, 5], 50), ["0_0", "0_1", "1_0", "1_1", "2_0", "2_1"])
+
+    def test_a_transaction_commits_only_what_it_declared(self):
+        after = {"road": dict(self.BEFORE["road"], transform="t2", zones=["0_0", "0_1"]), "bench": {"geometry": "g3", "transform": "t", "materials": [], "zones": ["1_0"]}, "far": self.BEFORE["far"]}
+        d = vizcore.index_diff(self.BEFORE, after)
+        self.assertEqual((d["added"], d["removed"], d["changed"], d["zones"]), (["bench"], ["tree"], {"road": ["transform"]}, ["0_0", "0_1", "1_0"]))
+        self.assertEqual(vizcore.contract_violations(d, {"objects": ["road", "bench", "tree"], "zones": ["0_0", "0_1", "1_0"], "added": 1, "removed": 1}), [])
+        self.assertEqual(vizcore.contract_violations(d, {"objects": ["road", "bench"]}), ["removed tree outside the declared objects"])
+        self.assertIn("touched zones outside the declared ones: 0_1, 1_0", vizcore.contract_violations(d, {"objects": ["*"], "zones": ["0_0"]}))
+        self.assertIn("added 1 objects, declared 0", vizcore.contract_violations(d, {"objects": ["*"], "added": 0}))
+        self.assertEqual(vizcore.contract_violations(vizcore.index_diff(self.BEFORE, self.BEFORE), {"objects": ["*"]}), ["nothing changed: the operation had no effect"])
+        swapped = dict(self.BEFORE, far=dict(self.BEFORE["far"], materials=["other"]))
+        self.assertEqual(vizcore.index_diff(self.BEFORE, swapped)["changed"], {"far": ["materials"]}, "a material swap far away is a change too")
+
+    def test_only_the_checks_of_touched_zones_decay(self):
+        ev = {"junction.step": {"zones": ["0_0"]}, "terrain_holes": {"zones": ["9_9"]}, "render.sun": {"zones": None}}
+        self.assertEqual(vizcore.decayed_zone_checks(ev, ["0_0", "1_0"]), ["junction.step", "render.sun"])
+        self.assertEqual(vizcore.decayed_zone_checks(ev, []), [])
+
+    def test_inside_out_solids_and_clashing_boxes(self):
+        tet = [[(0, 0, 0), (0, 1, 0), (1, 0, 0)], [(0, 0, 0), (1, 0, 0), (0, 0, 1)], [(0, 0, 0), (0, 0, 1), (0, 1, 0)], [(1, 0, 0), (0, 1, 0), (0, 0, 1)]]
+        self.assertGreater(vizcore.signed_volume(tet), 0)
+        self.assertLess(vizcore.signed_volume([t[::-1] for t in tet]), 0)
+        self.assertEqual(vizcore.boxes_overlap([[0, 0, 0], [10, 10, 0]], [[2, 2, 2], [12, 12, 2]], [[1, 1, 1], [20, 20, 20]], [[3, 3, 3], [21, 21, 21]]), [(0, 0)])
+        self.assertEqual(vizcore.boxes_overlap([[0, 0, 0]], [[2, 2, 2]], [[1.98, 0, 0]], [[4, 2, 2]], margin=0.05), [], "touching within the margin is not a clash")
+
+
 try:
     from PIL import Image, ImageDraw
 except ImportError:

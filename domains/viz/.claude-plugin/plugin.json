@@ -1,6 +1,6 @@
 {
   "name": "viz-flow",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Evidence-first production of website graphics (Archicad -> Blender -> renders -> web images) by a small team of cheap agents: one journal computes the next step, the model and the cost; scripts measure, an independent inspector decides.",
   "author": { "name": "viz-flow" },
   "license": "MIT",

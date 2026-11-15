@@ -98,3 +98,80 @@ def compare(value, op, limit):
     if value is None:
         return None
     return {"<=": value <= limit, "<": value < limit, ">=": value >= limit, ">": value > limit, "==": value == limit}[op]
+
+
+# ---- large scenes: an index instead of the scene, zones instead of the whole ------------------
+def zone_of(x, y, tile):
+    """The zone (a square tile of `tile` metres) a point belongs to. Zones make cost follow the change, not the scene."""
+    return "%d_%d" % (math.floor(x / tile), math.floor(y / tile))
+
+
+def zones_of_box(lo, hi, tile):
+    """Every zone a bounding box touches."""
+    return sorted({"%d_%d" % (i, j) for i in range(math.floor(lo[0] / tile), math.floor(hi[0] / tile) + 1)
+                   for j in range(math.floor(lo[1] / tile), math.floor(hi[1] / tile) + 1)})
+
+
+INDEX_FIELDS = ("geometry", "transform", "materials", "modifiers", "parent", "collection")
+
+
+def index_diff(before, after, fields=INDEX_FIELDS):
+    """What an operation did, object by object: {added, removed, changed: {name: [fields]}, zones}.
+    `before` and `after` are scene indexes: {name: {field: value, "zones": [...]}}."""
+    added = sorted(n for n in after if n not in before)
+    removed = sorted(n for n in before if n not in after)
+    changed = {}
+    for n in sorted(set(before) & set(after)):
+        f = [k for k in fields if before[n].get(k) != after[n].get(k)]
+        if f:
+            changed[n] = f
+    zones = set()
+    for n in added + list(changed):
+        zones.update(after[n].get("zones", []))
+    for n in removed + list(changed):
+        zones.update(before[n].get("zones", []))
+    return {"added": added, "removed": removed, "changed": changed, "zones": sorted(zones)}
+
+
+def contract_violations(diff, declared):
+    """An operation states beforehand what it may touch; everything else must come out identical.
+    declared = {"objects": [name patterns], "zones": [zone ids] or None, "added": n or None, "removed": n or None}"""
+    import fnmatch
+    pats = declared.get("objects") or []
+    ok = lambda n: any(fnmatch.fnmatch(n, p) for p in pats)
+    out = ["%s %s outside the declared objects" % (kind, n) for kind in ("added", "removed") for n in diff[kind] if not ok(n)]
+    out += ["changed %s (%s) outside the declared objects" % (n, ", ".join(f)) for n, f in diff["changed"].items() if not ok(n)]
+    if declared.get("zones") is not None:
+        stray = sorted(set(diff["zones"]) - set(declared["zones"]))
+        if stray:
+            out.append("touched zones outside the declared ones: %s" % ", ".join(stray[:8]))
+    for kind in ("added", "removed"):
+        if declared.get(kind) is not None and len(diff[kind]) != declared[kind]:
+            out.append("%s %d objects, declared %d" % (kind, len(diff[kind]), declared[kind]))
+    if not (diff["added"] or diff["removed"] or diff["changed"]):
+        out.append("nothing changed: the operation had no effect")
+    return out
+
+
+def decayed_zone_checks(evidence, touched):
+    """Trust decay for scenes. evidence = {check id: {"zones": [...] or None}}; a check with no zones
+    stands for the whole scene. Returns the checks a change of `touched` zones sends back."""
+    t = set(touched)
+    return sorted(c for c, e in evidence.items() if t and (e.get("zones") is None or t & set(e["zones"])))
+
+
+def signed_volume(tri_points):
+    """Six times the signed volume of a closed triangle mesh (n x 3 x 3). Negative: the surface faces inward."""
+    p = np.asarray(tri_points, dtype=float)
+    if not len(p):
+        return 0.0
+    return float(np.einsum("ij,ij->i", p[:, 0], np.cross(p[:, 1], p[:, 2])).sum())
+
+
+def boxes_overlap(lo_a, hi_a, lo_b, hi_b, margin=0.0):
+    """Index pairs (i, j) of boxes from set A and set B that overlap by more than `margin` on every axis."""
+    la, ha, lb, hb = (np.asarray(x, dtype=float).reshape(-1, 3) for x in (lo_a, hi_a, lo_b, hi_b))
+    if not len(la) or not len(lb):
+        return []
+    over = np.minimum(ha[:, None, :], hb[None, :, :]) - np.maximum(la[:, None, :], lb[None, :, :])
+    return [tuple(map(int, ij)) for ij in np.argwhere((over > margin).all(axis=2))]
