@@ -13,6 +13,11 @@ import { closedItems, holderOf, isSegmented, ofItem, openItems, readJournal, rec
 import { benchmarkReport, regressions, renderBenchmark, runBenchmark } from '../lib/benchmark.mjs';
 import { analyse, assertAblatable, assign, loadExperiments, newExperiment, renderAnalysis, saveExperiment, unitOf } from '../lib/experiments.mjs';
 import { designFor, diagnosePattern, loadProposals, mayAdopt, patterns, propose, renderProposals, saveProposal } from '../lib/evolve.mjs';
+import { curriculum, faded, lessonFrom, loadLessons, recallLessons, renderLessons, saveLessons } from '../lib/cognition.mjs';
+import { allocate, hire, itemsClosed, priceFacets, renderEconomy, reworkCost } from '../lib/economy.mjs';
+import { followUp, overrides, plan as healPlan, renderHeal, weaknesses } from '../lib/heal.mjs';
+import { judge as judgeHypothesis, loadHypotheses, newHypothesis, renderHypotheses, saveHypothesis } from '../lib/hypothesis.mjs';
+import { buildTrustGraph, renderTrustGraph } from '../lib/trustgraph.mjs';
 import { analyseDesign, armFor, armOfUnit, fourArms, newDesign, renderDesign, stratumOf, unitsNeeded, unitsSoFar } from '../lib/intelligence.mjs';
 import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, stepsOf } from '../lib/planner.mjs';
 import { buildGraph } from '../lib/seams.mjs';
@@ -114,14 +119,33 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
         const base = modelFor(step, { loadouts: loadouts(), flow: flowDef, tier: state.tier });
         const r = project.router?.enabled && step.agent && !base.escalated ? route({ agent: step.agent, base: base.model, tier: state.tier, rows: matrix(observations(events()), { minN: project.router.minN ?? 5 }), ladder: flowDef.ladder, seen: observations(events()).filter((o) => o.agent === step.agent).length, options: project.router }) : null;
         const ext = extensions.map((x) => x.route?.(step, { state, base: base.model, events: events() })).find(Boolean);
+        const healed = step.agent ? overrides(events()).models[step.agent] : null; // a weak agent on probation one model up (facet heal)
+        const ladder = flowDef.ladder ?? [];
+        if (healed && !ext && ladder.indexOf(healed) > ladder.indexOf((r ?? base).model)) return { model: healed, reason: 'on probation one model up: its record on the smaller model was weak (facet heal)' };
         return ext ? { model: ext, reason: 'extension' } : (r ?? { model: base.model, reason: base.escalated ? 'one step up after repeated failure' : 'configured' });
     };
 
+    // ---- what the record says about the team itself ---------------------------------------------
+    const judgedHypotheses = () => loadHypotheses(CWD).map((h) => {
+        const designs = loadExperiments(CWD).filter((m) => m.arms);
+        const design = designs.find((d) => d.confirms === h.design) ?? designs.find((d) => d.id === h.design) ?? null; // the repetition, when there is one
+        const first = design?.confirms ? designs.find((d) => d.id === design.confirms) : null;
+        const analysis = design ? analyseDesign(events(), design, { prior: first ? analyseDesign(events(), first) : null }) : null;
+        return { h, design, analysis, v: judgeHypothesis(h, analysis) };
+    });
+    const trustGraphNow = () => {
+        const suspect = new Set(overrides(events()).suspect); // a check marked suspect vouches for nothing until it is repaired
+        return buildTrustGraph(events().filter((e) => !(e.kind === 'evidence' && suspect.has(e.name))));
+    };
+    const weaknessesNow = () => {
+        const proposed = new Set(loadProposals(CWD).map((p) => `${p.mode}|${p.agent ?? '*'}`));
+        return weaknesses({ events: events(), graph: trustGraphNow(), fadedLessons: faded(loadLessons(CWD), events()), openPatterns: patterns(events()).filter((p) => !proposed.has(`${p.mode}|${p.agent ?? '*'}`)), ladder: flowDef.ladder });
+    };
     // ---- skill intelligence: what each step was given to read ------------------------------
     const allFacets = () => skills().flatMap((s) => s.facets);
     const loadedRefs = () => new Set(Object.keys(loadouts().roles ?? {}).flatMap((role) => loadoutPicks(loadouts(), role).picks).flatMap((pick) => resolvePicks(skills(), [pick]).facets.map((f) => f.ref)));
     const rulesFor = (step, item) => {
-        if (!step.agent || !step.phase || !loadouts().roles?.[step.agent]?.phases?.[step.phase]) return { facets: [], withheld: [], file: null, experiments: [] };
+        if (!step.agent || !step.phase || !loadouts().roles?.[step.agent]?.phases?.[step.phase]) return { facets: [], withheld: [], file: null, experiments: [], lessons: [] };
         const lo = loadoutPicks(loadouts(), step.agent, step.phase);
         const used = compose(resolvePicks(skills(), lo.picks).facets, { budget: lo.budget }).used;
         const withheld = withheldFor(used, { item, step: step.id, rate: project.skillint?.ablate?.rate ?? 0, seed: project.skillint?.ablate?.seed });
@@ -151,13 +175,21 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             if (arm.order) given = arm.order === 'first' ? [...given.filter((f) => f.ref === d.facet), ...given.filter((f) => f.ref !== d.facet)] : [...given.filter((f) => f.ref !== d.facet), ...given.filter((f) => f.ref === d.facet)];
             if (arm.model) model = arm.model;
         }
+        // what the team has learned for this situation changes what the agent is given; a running experiment outranks a lesson
+        const learned = curriculum(recallLessons(loadLessons(CWD), events(), { agent: step.agent, taskClass: routing()[item]?.class ?? null, difficulty: routing()[item]?.difficulty ?? null, model: model ?? modelFor(step, { loadouts: loadouts(), flow: flowDef }).model }, { budgetWords: project.cognition?.words ?? 120 }));
+        const underTest = new Set(experiments.map((x) => x.facet));
+        for (const ref of learned.drop) if (!underTest.has(ref) && used.find((f) => f.ref === ref)?.ablatable && !withheld.includes(ref)) withheld.push(ref);
+        for (const ref of learned.add) {
+            const f = !underTest.has(ref) && !given.some((x) => x.ref === ref) ? allFacets().find((x) => x.ref === ref) : null;
+            if (f) given = [...given, f];
+        }
         let file = null;
-        if (withheld.length || given !== used) {
+        if (withheld.length || given !== used || learned.notes.length) {
             file = path.join(work, item, `rules-${step.id}.md`);
             fs.mkdirSync(path.dirname(file), { recursive: true });
-            fs.writeFileSync(file, renderLoadout(compose(given.filter((f) => !withheld.includes(f.ref)), { budget: lo.budget }), { role: step.agent, phase: step.phase }));
+            fs.writeFileSync(file, renderLoadout(compose(given.filter((f) => !withheld.includes(f.ref)), { budget: lo.budget }), { role: step.agent, phase: step.phase }) + (learned.notes.length ? `\n## Learned on this project\n${learned.notes.map((n) => `- ${n}`).join('\n')}\n` : ''));
         }
-        return { facets: used.map((f) => f.ref).filter((r) => !withheld.includes(r)), withheld, file, experiments, model };
+        return { facets: given.map((f) => f.ref).filter((r) => !withheld.includes(r)), withheld, file, experiments, model, lessons: learned.ids };
     };
 
     function describe(n) {
@@ -225,7 +257,7 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             if (n.step !== stepId && !flag('force')) fail(`flow start: the next step of ${item} is "${n.step ?? n.action}", not "${stepId}". Steps are not skipped; --force records an exception.`);
             const { model } = n.step === stepId && n.model ? n : pickModel(step, state);
             const rules = rulesFor(step, item);
-            say({ kind: 'step.start', item, step: stepId, agent: step.agent, mode: step.mode, model: opt('model', rules.model ?? model ?? undefined), rework: step.rework || undefined, assist: opt('assist'), forced: n.step !== stepId || undefined, facets: rules.facets.length ? rules.facets : undefined, withheld: rules.withheld.length ? rules.withheld : undefined, experiments: rules.experiments.length ? rules.experiments : undefined });
+            say({ kind: 'step.start', item, step: stepId, agent: step.agent, mode: step.mode, model: opt('model', rules.model ?? model ?? undefined), rework: step.rework || undefined, assist: opt('assist'), forced: n.step !== stepId || undefined, facets: rules.facets.length ? rules.facets : undefined, withheld: rules.withheld.length ? rules.withheld : undefined, lessons: rules.lessons?.length ? rules.lessons : undefined, experiments: rules.experiments.length ? rules.experiments : undefined });
             if (rules.file) console.log(`rules for this step (give the agent this file instead of its usual one): ${path.relative(CWD, rules.file)}`);
             if (rules.model) console.log(`model for this step, set by an experiment: ${rules.model} — call the agent on it`);
             const wanted = project.eval?.snapshot ?? [];
@@ -684,6 +716,86 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             console.log(chosen.map((m) => `${renderDesign(read(m))}\n  status: ${m.status} · seed ${m.seed} · strata: ${m.strata.join(', ')} · floor ${m.minPerArm} per arm`).join('\n\n'));
         },
         /** evolve scan|list|test|adopt|reject: recurring mistakes → diagnosed rules → tested changes → a person's decision. */
+        /** hypo new|list: beliefs about the team's work, stated so that the journal can prove them wrong. */
+        hypo() {
+            const sub = positional[0] ?? 'list';
+            const all = loadHypotheses(CWD);
+            if (sub === 'new') {
+                if (all.some((h) => h.id === positional[1])) fail(`hypo: ${positional[1]} exists; a prediction is written once, before the data`);
+                try {
+                    saveHypothesis(CWD, newHypothesis({ id: positional[1], claim: opt('claim'), facet: opt('facet') ?? null, metric: opt('metric', 'clean'), direction: opt('direction', 'better'), margin: Number(opt('margin', 0.05)), arm: opt('arm', 'B'), design: opt('design') ?? null }));
+                } catch (e) {
+                    fail(`hypo: ${e.message} — facet hypo new <ID> --claim "…" [--facet skill:facet] [--metric clean] [--direction better|worse|none] [--margin 0.05] [--design ID]`);
+                }
+                return void console.log(`hypothesis ${positional[1]} recorded. Test it: facet intel design <DESIGN> --facet … --seed …, then set "design" in trials/hypotheses/${positional[1]}.json`);
+            }
+            console.log(renderHypotheses(judgedHypotheses().map(({ h, v }) => ({ h, v }))));
+        },
+        /** learn [apply --by NAME | list | retire ID]: judged hypotheses become lessons that change what agents are given. */
+        learn() {
+            const sub = positional[0] ?? 'list';
+            const lessons = loadLessons(CWD);
+            if (sub === 'apply') {
+                const by = opt('by') ?? fail('learn apply: --by NAME — what the team learns is a person\'s decision');
+                const fresh = [];
+                for (const { h, v, design } of judgedHypotheses()) {
+                    if (lessons.some((l) => l.because.includes(h.id) && l.status === 'active')) continue;
+                    if (v.verdict === 'promising' && !flag('provisional')) continue; // found once: not learned unless asked for, and then at lower confidence
+                    const stratum = design?.strata?.includes('agent') ? { agent: opt('agent') ?? null } : {};
+                    const l = lessonFrom(h, v, { when: { ...stratum, taskClass: opt('class') ?? null, difficulty: opt('difficulty') ?? null }, at: itemsClosed(events()), model: opt('model') ?? null });
+                    if (l) fresh.push({ ...l, adoptedBy: by });
+                }
+                if (!fresh.length) return void console.log('nothing new to learn: no hypothesis has a settled verdict that is not already a lesson (found once only → add --provisional)');
+                saveLessons(CWD, [...lessons, ...fresh]);
+                for (const l of fresh) say({ kind: 'learn', lesson: l.id, because: l.because, by });
+                return void console.log(`${fresh.length} lesson(s) learned by decision of ${by}:\n${renderLessons(fresh, events())}`);
+            }
+            if (sub === 'retire') {
+                if (!lessons.some((l) => l.id === positional[1])) fail(`learn: no lesson "${positional[1] ?? ''}"`);
+                saveLessons(CWD, lessons.map((l) => (l.id === positional[1] ? { ...l, status: 'retired', retiredWhy: opt('why', 'by hand') } : l)));
+                return void console.log(`${positional[1]} retired`);
+            }
+            console.log(renderLessons(lessons, events()));
+        },
+        /** trustgraph [--item ID]: who and what each result rests on, and how far each of them has held so far. */
+        trustgraph() {
+            console.log(renderTrustGraph(trustGraphNow(), { item: opt('item') ?? positional[0] ?? null }));
+        },
+        /** heal [scan|apply|undo KEY]: the team's own weak points, the safe repairs, and whether earlier repairs worked. */
+        heal() {
+            const sub = positional[0] ?? 'scan';
+            const found = weaknessesNow();
+            if (sub === 'undo') {
+                const h = events().filter((e) => e.kind === 'heal').findLast((e) => e.key === positional[1]) ?? fail(`heal: nothing applied under "${positional[1] ?? ''}"`);
+                say({ kind: 'heal.undo', key: h.key, agent: h.agent, check: h.check });
+                return void console.log(`${h.key}: ${h.action} undone`);
+            }
+            const p = healPlan(found, events());
+            if (sub === 'apply') {
+                for (const w of p.auto) {
+                    if (w.remedy.action === 'retire-lesson') saveLessons(CWD, loadLessons(CWD).map((l) => (l.id === w.remedy.lesson ? { ...l, status: 'retired', retiredWhy: w.text } : l)));
+                    if (w.remedy.action === 'file-proposal') for (const x of propose(patterns(events()).flatMap((pt) => diagnosePattern(pt, events(), allFacets(), { ledgerOf })), loadProposals(CWD))) saveProposal(CWD, x);
+                    say({ kind: 'heal', key: w.key, action: w.remedy.action, agent: w.remedy.agent, from: w.remedy.from, to: w.remedy.to, check: w.remedy.check, lesson: w.remedy.lesson, closedThen: itemsClosed(events()) });
+                    console.log(`applied: ${w.text}\n  → ${w.remedy.text}   (undo: facet heal undo "${w.key}")`);
+                }
+                if (!p.auto.length) console.log('nothing to repair automatically');
+                return;
+            }
+            console.log(renderHeal(p, followUp(found, events())));
+        },
+        /** economy [--role AGENT --phase PHASE] [--risk low|normal|high]: what each capability costs and returns; what a budget buys. */
+        economy() {
+            const judgedRows = judgedHypotheses().map(({ h, v, analysis }) => ({ h, v, effect: analysis?.arms.find((a) => a.arm === h.predicts.arm)?.primary?.diff ?? null }));
+            const role = opt('role');
+            const pool = role ? resolvePicks(skills(), loadoutPicks(loadouts(), role, opt('phase')).picks).facets : allFacets().filter((f) => loadedRefs().has(f.ref));
+            const prices = priceFacets(pool, events(), { judged: judgedRows });
+            const allocation = role ? allocate(prices, { budgetWords: Number(opt('budget', loadoutPicks(loadouts(), role, opt('phase')).budget ?? 400)) }) : null;
+            console.log(renderEconomy(prices, allocation, { perRework: reworkCost(events()), items: itemsClosed(events()) }));
+            if (role) {
+                const h = hire(trustGraphNow(), role, { ladder: flowDef.ladder, risk: opt('risk', 'normal') });
+                console.log(`labour: run ${role} on ${h.model} for risk "${opt('risk', 'normal')}" — ${h.why}\n${h.rows.map((r) => `  ${r.model.padEnd(8)} trust ${r.trust} (${r.n} items)`).join('\n')}`);
+            }
+        },
         evolve() {
             const sub = positional[0] ?? 'list';
             const all = loadProposals(CWD);

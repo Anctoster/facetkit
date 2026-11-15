@@ -29,6 +29,9 @@
 //   facet skill report|coverage|modes                which rules work, why, and what to do about each
 //   facet intel design|start|stop|report|size        controlled trials of a facet: presence, wording, model, position
 //   facet evolve scan|list|test|adopt|reject         recurring mistakes → diagnosed rules → tested changes → a person's decision
+//   facet hypo new|list · learn [apply --by N|retire ID]      predictions the journal can refute; what was learned from them
+//   facet trustgraph [--item ID] · heal [scan|apply|undo KEY]  who and what a result rests on; own weak points and their repair
+//   facet economy [--role AGENT --phase PHASE --risk R]       what each rule, agent and check costs and returns
 //   facet route [files…] [--task "…"] [--item ID --apply]   owners, reach, risk and the route, before the work
 //   facet proof create|verify|status|decay · check --stale   what a result is proven for; what a change sends back
 //   facet owners · experiment · benchmark · journal repair

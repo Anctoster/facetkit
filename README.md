@@ -155,6 +155,8 @@ Five things an outside review asked for; each is a tool with tests, and each is 
 | **Rules evolve by evidence, not by opinion.** A mistake that recurs is traced to the rule that should have stopped it: missing, not delivered, unmeasurable, ignored, or followed in vain. Each diagnosis becomes a proposal, each proposal an experiment, and a change is adopted only after an independent repetition — by a person. | `facet evolve scan\|test\|adopt` | changing a rule because a model finds the new wording better |
 | **Responsibility is settled before the work.** From the files a task touches: one owner per file, the modules that depend on them, a risk level with its reasons, and a route with only the agents that risk calls for. A security gate the plan locks cannot be removed by any option. | `facet route`, `facet owners` | unowned files, two claims, a full team for a typo, a skipped audit to save tokens |
 
+From record to knowledge — hypotheses with computed verdicts, lessons whose confidence follows experience, a trust graph in which unknown is the lowest trust, bounded self-repair with a follow-up, and an economy that prices each rule by what it measurably prevents — is described in [docs/cognitive.md](docs/cognitive.md).
+
 `facet benchmark` runs the guards against damaged journals, dishonest stories and doctored proofs whose expected outcomes are kept apart from the code (`benchmark/expected.json`); `--write` records the result per version, and a later run names regressions. What is still open is listed, ticket by ticket, in [docs/roadmap-0.6.0.md](docs/roadmap-0.6.0.md).
 
 ## Beyond code: domains
