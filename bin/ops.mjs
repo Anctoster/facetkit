@@ -10,7 +10,7 @@ import { buildAtlas, card, findSymbol, hiddenCoupling, hotspots, pathBetween, st
 import { boardData, renderBoard } from '../lib/board.mjs';
 import { attest, calibration, DEFAULT_POLICY, digestOf, evaluate, gate, renderEvaluation, renderTrust, trust } from '../lib/govern.mjs';
 import { closedItems, holderOf, isSegmented, ofItem, openItems, readJournal, record, repairJournal, verifyJournal, writerId } from '../lib/journal.mjs';
-import { benchmarkReport, regressions, renderBenchmark, runBenchmark } from '../lib/benchmark.mjs';
+import { benchmarkReport, regressions, renderBenchmark, reportProblems, runBenchmark, trend } from '../lib/benchmark.mjs';
 import { analyse, assertAblatable, assign, loadExperiments, newExperiment, renderAnalysis, saveExperiment, unitOf } from '../lib/experiments.mjs';
 import { designFor, diagnosePattern, loadProposals, mayAdopt, patterns, propose, renderProposals, saveProposal } from '../lib/evolve.mjs';
 import { curriculum, faded, lessonFrom, loadLessons, recallLessons, renderLessons, saveLessons } from '../lib/cognition.mjs';
@@ -22,7 +22,7 @@ import { analyseDesign, armFor, armOfUnit, fourArms, newDesign, renderDesign, st
 import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, stepsOf } from '../lib/planner.mjs';
 import { buildGraph } from '../lib/seams.mjs';
 import { checkOwners, renderOwners } from '../lib/ownership.mjs';
-import { createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
+import { exportProof, renderBundle, verifyBundle, createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
 import { planMutants, probe } from '../lib/mutaprobe.mjs';
 import { route } from '../lib/router.mjs';
 import { scan } from '../lib/secscan.mjs';
@@ -166,7 +166,7 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             const facet = used.find((f) => f.ref === d.facet);
             if (!facet || !facet.ablatable) continue;
             const known = armOfUnit(events(), d, item, step.id); // a rework or a resume keeps the arm it was dealt
-            const stratum = known?.stratum ?? stratumOf(d, { agent: step.agent, taskClass: routing()[item]?.class ?? null, difficulty: routing()[item]?.difficulty ?? itemState(events(), item)?.tier ?? null });
+            const stratum = known?.stratum ?? stratumOf(d, { agent: step.agent, taskClass: routing()[item]?.class ?? null, difficulty: routing()[item]?.difficulty ?? itemState(events(), item)?.tier ?? null, risk: routing()[item]?.risk ?? null, model: modelFor(step, { loadouts: loadouts(), flow: flowDef }).model });
             const armId = known?.arm ?? armFor(d, stratum, unitsSoFar(events(), d, stratum));
             const arm = d.arms.find((a) => a.id === armId);
             experiments.push({ id: d.id, facet: d.facet, arm: armId, stratum });
@@ -257,7 +257,7 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             if (n.step !== stepId && !flag('force')) fail(`flow start: the next step of ${item} is "${n.step ?? n.action}", not "${stepId}". Steps are not skipped; --force records an exception.`);
             const { model } = n.step === stepId && n.model ? n : pickModel(step, state);
             const rules = rulesFor(step, item);
-            say({ kind: 'step.start', item, step: stepId, agent: step.agent, mode: step.mode, model: opt('model', rules.model ?? model ?? undefined), rework: step.rework || undefined, assist: opt('assist'), forced: n.step !== stepId || undefined, facets: rules.facets.length ? rules.facets : undefined, withheld: rules.withheld.length ? rules.withheld : undefined, lessons: rules.lessons?.length ? rules.lessons : undefined, experiments: rules.experiments.length ? rules.experiments : undefined });
+            say({ kind: 'step.start', item, step: stepId, agent: step.agent, run: opt('run') ?? process.env.FACET_RUN ?? undefined, mode: step.mode, model: opt('model', rules.model ?? model ?? undefined), rework: step.rework || undefined, assist: opt('assist'), forced: n.step !== stepId || undefined, facets: rules.facets.length ? rules.facets : undefined, withheld: rules.withheld.length ? rules.withheld : undefined, lessons: rules.lessons?.length ? rules.lessons : undefined, experiments: rules.experiments.length ? rules.experiments : undefined });
             if (rules.file) console.log(`rules for this step (give the agent this file instead of its usual one): ${path.relative(CWD, rules.file)}`);
             if (rules.model) console.log(`model for this step, set by an experiment: ${rules.model} — call the agent on it`);
             const wanted = project.eval?.snapshot ?? [];
@@ -506,7 +506,7 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             for (const c of v.conflicts) console.error(`journal: ${c.item} was opened by ${c.loser} while ${c.winner} held it — ${c.loser} must run: facet flow yield --item ${c.item}`);
             if (v.broken.length || v.structure.length || v.conflicts.length) process.exit(1);
             if (!v.segments) return void console.log('journal: nothing recorded yet');
-            console.log(`journal intact: ${v.events} events${v.segments > 1 || me ? ` in ${v.segments} segment(s)` : ''}, ${openItems(ev).length} open, ${closedItems(ev).length} closed`);
+            console.log(`journal ${v.status}: ${v.events} events${v.segments > 1 || me ? ` in ${v.segments} segment(s)` : ''}, ${openItems(ev).length} open, ${closedItems(ev).length} closed`);
         },
         // ---- quality and governance ----------------------------------------------------------
         scan() {
@@ -570,6 +570,11 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
         /** proof create|verify|status [--item ID]: the manifest that ties a result to the sources it was checked on. */
         proof() {
             const sub = positional[0] ?? 'status';
+            if (sub === 'verify' && opt('bundle')) { // needs nothing but the file: no project, no settings, no trust in its maker
+                const v = verifyBundle(JSON.parse(fs.readFileSync(path.resolve(CWD, opt('bundle')), 'utf-8')), { root: opt('root') ? path.resolve(CWD, opt('root')) : null });
+                console.log(renderBundle(v));
+                return void (v.status === 'VALID' || process.exit(1));
+            }
             const item = opt('item') ?? positional[1] ?? openItems(events(), me)[0] ?? closedItems(events()).at(-1);
             if (!item) fail('proof: no item (facet proof create|verify|status --item ID)');
             const options = { policy: policy(), checks: checkNames(), project: projectFacts(), ignore: sourceIgnore(), scopes: scopesFor(evidenceNames(item)) };
@@ -587,8 +592,15 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
                 if (openItems(events()).includes(item)) say({ kind: 'proof.create', item, digest: m.digest, src: m.source.state, level: m.level });
                 return void console.log(`${renderProof(m)}\nwritten: ${path.relative(CWD, file)}`);
             }
-            if (!fs.existsSync(file)) fail(`proof: ${item} has no proof pack — facet proof create --item ${item}`);
+            if (!fs.existsSync(file)) fail(`proof: ${item} has no proof pack${fs.existsSync(path.join(work, item, 'attestation.json')) ? ' — it has an attestation from before 0.6, which is bound to no source state and proves nothing about these sources' : ''} — facet proof create --item ${item}`);
             const m = JSON.parse(fs.readFileSync(file, 'utf-8'));
+            if (sub === 'export') {
+                const files = isSegmented(journal) ? fs.readdirSync(journal, { recursive: true }).filter((f) => String(f).endsWith('.jsonl')).map(String).sort() : [path.basename(journal)];
+                const segments = Object.fromEntries(files.map((f) => [f.split(path.sep).join('/'), fs.readFileSync(isSegmented(journal) ? path.join(journal, f) : journal, 'utf-8').split('\n').filter(Boolean)]));
+                const out = path.resolve(CWD, opt('out', `${item}.proof.json`));
+                fs.writeFileSync(out, `${JSON.stringify(exportProof(m, events(), { policy: policy(), checks: checkNames(), segments, facts: Object.fromEntries(Object.entries(projectFacts()).filter(([k]) => k !== 'journalIntact')) }))}\n`);
+                return void console.log(`exported: ${path.relative(CWD, out)} — anyone can check it: facet proof verify --bundle ${path.relative(CWD, out)} [--root <their copy of the sources>]`);
+            }
             const v = verifyProof(CWD, events(), m, options);
             console.log(renderProof(m, v));
             if (sub === 'verify' && v.status !== 'VALID') process.exit(1);
@@ -641,6 +653,11 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             const results = path.join(dir, 'results');
             const earlier = fs.existsSync(results) ? fs.readdirSync(results).filter((f) => f.endsWith('.json') && f !== `${version}.json`).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })) : [];
             const lost = earlier.length ? regressions(JSON.parse(fs.readFileSync(path.join(results, earlier.at(-1)), 'utf-8')), report) : [];
+            if (flag('trend')) {
+                const all = [...earlier.map((f) => JSON.parse(fs.readFileSync(path.join(results, f), 'utf-8'))), report];
+                for (const bad of all.filter((r) => reportProblems(r).length)) console.error(`benchmark: the stored report of ${bad.version ?? '?'} is malformed (${reportProblems(bad).join(', ')})`);
+                return void console.log(trend(all.filter((r) => !reportProblems(r).length || r === report)).map((t) => `${t.version.padEnd(8)} ${String(t.passed).padStart(3)}/${t.total}${t.added.length ? `  +${t.added.length} new cases` : ''}${t.lost.length ? `  LOST: ${t.lost.join(', ')}` : ''}`).join('\n'));
+            }
             console.log(renderBenchmark(report, lost));
             if (flag('write')) {
                 fs.mkdirSync(results, { recursive: true });
@@ -691,7 +708,7 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
                     assertAblatable(facet);
                     const arms = opt('arms') === 'four' ? fourArms(opt('other-model') ?? fail('intel: --arms four needs --other-model M')) : opt('variant') ? [{ id: 'A', facet: 'on' }, { id: 'B', facet: 'variant', variant: opt('variant') }, { id: 'C', facet: 'off' }] : undefined;
                     if (opt('variant') && !fs.existsSync(path.resolve(CWD, opt('variant')))) fail(`intel: no file ${opt('variant')}`);
-                    saveExperiment(CWD, newDesign({ id: positional[1], facet: facet.ref, seed: opt('seed'), ...(arms ? { arms } : {}), primary: opt('primary', 'clean'), minPerArm: Number(opt('min', 30)), confirms: opt('confirms') ?? null }));
+                    saveExperiment(CWD, newDesign({ id: positional[1], facet: facet.ref, seed: opt('seed'), ...(arms ? { arms } : {}), primary: opt('primary', 'clean'), minPerArm: Number(opt('min', 30)), confirms: opt('confirms') ?? null, ...(opt('strata') ? { strata: list(opt('strata')) } : {}) }));
                 } catch (e) {
                     fail(`intel: ${e.message}`);
                 }

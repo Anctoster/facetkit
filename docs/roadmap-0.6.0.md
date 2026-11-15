@@ -90,3 +90,26 @@ npm test                 # every "done" above has a test that fails without it
 npm run benchmark        # 17 adversarial cases; none may pass by absence
 npm run test:viz         # the domain tools that need no Blender
 ```
+
+## Second review: state of every ticket
+
+| Ticket | State |
+|---|---|
+| SKI-01 withholding opt-in | was already so: the rate is 0 unless the project sets `skillint.ablate.rate`; experiments and designs assign only while `running` |
+| SKI-02, 03, 04, 05 | done (manifest; assignment on `step.start`; delivered / followed / effect separated in `evolve`; adoption only by a person after a confirmed result) |
+| SKI-06 strata by model, task class, risk tier | done: `--strata agent,taskClass,difficulty,model,risk` |
+| SKI-07, 08 | done (permutation test, floor and `intel size`; `confirms`, Holm) |
+| SKI-09 reports on effect, cost, model dependency | done: `intel report` (arm C), `facet economy` |
+| PRF-01 … 05, 07, 08 | done |
+| PRF-06 independence by principal / run identity | done: another agent and another run; `identity: "required"` |
+| PRF-09 provenance and export | done: `proof export`, `proof verify --bundle` |
+| PRF-10 old attestations | partly: `facet attest --verify` still reads them; `facet proof` says they are bound to no source state. No converter — a proof for old work is made by running the checks again |
+| JRN-01 actor and session identity, legacy fallback | done (`FACET_SESSION`, `FACET_ACTOR`; the writer stays the owner of items) |
+| JRN-02 … 05 | done (lock for single files and shared segments; `n`, `prev`, JSON, event id, writer; no append after a torn line; statuses; child-process tests) |
+| JRN-06 memory store on the same append model | done |
+| JRN-07 shared file systems | documented, not tested |
+| QLT-01 … 04 | done (manifest of fixtures and expectations; report schema; regression fixtures; CI artifacts) |
+| QLT-05, 06 mutation outcomes, fixed plan, manifest of equivalents | done; mutants are picked in a fixed order, so a run is repeatable without a seed |
+| QLT-07 nightly mutation benchmark | done as a workflow; it has not run yet |
+| QLT-08 history and trend | done: `benchmark --trend` |
+| QLT-09 repeatable prior-art audit | open |

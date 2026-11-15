@@ -1,0 +1,24 @@
+name: nightly
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: git config --global user.name ci && git config --global user.email ci@example.invalid
+      # the guards are probed with planted defects: a survivor is a change no test noticed
+      - run: node bin/facet.mjs mutate --files lib/journal.mjs,lib/govern.mjs,lib/proof.mjs --test "node --test test/journal.test.mjs test/journal-concurrency.test.mjs test/govern.test.mjs test/proof.test.mjs test/hardening.test.mjs" --max 40 --max-minutes 25 --equivalents benchmark/mutation.equivalents.json --out mutation.json --allow 99
+      - run: node bin/facet.mjs benchmark --trend
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-${{ github.sha }}
+          path: mutation.json

@@ -14,6 +14,16 @@ No dependencies. Node 20+. Works with any agent that can run a shell command; sh
 
 > **Status: 0.6.0, experimental.** The tools are tested (130+ tests and a guard benchmark of adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **69 untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute.
 
+
+## Try it in five minutes
+
+```bash
+git clone https://github.com/Anctoster/facetkit && cd facetkit
+npm run demo:proof
+```
+
+An agent changes code; another run checks it; a proof pack ties the verdict to those exact sources; a second party verifies it from one file; one edited line later the proof says STALE, and an edited bundle says TAMPERED. Nothing is installed and nothing outside a temp folder is touched. Where this is going: [ROADMAP.md](ROADMAP.md) · the map of the code: [ARCHITECTURE.md](ARCHITECTURE.md) · first contributions: [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md).
+
 ## The problem
 
 Agents finish work and say it is done. Between that sentence and a result you can rely on there are questions nobody answers by default:

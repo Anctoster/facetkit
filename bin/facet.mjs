@@ -164,9 +164,9 @@ const commands = {
         const files = list(opt('files'));
         const test = opt('test');
         if (!files.length || !test) fail('mutate: facet mutate --files a.ts,b.ts --test "npm test -- a" [--ref HEAD] [--max 12] [--allow 0]');
-        const r = probe({ cwd: CWD, files, test, ref: opt('ref'), max: Number(opt('max', 12)), timeoutSec: Number(opt('timeout', 120)), maxMinutes: Number(opt('max-minutes', 10)), log: flag('verbose') ? console.log : undefined });
+        const r = probe({ cwd: CWD, files, test, ref: opt('ref'), max: Number(opt('max', 12)), timeoutSec: Number(opt('timeout', 120)), maxMinutes: Number(opt('max-minutes', 10)), log: flag('verbose') ? console.log : undefined, equivalents: opt('equivalents') ? readJson(path.resolve(CWD, opt('equivalents')), []) : [] });
         if (r.baseline !== 'green') fail(`mutate: ${r.message}`, 2);
-        console.log(`mutants: ${r.planned} of ${r.total} possible · killed ${r.killed} · survived ${r.survived.length}${r.notRun ? ` · not run ${r.notRun} (time limit)` : ''} · ${r.minutes} min`);
+        console.log(`mutants: ${r.planned} of ${r.total} possible · detected ${r.killed} · survived ${r.survived.length} · equivalent (declared) ${r.equivalent.length} · invalid (did not load) ${r.invalid.length}${r.notRun ? ` · not executed ${r.notRun} (time limit)` : ''} · ${r.minutes} min`);
         for (const s of r.survived) console.log(`  SURVIVED ${s.file}:${s.line} [${s.op}]  ${s.before}  →  ${s.after}`);
         if (r.survived.length) console.log('A survivor means no test noticed that change: add the missing assertion, or note in one line why the mutant is equivalent.');
         if (opt('out')) fs.writeFileSync(path.resolve(CWD, opt('out')), JSON.stringify(r, null, 2));

@@ -59,3 +59,14 @@ Numbers from real use — agent × model matrices, escape rates, which facets ch
 ## Licence
 
 By contributing you agree that your contribution is licensed under the MIT licence of this repository.
+
+## Guard files
+
+`lib/journal.mjs`, `lib/govern.mjs`, `lib/proof.mjs`, `lib/benchmark.mjs`, `lib/secscan.mjs`, `benchmark/expected.json` and `benchmark/fixtures/` carry the guarantees every proof rests on. A pull request that touches one of them:
+
+- contains nothing else — no feature, no refactoring alongside;
+- says in its description which guarantee changes and why;
+- keeps `npm run benchmark` at full marks **without changing an existing expectation**; a new expectation comes with the fixture that needs it;
+- is reviewed by a maintainer listed in `.github/CODEOWNERS`.
+
+A change that makes a guard pass more often is treated as a security change, whoever proposes it. Where to start instead: [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md).

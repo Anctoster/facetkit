@@ -1,9 +1,10 @@
 {
+ "schema": "facetkit-benchmark/1",
  "version": "0.6.0",
- "commit": "7750b5e8a7c171a978cd2c349ca219da5763182a",
+ "commit": "39d3bd73d562261a2a80fa93398b5c036df017c9",
  "dirty": true,
  "node": "v22.23.4",
- "at": "2026-11-15T10:00:25.272Z",
+ "at": "2026-11-15T17:31:09.012Z",
  "passed": 17,
  "failed": 0,
  "cases": [

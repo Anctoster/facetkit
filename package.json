@@ -52,6 +52,7 @@
     "build:plugin": "node scripts/build-plugin.mjs",
     "audit": "node bin/facet.mjs audit",
     "benchmark": "node bin/facet.mjs benchmark",
+    "demo:proof": "node scripts/demo-proof.mjs",
     "test:viz": "python3 -m unittest discover -s domains/viz/tests",
     "test:arch": "python3 -m unittest discover -s domains/arch/tests"
   },

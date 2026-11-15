@@ -1,0 +1,10 @@
+# Guard files: the code and data that carry facetkit's guarantees. A change here can weaken what
+# every proof rests on, so it is reviewed on its own, by a maintainer, and never bundled with a feature.
+/lib/journal.mjs            @Anctoster
+/lib/govern.mjs             @Anctoster
+/lib/proof.mjs              @Anctoster
+/lib/benchmark.mjs          @Anctoster
+/benchmark/expected.json    @Anctoster
+/benchmark/fixtures/        @Anctoster
+/lib/secscan.mjs            @Anctoster
+/.github/                   @Anctoster
