@@ -27,6 +27,11 @@
 //   facet atlas card|find|path|hotspots|coupling     the code, without reading it
 //   facet board [--out FILE]                         the whole system on one page
 //   facet skill report|coverage|modes                which rules work, why, and what to do about each
+//   facet intel design|start|stop|report|size        controlled trials of a facet: presence, wording, model, position
+//   facet evolve scan|list|test|adopt|reject         recurring mistakes → diagnosed rules → tested changes → a person's decision
+//   facet route [files…] [--task "…"] [--item ID --apply]   owners, reach, risk and the route, before the work
+//   facet proof create|verify|status|decay · check --stale   what a result is proven for; what a change sends back
+//   facet owners · experiment · benchmark · journal repair
 //   facet init [--minimal] [--claude] · facet demo · facet hypotheses [--write FILE]
 //
 // Configuration (optional) in the project's package.json:

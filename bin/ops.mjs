@@ -12,8 +12,12 @@ import { attest, calibration, DEFAULT_POLICY, digestOf, evaluate, gate, renderEv
 import { closedItems, holderOf, isSegmented, ofItem, openItems, readJournal, record, repairJournal, verifyJournal, writerId } from '../lib/journal.mjs';
 import { benchmarkReport, regressions, renderBenchmark, runBenchmark } from '../lib/benchmark.mjs';
 import { analyse, assertAblatable, assign, loadExperiments, newExperiment, renderAnalysis, saveExperiment, unitOf } from '../lib/experiments.mjs';
+import { designFor, diagnosePattern, loadProposals, mayAdopt, patterns, propose, renderProposals, saveProposal } from '../lib/evolve.mjs';
+import { analyseDesign, armFor, armOfUnit, fourArms, newDesign, renderDesign, stratumOf, unitsNeeded, unitsSoFar } from '../lib/intelligence.mjs';
+import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, stepsOf } from '../lib/planner.mjs';
+import { buildGraph } from '../lib/seams.mjs';
 import { checkOwners, renderOwners } from '../lib/ownership.mjs';
-import { createProof, proofPath, renderProof, sourceState, verifyProof } from '../lib/proof.mjs';
+import { createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
 import { planMutants, probe } from '../lib/mutaprobe.mjs';
 import { route } from '../lib/router.mjs';
 import { scan } from '../lib/secscan.mjs';
@@ -63,21 +67,47 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
     // evidence belongs to the state of the sources it was measured on; "off" restores time-only staleness
     const sourceIgnore = () => [...(govern.sourceIgnore ?? []), `${path.relative(CWD, journal).split(path.sep).join('/')}${isSegmented(journal) ? '/**' : ''}`, `${path.relative(CWD, journal).split(path.sep).join('/')}.lock`];
     let sourceMemo;
-    const sourceNow = () => (govern.source === 'off' ? null : (sourceMemo ??= sourceState(CWD, { ignore: sourceIgnore() }).state));
+    let hashMemo;
+    let graphMemo;
+    const hashesNow = () => (hashMemo ??= fileHashes(CWD, { ignore: sourceIgnore(), cache: path.join(work, '.hashcache.json') }));
+    const sourceNow = () => (govern.source === 'off' ? null : (sourceMemo ??= sourceState(CWD, { ignore: sourceIgnore(), hashes: hashesNow() }).state));
+    const sourceDirs = () => (project.dirs ?? ['src', 'server', 'lib', 'bin', 'tests', 'test', 'e2e']).filter((d) => fs.existsSync(path.join(CWD, d)));
+    const graphNow = () => (graphMemo ??= buildGraph(CWD, sourceDirs()));
+    // trust decay: what each check stands for. A check declares "covers"; one that does not covers everything.
+    const coversOf = (name) => (typeof govern.checks?.[name] === 'object' ? govern.checks[name].covers : null) ?? govern.covers?.[name] ?? ['**'];
+    const scopesFor = (names) => (govern.source === 'off' ? null : scopesNow(hashesNow(), Object.fromEntries(names.map((n) => [n, coversOf(n)])), graphNow()));
+    const evidenceNames = (item) => [...new Set([...checkNames(), ...events().filter((e) => e.kind === 'evidence' && e.item === item).map((e) => e.name)])];
+    const digestsFor = (item) => {
+        const sc = scopesFor(evidenceNames(item));
+        return sc ? Object.fromEntries(Object.entries(sc).map(([k, v]) => [k, v.digest])) : null;
+    };
+    const snapshotFile = (item, src) => path.join(work, item, 'states', `${src}.json`);
+    /** What is stored with a piece of evidence so that it can decay precisely: its scope, and the tree it was measured on. */
+    const bound = (item, name) => {
+        const src = sourceNow();
+        if (!src) return {};
+        const file = snapshotFile(item, src);
+        if (!fs.existsSync(file)) {
+            fs.mkdirSync(path.dirname(file), { recursive: true });
+            fs.writeFileSync(file, JSON.stringify(Object.fromEntries(hashesNow())));
+        }
+        const sc = scopesFor([name])[name];
+        return { src, scope: { digest: sc.digest, files: sc.files } };
+    };
     const judged = (item) => {
         const cal = calibration(events());
-        return evaluate(events(), item, { policy: policy(), checks: checkNames(), source: sourceNow(), project: { ...projectFacts(), guardCatchLow: cal.length ? Math.min(...cal.map((c) => c.low)) : 0 } });
+        return evaluate(events(), item, { policy: policy(), checks: checkNames(), source: sourceNow(), scopes: digestsFor(item), project: { ...projectFacts(), guardCatchLow: cal.length ? Math.min(...cal.map((c) => c.low)) : 0 } });
     };
     const evidence = (name, ok, value, detail, extra = {}) => {
         const item = opt('item', process.env.FACET_ITEM) ?? (openItems(events(), me).length === 1 ? openItems(events(), me)[0] : null);
         if (!item || !openItems(events()).includes(item)) return false;
-        say({ kind: 'evidence', item, name, ok, value, detail, src: sourceNow() ?? undefined, ...extra });
+        say({ kind: 'evidence', item, name, ok, value, detail, ...bound(item, name), ...extra });
         return true;
     };
     const baseOf = (item) => ofItem(events(), item).find((e) => e.kind === 'item.open')?.base ?? 'HEAD';
     const runScan = (item) => {
         const r = scan(CWD, { ref: baseOf(item), forbidden: govern.forbidden ?? ['.env', '**/.env', '**/*.pem', '**/id_rsa*'], ignore: govern.scanIgnore ?? [], runs: ledgerOf(item), stores: [path.relative(CWD, path.join(work, item)), ...(govern.stores ?? [])] });
-        say({ kind: 'evidence', item, name: 'scan', ok: r.blocking === 0, value: r.findings.length, src: sourceNow() ?? undefined, approvals: r.approvals, detail: r.findings.slice(0, 5).map((f) => `${f.kind} ${f.where}`).join('; ') || undefined });
+        say({ kind: 'evidence', item, name: 'scan', ok: r.blocking === 0, value: r.findings.length, ...bound(item, 'scan'), approvals: r.approvals, detail: r.findings.slice(0, 5).map((f) => `${f.kind} ${f.where}`).join('; ') || undefined });
         return r;
     };
     const pickModel = (step, state) => {
@@ -105,13 +135,29 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             if (arm === 'treatment' && !withheld.includes(x.facet)) withheld.push(x.facet);
             if (arm === 'control' && withheld.includes(x.facet)) withheld.splice(withheld.indexOf(x.facet), 1);
         }
+        // designs (schema 2): several arms, dealt in blocks inside strata that are known before the work starts
+        let given = used;
+        let model = null;
+        for (const d of loadExperiments(CWD).filter((m) => m.status === 'running' && m.arms)) {
+            const facet = used.find((f) => f.ref === d.facet);
+            if (!facet || !facet.ablatable) continue;
+            const known = armOfUnit(events(), d, item, step.id); // a rework or a resume keeps the arm it was dealt
+            const stratum = known?.stratum ?? stratumOf(d, { agent: step.agent, taskClass: routing()[item]?.class ?? null, difficulty: routing()[item]?.difficulty ?? itemState(events(), item)?.tier ?? null });
+            const armId = known?.arm ?? armFor(d, stratum, unitsSoFar(events(), d, stratum));
+            const arm = d.arms.find((a) => a.id === armId);
+            experiments.push({ id: d.id, facet: d.facet, arm: armId, stratum });
+            if (arm.facet === 'off' && !withheld.includes(d.facet)) withheld.push(d.facet);
+            if (arm.facet === 'variant') given = given.map((f) => (f.ref === d.facet ? { ...f, body: fs.readFileSync(path.resolve(CWD, arm.variant), 'utf-8').replace(/^---[\s\S]*?---\n/, '') } : f));
+            if (arm.order) given = arm.order === 'first' ? [...given.filter((f) => f.ref === d.facet), ...given.filter((f) => f.ref !== d.facet)] : [...given.filter((f) => f.ref !== d.facet), ...given.filter((f) => f.ref === d.facet)];
+            if (arm.model) model = arm.model;
+        }
         let file = null;
-        if (withheld.length) {
+        if (withheld.length || given !== used) {
             file = path.join(work, item, `rules-${step.id}.md`);
             fs.mkdirSync(path.dirname(file), { recursive: true });
-            fs.writeFileSync(file, renderLoadout(compose(used.filter((f) => !withheld.includes(f.ref)), { budget: lo.budget }), { role: step.agent, phase: step.phase }));
+            fs.writeFileSync(file, renderLoadout(compose(given.filter((f) => !withheld.includes(f.ref)), { budget: lo.budget }), { role: step.agent, phase: step.phase }));
         }
-        return { facets: used.map((f) => f.ref).filter((r) => !withheld.includes(r)), withheld, file, experiments };
+        return { facets: used.map((f) => f.ref).filter((r) => !withheld.includes(r)), withheld, file, experiments, model };
     };
 
     function describe(n) {
@@ -157,9 +203,11 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             if (missing.length && !flag('force')) fail(`${item} depends on ${missing.join(', ')}, not closed yet`);
             const route = list(opt('route')).length ? list(opt('route')) : (known.route ?? []);
             const gates = opt('gates') !== undefined ? list(opt('gates')) : (known.gates ?? []);
-            const steps = planSteps(flowDef, { route, gates }).map(({ id, agent, mode, phase, gates: g, agents, manual, verdict, bookkeeping }) => ({ id, agent, mode, phase, gates: g, agents, manual, verdict, bookkeeping }));
+            const lockedGates = (known.locked ?? []).filter((g) => !gates.includes(g));
+            if (lockedGates.length) console.log(`gate(s) ${lockedGates.join(', ')} are locked by the route plan and stay on the route`);
+            const steps = stepsOf(flowDef, { route, gates, locked: (known.locked ?? []).map((agent) => ({ agent })), skip: known.skip ?? [] }).map(({ id, agent, mode, phase, gates: g, agents, manual, verdict, bookkeeping }) => ({ id, agent, mode, phase, gates: g, agents, manual, verdict, bookkeeping }));
             const base = spawnSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: CWD, encoding: 'utf-8' }).stdout?.trim() || undefined;
-            say({ kind: 'item.open', item, tier: opt('tier', known.tier ?? 'normal'), version: known.version, steps, rerun: flowDef.rework?.rerun ?? [], base });
+            say({ kind: 'item.open', item, tier: opt('tier', known.tier ?? 'normal'), version: known.version, class: known.class, difficulty: known.difficulty, steps, rerun: flowDef.rework?.rerun ?? [], base });
             console.log(`${item} opened with ${steps.length} steps: ${steps.map((s) => s.id).join(' → ')}\n\n${describe(upcoming(item))}`);
         },
         next() {
@@ -177,8 +225,9 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             if (n.step !== stepId && !flag('force')) fail(`flow start: the next step of ${item} is "${n.step ?? n.action}", not "${stepId}". Steps are not skipped; --force records an exception.`);
             const { model } = n.step === stepId && n.model ? n : pickModel(step, state);
             const rules = rulesFor(step, item);
-            say({ kind: 'step.start', item, step: stepId, agent: step.agent, mode: step.mode, model: opt('model', model ?? undefined), rework: step.rework || undefined, assist: opt('assist'), forced: n.step !== stepId || undefined, facets: rules.facets.length ? rules.facets : undefined, withheld: rules.withheld.length ? rules.withheld : undefined, experiments: rules.experiments.length ? rules.experiments : undefined });
+            say({ kind: 'step.start', item, step: stepId, agent: step.agent, mode: step.mode, model: opt('model', rules.model ?? model ?? undefined), rework: step.rework || undefined, assist: opt('assist'), forced: n.step !== stepId || undefined, facets: rules.facets.length ? rules.facets : undefined, withheld: rules.withheld.length ? rules.withheld : undefined, experiments: rules.experiments.length ? rules.experiments : undefined });
             if (rules.file) console.log(`rules for this step (give the agent this file instead of its usual one): ${path.relative(CWD, rules.file)}`);
+            if (rules.model) console.log(`model for this step, set by an experiment: ${rules.model} — call the agent on it`);
             const wanted = project.eval?.snapshot ?? [];
             if (wanted.includes(stepId) || flag('snapshot')) {
                 const snap = snapshot(CWD, { item, step: stepId, workDir: work });
@@ -437,11 +486,19 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
         },
         async check() {
             const item = theItem();
-            const wanted = positional.length ? positional : checkNames();
+            let wanted = positional.length ? positional : checkNames();
+            if (flag('stale')) {
+                // only what the changes since the last run actually touch
+                const d = decay(events(), item, { hashes: hashesNow(), scopes: scopesFor(evidenceNames(item)), snapshotOf: (src) => readJson(snapshotFile(item, src), null) });
+                const have = new Set(d.rows.filter((r) => r.state === 'fresh' && r.ok).map((r) => r.name));
+                wanted = checkNames().filter((n) => !have.has(n));
+                if (!wanted.length) return void console.log('check: every check still stands for these sources — nothing to run');
+                console.log(`check: running only what changed sources touch: ${wanted.join(', ')}`);
+            }
             if (!wanted.length) fail('check: configure "facetkit": { "govern": { "checks": { "name": "command" } } } or an extension with checks');
             let failed = 0;
             for (const name of wanted) {
-                const cmd = govern.checks?.[name];
+                const cmd = typeof govern.checks?.[name] === 'object' ? govern.checks[name].run : govern.checks?.[name];
                 const ext = extensions.find((x) => x.checks?.[name]);
                 let ok;
                 let value;
@@ -451,7 +508,7 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
                     value = `exit ${r.exit}`;
                 } else if (ext) ({ ok, value } = await ext.checks[name]({ cwd: CWD, item, events: events() }));
                 else fail(`check: unknown check "${name}" (known: ${checkNames().join(', ')})`);
-                say({ kind: 'evidence', item, name, ok: !!ok, value, src: sourceNow() ?? undefined });
+                say({ kind: 'evidence', item, name, ok: !!ok, value, ...bound(item, name) });
                 console.log(`${ok ? '✓' : '✗'} ${name}${value !== undefined ? ` (${value})` : ''}`);
                 if (!ok) failed++;
             }
@@ -483,8 +540,14 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             const sub = positional[0] ?? 'status';
             const item = opt('item') ?? positional[1] ?? openItems(events(), me)[0] ?? closedItems(events()).at(-1);
             if (!item) fail('proof: no item (facet proof create|verify|status --item ID)');
-            const options = { policy: policy(), checks: checkNames(), project: projectFacts(), ignore: sourceIgnore() };
+            const options = { policy: policy(), checks: checkNames(), project: projectFacts(), ignore: sourceIgnore(), scopes: scopesFor(evidenceNames(item)) };
             const file = proofPath(work, item);
+            if (sub === 'decay') {
+                const d = decay(events(), item, { hashes: hashesNow(), scopes: options.scopes ?? {}, snapshotOf: (src) => readJson(snapshotFile(item, src), null) });
+                console.log(`${item}: trust in the recorded proofs, on the sources as they are now\n${renderDecay(d)}`);
+                if (flag('json')) console.log(JSON.stringify(d));
+                return;
+            }
             if (sub === 'create') {
                 const m = createProof(CWD, events(), item, options);
                 fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -552,6 +615,123 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
                 fs.writeFileSync(path.join(results, `${version}.json`), `${JSON.stringify(report, null, 1)}\n`);
             }
             if (report.failed) process.exit(1);
+        },
+        /** route [files…] [--task "…"] [--changed] [--item ID --apply] [--strategy S] [--json]: who is responsible, how risky, which route. */
+        route() {
+            const graph = graphNow();
+            const all = [...hashesNow().keys()];
+            let files = positional.filter((f) => f !== 'route');
+            if (flag('changed')) files = [...files, ...changedFiles().filter((f) => all.includes(f))];
+            if (opt('task') && !files.length) {
+                const found = discover(opt('task'), all, { symbols: new Map() });
+                if (!found.certain) {
+                    console.log(found.candidates.length ? `the task names no file. Files that share its words:\n${found.candidates.map((c) => `  ${String(c.score).padStart(2)}  ${c.file}`).join('\n')}\nconfirm the ones it will touch: facet route <files…>` : 'the task names no file and no path shares its words: name the files it will touch — facet route <files…>');
+                    process.exit(2);
+                }
+                files = found.named;
+            }
+            if (!files.length) fail('route: facet route <files…> | --changed | --task "text that names files"');
+            const manifest = project.owners ?? readJson(path.resolve(CWD, opt('owners', 'owners.json')), null);
+            const plan = planRoute(files, { graph, owners: manifest, flow: flowDef, planning: { ...DEFAULT_PLANNING, ...(project.planning ?? {}) }, strategy: opt('strategy', 'adaptive') });
+            console.log(flag('json') ? JSON.stringify(plan, null, 2) : renderRoute(plan, flowDef));
+            if (flag('apply')) {
+                const item = opt('item') ?? fail('route --apply: name the item with --item ID');
+                if (!plan.ok) fail('route: not applied — the ownership problems above come first');
+                const file = path.resolve(CWD, opt('routing', project.routing ?? 'routing.json'));
+                const data = readJson(file, { items: {} });
+                data.items ??= {};
+                data.items[item] = { ...(data.items[item] ?? {}), route: plan.route, gates: [...new Set([...(data.items[item]?.gates ?? []), ...plan.gates])], locked: plan.locked.map((g) => g.agent), skip: plan.skip, tier: plan.tier, class: plan.classes.join('+'), difficulty: plan.difficulty, files };
+                fs.writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`);
+                console.log(`\nrecorded for ${item} in ${path.relative(CWD, file)} — facet flow open ${item}`);
+            }
+            if (!plan.ok) process.exit(1);
+        },
+        /** intel design|start|stop|report: controlled trials of a facet — presence, wording, model, position. */
+        intel() {
+            const sub = positional[0] ?? 'report';
+            const all = loadExperiments(CWD).filter((m) => m.arms);
+            const one = () => all.find((m) => m.id === positional[1]) ?? fail(`intel: no design "${positional[1] ?? ''}" (known: ${all.map((m) => m.id).join(', ') || 'none'})`);
+            if (sub === 'design') {
+                const facet = allFacets().find((f) => f.ref === opt('facet'));
+                if (!positional[1] || !facet) fail('intel: facet intel design <ID> --facet skill:facet --seed S [--arms four --other-model M] [--variant FILE] [--primary clean|errors|falsePasses|retries|tokens|minutes] [--min 30] [--confirms ID]');
+                if (loadExperiments(CWD).some((m) => m.id === positional[1])) fail(`intel: ${positional[1]} exists; a design is written once, before the data`);
+                try {
+                    assertAblatable(facet);
+                    const arms = opt('arms') === 'four' ? fourArms(opt('other-model') ?? fail('intel: --arms four needs --other-model M')) : opt('variant') ? [{ id: 'A', facet: 'on' }, { id: 'B', facet: 'variant', variant: opt('variant') }, { id: 'C', facet: 'off' }] : undefined;
+                    if (opt('variant') && !fs.existsSync(path.resolve(CWD, opt('variant')))) fail(`intel: no file ${opt('variant')}`);
+                    saveExperiment(CWD, newDesign({ id: positional[1], facet: facet.ref, seed: opt('seed'), ...(arms ? { arms } : {}), primary: opt('primary', 'clean'), minPerArm: Number(opt('min', 30)), confirms: opt('confirms') ?? null }));
+                } catch (e) {
+                    fail(`intel: ${e.message}`);
+                }
+                return void console.log(`design ${positional[1]} written for ${facet.ref}. Start it: facet intel start ${positional[1]}`);
+            }
+            if (sub === 'size') {
+                const [from, to] = [Number(opt('from')), Number(opt('to'))];
+                try {
+                    return void console.log(`to see "${opt('from')} → ${opt('to')}" with ${Math.round(Number(opt('power', 0.8)) * 100)}% power: ${unitsNeeded(from, to, { power: Number(opt('power', 0.8)) })} units in each arm (pass it as --min)`);
+                } catch (e) {
+                    fail(`intel size: --from RATE --to RATE — ${e.message}`);
+                }
+            }
+            if (sub === 'start' || sub === 'stop') {
+                const m = one();
+                saveExperiment(CWD, { ...m, status: sub === 'start' ? 'running' : 'stopped', [sub === 'start' ? 'startedAt' : 'stoppedAt']: new Date().toISOString() });
+                return void console.log(`design ${m.id}: ${sub === 'start' ? 'running — arms are dealt as steps start' : 'stopped'}`);
+            }
+            const chosen = positional[1] ? [one()] : all;
+            if (!chosen.length) return void console.log('no designs yet: facet intel design <ID> --facet skill:facet --seed S');
+            const read = (m) => analyseDesign(events(), m, { prior: m.confirms && all.find((x) => x.id === m.confirms) ? analyseDesign(events(), all.find((x) => x.id === m.confirms)) : null });
+            console.log(chosen.map((m) => `${renderDesign(read(m))}\n  status: ${m.status} · seed ${m.seed} · strata: ${m.strata.join(', ')} · floor ${m.minPerArm} per arm`).join('\n\n'));
+        },
+        /** evolve scan|list|test|adopt|reject: recurring mistakes → diagnosed rules → tested changes → a person's decision. */
+        evolve() {
+            const sub = positional[0] ?? 'list';
+            const all = loadProposals(CWD);
+            const one = () => all.find((p) => p.id === positional[1]) ?? fail(`evolve: no proposal "${positional[1] ?? ''}" (known: ${all.map((p) => p.id).join(', ') || 'none'})`);
+            const analysisOf = (p) => {
+                const designs = loadExperiments(CWD).filter((m) => m.arms && m.proposal === p.id);
+                const last = designs.find((d) => d.confirms) ?? designs[0];
+                if (!last) return null;
+                const first = designs.find((d) => d.id === last.confirms);
+                return analyseDesign(events(), last, { prior: first ? analyseDesign(events(), first) : null });
+            };
+            if (sub === 'scan') {
+                const found = patterns(events());
+                const diagnoses = found.flatMap((pt) => diagnosePattern(pt, events(), allFacets(), { ledgerOf }));
+                const fresh = propose(diagnoses, all);
+                for (const p of fresh) saveProposal(CWD, p);
+                console.log(`${found.length} recurring cause(s) in the last closed items; ${fresh.length} new proposal(s)\n${renderProposals(fresh)}`);
+                return;
+            }
+            if (sub === 'test') {
+                const p = one();
+                try {
+                    const id = opt('id', `${p.id}-X${loadExperiments(CWD).filter((m) => m.proposal === p.id).length + 1}`);
+                    const prior = loadExperiments(CWD).find((m) => m.proposal === p.id && !m.confirms);
+                    const d = { ...designFor({ ...p, facet: opt('facet') ?? p.facet }, { id, seed: opt('seed'), variant: opt('variant') ?? null, otherModel: opt('other-model') ?? null, minPerArm: Number(opt('min', 30)) }), confirms: prior?.id ?? null };
+                    saveExperiment(CWD, d);
+                    saveProposal(CWD, { ...p, status: 'testing', design: id });
+                    console.log(`${p.id}: design ${id} written (${d.arms.map((a) => a.id).join(' / ')})${prior ? `, as the independent repetition of ${prior.id}` : ''}. Start it: facet intel start ${id}`);
+                } catch (e) {
+                    fail(`evolve: ${e.message}`);
+                }
+                return;
+            }
+            if (sub === 'adopt') {
+                const p = one();
+                const by = opt('by') ?? fail('evolve adopt: --by NAME — adoption is a person\'s decision');
+                const verdict = mayAdopt(p, analysisOf(p));
+                if (!verdict.ok) fail(`evolve: ${p.id} is not adopted — ${verdict.why}`);
+                saveProposal(CWD, { ...p, status: 'adopted', adoptedBy: by, adoptedAt: new Date().toISOString(), basis: verdict.why });
+                console.log(`${p.id} adopted by ${by} — ${verdict.why}\nnow make the change itself: ${p.change}`);
+                return;
+            }
+            if (sub === 'reject') {
+                const p = one();
+                saveProposal(CWD, { ...p, status: 'rejected', rejectedWhy: opt('why') ?? fail('evolve reject: --why "…"') });
+                return void console.log(`${p.id} rejected`);
+            }
+            console.log(renderProposals(all));
         },
         attest() {
             const options = { policy: policy(), checks: checkNames(), project: projectFacts() };

@@ -93,3 +93,39 @@ facet experiment report             # control vs treatment, with intervals, and 
 ```
 
 The manifest is written once, before the data. The arm of a unit (one step of one item) is a function of the seed, so the assignment can be recomputed by anyone. Units on another model or of another task class are left out and counted. A facet marked `ablatable: no` is never withheld. With fewer than `--min` units in either arm the verdict is "not enough data"; a difference found once is *exploratory*; a second experiment declared with `--confirms EXP-001` makes it *validated* only if it shows the same direction. The report ends with a decision for a person — nothing is retired automatically.
+
+## The Facet Intelligence Engine (0.6.0)
+
+`facet experiment` compares "with" and "without". `facet intel` is the full instrument:
+
+```bash
+facet intel size --from 0.67 --to 0.83                      # how many units per arm this effect needs
+facet intel design IO-1 --facet falsifiable-tests:independent-oracle --seed 2026 \
+      --arms four --other-model haiku --min 114             # A without · B with · C with, on haiku · D with, placed last
+facet intel start IO-1
+facet intel report IO-1
+```
+
+- **Arms** differ in presence (`off`/`on`), wording (`--variant FILE`), model, or position among the other rules.
+- **Strata.** Every unit — one step of one item — belongs to a stratum of role, task class and difficulty, all fixed before the work. Arms are dealt in shuffled blocks inside each stratum, so no arm collects the easy tasks. Units whose stratum lacks the other arm are not compared with anything.
+- **Outcomes** come from the journal, never from the agent under test: `clean` (closed without rework or a later defect), `errors`, `falsePasses`, `retries`, `tokens`, `minutes`. One is primary and decides; the rest describe.
+- **Inference.** A stratified permutation test and bootstrap interval, seeded: the same journal gives the same numbers. Thresholds are adjusted for every arm read (Holm).
+- **Stages.** exploratory → confirmed by an independent repetition (`--confirms`). Only a confirmed result may change a rule.
+
+## Evolution: from a recurring mistake to a tested change
+
+```bash
+facet evolve scan                 # causes that recur across items, and what each says about its rule
+facet evolve test EVO-001 --seed 7 --variant trials/variants/oracle-v2.md
+facet evolve adopt EVO-001 --by NAME     # refused until an independent repetition confirms the gain
+```
+
+| The rule that should have prevented it… | Diagnosis | What is proposed |
+|---|---|---|
+| does not exist | `create` | write a facet, test it against no rule |
+| exists, was not in the loadout of the failing steps | `load` | a configuration change — no experiment needed |
+| was delivered, declares no footprint | `instrument` | make it measurable first |
+| was delivered, rarely followed | `reword` | candidate wording vs current vs none |
+| was followed, the mistake still happened | `change` or `to-tool` | rewrite or retire; or, when its Check names a command, make that command a gate |
+
+Nothing here edits a facet. A proposal is a file, a candidate is a file, adoption is a recorded decision by a named person — and `adopt` refuses while the evidence is exploratory, flat or unfavourable.

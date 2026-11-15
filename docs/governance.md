@@ -77,3 +77,15 @@ A guard that has never been shown a planted defect has an unknown catch rate, an
 - **Unknown does not pass.** A fact nobody established — the journal's integrity when nobody verified it — fails its rule and is shown as `UNKNOWN`. A waiver accepts a *known* failure; it does not open the gate for an unknown, and it never raises the level.
 - **Evidence belongs to a source state.** `facet` records with every piece of evidence a hash of the working tree's content (records under `.work/` and `.facet/` excluded). Evidence measured on another state is stale. Any edit invalidates everything: conservative by design. Settings: `"govern": { "source": "off" }` to return to time-only staleness, `"sourceIgnore": ["docs/**"]` for paths that are not sources.
 - **Proof pack.** `facet proof create --item ID` writes `.work/<ID>/proof/manifest.json`: the source state (commit, tree, uncommitted files with hashes), the policy hash, every rule with its outcome, the evidence with its origin, one digest over all of it. `facet proof verify` answers `VALID`, `STALE` (the sources moved on), `TAMPERED` (the manifest was edited), `MISMATCH` (the journal no longer supports it) or `UNKNOWN` (the journal could not be verified). The same sources and the same journal give the same answer on another clone.
+
+## Trust decay (0.6.0)
+
+Conservative invalidation re-runs everything after any edit. Trust decay narrows that without guessing. A check may declare what it covers:
+
+```json
+"govern": { "checks": { "unit": { "run": "npm test", "covers": ["test/**"] }, "lint": { "run": "eslint src", "covers": ["src/**"] } } }
+```
+
+Its scope is those files plus everything they import, recomputed on every reading — a new import widens it. Evidence stores the digest of its scope; when the digest still matches, the evidence is fresh however much else changed. `facet proof decay` lists each check as fresh, decayed (with the files that reached it) or unbound, gives the share still standing, and names changed files that no check covers. `facet check --stale` runs only the decayed ones.
+
+Two things keep this from becoming a way to skip work: a check without `covers` stands for every file, and the security scan never declares a scope.

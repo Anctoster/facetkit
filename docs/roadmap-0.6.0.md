@@ -34,7 +34,7 @@ Limits: the lock is an exclusive-create file. That is atomic on local file syste
 | PRF-07 conservative invalidation | done | `evidenceOf(..., { source })` |
 | PRF-08 attestation extended | partly: the proof pack carries the source state; `facet attest` itself is unchanged | — |
 | PRF-09 `facet proof verify` | done | `bin/ops.mjs` |
-| PRF-10 dependency-aware invalidation | open, on purpose: it needs a dependency graph that can be trusted | — |
+| PRF-10 dependency-aware invalidation | done as **trust decay**: scope = declared `covers` + import closure; undeclared scope stays conservative | `decay`, `facet check --stale` |
 
 Independence of the inspector was already fail-closed (no named judge → not independent); a benchmark case now pins it.
 
@@ -50,19 +50,24 @@ Independence of the inspector was already fail-closed (no named judge → not in
 | SKI-06 analysis | done: Wilson intervals, Bonferroni across experiments read together | `analyse` |
 | SKI-07 exploratory vs validated | done | `stage` |
 | SKI-08 independent confirmation trials | done as a mechanism (`confirms`); no trial has been run | — |
-| SKI-09 recommendations for facet evolution | open | — |
+| SKI-09 recommendations for facet evolution | done: `facet evolve` — pattern, diagnosis, proposal, experiment, gated adoption | `lib/evolve.mjs` |
+| multi-arm designs, strata, permutation inference | done: `facet intel` supersedes the two-arm `facet experiment` for new work | `lib/intelligence.mjs` |
 
-No experiment has been run. The 69 facets are still hypotheses; what exists now is the instrument.
+No experiment has been run on real work. The 69 facets are still hypotheses; what exists now is the instrument, and its own error rates measured on simulated journals (see the changelog). Simulated journals show that the statistics behave; they say nothing about any facet.
+
+Known limits: "followed" is still the footprint a facet declares — a facet without a footprint is diagnosed as unmeasurable, not guessed at. Difficulty comes from the route plan; an item opened without a plan falls into the stratum of its tier. A model arm changes the model the flow recommends for the step; whether the coordinator obeyed is checked afterwards (a unit on the wrong model is a broken delivery).
 
 ## P1.1 Ownership and routing
 
 | Ticket | State |
 |---|---|
 | ORC-01 manifest, ORC-02 resolver, ORC-03 unassigned, ORC-04 conflicts | done — `lib/ownership.mjs`, `facet owners` |
-| ORC-05 dependency mapping through the atlas | open |
-| ORC-06 risk-based routing | open |
-| ORC-07 route diagnostics in the CLI | open |
+| ORC-05 dependency mapping | done, through the import graph (`seams`) the atlas is built on |
+| ORC-06 risk-based routing | done — `planRoute`, compared with two simpler strategies on scenarios |
+| ORC-07 route diagnostics in the CLI | done — `facet route` prints owners, reach, risk, route and every omission with its reason |
 | ORC-08 ownership tied into REWORK | open: REWORK already requires an owner; the manifest is not consulted there yet |
+
+Limits: the scenarios are written by hand from the team's rules, seven of them, on a small project — a comparison of strategies, not a field result. File discovery from a task's text is offered as candidates and never assumed; the plan is only as good as the files it is given.
 
 ## P1.2 Quality benchmark
 
