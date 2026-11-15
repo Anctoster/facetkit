@@ -1,0 +1,23 @@
+{
+ "manifest": {
+  "owners": {
+   "src/**": "slice-builder",
+   "test/**": "spec-falsifier",
+   "lib/*.mjs": "slice-builder",
+   "lib/g*.mjs": "blueprint-architect",
+   "a*/x.mjs": "slice-builder",
+   "ab/*.mjs": "release-pilot"
+  },
+  "shared": [
+   "package.json"
+  ]
+ },
+ "files": [
+  "src/a.mjs",
+  "test/a.test.mjs",
+  "package.json",
+  "docs/x.md",
+  "lib/govern.mjs",
+  "ab/x.mjs"
+ ]
+}

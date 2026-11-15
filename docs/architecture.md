@@ -53,3 +53,16 @@ Every command that reads the journal ignores kinds it does not know, so extensio
 ## Why not a runtime
 
 A runtime that intercepts agent actions has to be trusted, kept running and integrated with every tool an agent uses. A log that is evaluated afterwards has none of these needs, and it leaves something a runtime does not: a record a third person can re-evaluate with a different policy. The price is that facetkit does not prevent an action; it prevents an item from being **closed** on work that does not meet the policy. Use your platform's permissions and sandboxing for prevention.
+
+## Added in 0.6.0
+
+| Module | Role |
+|---|---|
+| `lib/journal.mjs` | writer protocol: one lock per journal around read-then-append; structural verification; `repairJournal` |
+| `lib/proof.mjs` | source state, proof packs, verification |
+| `lib/experiments.mjs` | experiment manifests, seeded arms, analysis |
+| `lib/ownership.mjs` | who may change which file |
+| `lib/benchmark.mjs` | the guards run against fixtures with separately stored expectations |
+| `domains/viz/` | the method for architectural visualization: a self-contained plugin with its own journal tool in Python |
+
+The orchestrator still does not plan or decide: ownership and experiments feed the flow, they do not replace it.

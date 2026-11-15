@@ -12,7 +12,7 @@ No dependencies. Node 20+. Works with any agent that can run a shell command; sh
 
 ![One item of work: specification, build, probe, proof, policy gate — evidence accumulates and the assurance level rises](docs/assets/flow.svg)
 
-> **Status: 0.5.0, experimental.** The tools are tested (100+ tests; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **69 untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute.
+> **Status: 0.6.0, experimental.** The tools are tested (130+ tests and a guard benchmark of adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **69 untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute.
 
 ## The problem
 
@@ -141,6 +141,24 @@ thrift-loop:hard-caps — followed, no measurable effect
 ```
 
 Optional, seeded **withholding** turns correlation into an experiment (never for safety rules, off by default). `facet skill coverage` lists failure modes with incidents and no guarding rule, each with a trial harvested from the real incident. The intended direction is that a collection gets *shorter*: rules that matter graduate into tools, rules that do not are deleted. See [docs/skill-intelligence.md](docs/skill-intelligence.md).
+
+## What 0.6.0 hardens
+
+Five things an outside review asked for; each is a tool with tests, and each is exercised by `facet benchmark`:
+
+| Guarantee | Command | What it refuses |
+|---|---|---|
+| **Concurrent writers do not corrupt the journal.** Every append runs under one lock per journal; a lock left by a dead process is taken over; a line cut off mid-write is reported, never appended after, and set aside only by `facet journal repair`. | `facet journal` | duplicate sequence numbers, a clock that runs backwards, a foreign writer in a segment, a torn tail |
+| **Unknown is not pass.** A journal nobody verified, a judge nobody named, evidence nobody produced fail their rule like a bad result would. A waiver accepts a known failure; it cannot stand in for an unknown, and it never raises the level. | `facet assure` | closing on what was not established |
+| **A proof belongs to one state of the sources.** Evidence records the source state it was measured on; any later edit makes it stale. The proof pack of an item verifies on another clone and reports VALID, STALE, TAMPERED, MISMATCH or UNKNOWN. | `facet proof create\|verify\|status` | reusing yesterday's green run for today's code |
+| **Facet effects are measured as experiments.** A manifest written before the data, arms drawn by a seed, like compared with like, intervals widened when many facets are read at once, and three stages: exploratory, confirmatory, validated. Nothing is retired automatically. | `facet experiment new\|start\|report` | a verdict from five observations |
+| **Every file of a plan has one owner.** | `facet owners` | unowned files, two equal claims, editing another agent's territory |
+
+`facet benchmark` runs the guards against damaged journals, dishonest stories and doctored proofs whose expected outcomes are kept apart from the code (`benchmark/expected.json`); `--write` records the result per version, and a later run names regressions. What is still open is listed, ticket by ticket, in [docs/roadmap-0.6.0.md](docs/roadmap-0.6.0.md).
+
+## Beyond code: domains
+
+The method does not depend on the work being code. [`domains/viz`](domains/viz) applies it to architectural visualization — Archicad → Blender → renders → website images — as a second, self-contained plugin (`viz-flow`): a brief with checkable acceptance criteria instead of a specification, measured stage checks instead of tests, and a quality report that tells agent defects, missing criteria and new wishes apart.
 
 ## Many developers, many teams
 

@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] — 2026-11-15
+
+### Added
+- **Journal writer protocol.** Appends run under one lock per journal (exclusive-create lock file with owner, takeover of a dead owner's lock, a bounded wait). `verifyJournal` now checks structure as well as the hash chain — sequence numbers, the logical clock, the writer of each segment, lines cut off mid-write — and answers with a single `intact`. `facet journal repair` sets a torn tail aside in `<segment>.torn`; nothing is repaired silently.
+- **Proof packs** (`facet proof create|verify|status`, `facetkit/proof`): one manifest per item tying its rules and evidence to a source state — a hash over the content of the working tree, unchanged by a commit of the same content, changed by any edit. Verification answers VALID, STALE, TAMPERED, MISMATCH or UNKNOWN and is reproducible on another clone.
+- **Source-bound evidence.** Every evidence event records the source state it was measured on; evidence from another state is stale (conservative invalidation). `govern.source: "off"` restores time-only staleness; `govern.sourceIgnore` lists paths that are not sources.
+- **Experiments** (`facet experiment new|start|stop|report|arm`, `facetkit/experiments`): manifests in `trials/experiments/`, seeded assignment recorded on `step.start`, held-equal model and task class, Wilson intervals with a Bonferroni correction, and exploratory → confirmatory → validated stages.
+- **Ownership** (`facet owners`, `facetkit/ownership`): most-specific-pattern resolution, with unowned files, equal claims and foreign edits refused.
+- **Guard benchmark** (`facet benchmark [--write]`, `facetkit/benchmark`): adversarial fixtures under `benchmark/fixtures`, expectations in `benchmark/expected.json`, results per version in `benchmark/results/`, regressions named.
+- **`domains/viz`** — the method applied to architectural visualization, as a second plugin (`viz-flow`) in the marketplace.
+
+### Changed
+- **Governance is fail-closed.** `journalIntact` is unknown unless the caller established it, and unknown does not pass (`evaluate` marks such rules `unknown`). Library callers that evaluated in-memory events must now pass `project: { journalIntact: true }` after verifying the journal; `facet` does so itself.
+- A waiver no longer opens the gate for an unknown rule; it still never raises the level.
+- `readJournal` skips a line that is not an event instead of throwing; `verifyJournal` reports it and `record` refuses to append after it.
+- An absent journal is not an intact one: `verifyJournal(...).intact` is false when nothing was recorded.
+
+### Fixed
+- Two processes appending at once could take the same sequence number and logical clock, and a reader could meet a half-written line and crash. Measured on 0.5.1 with 20 writers × 100 events: 1910 of 2000 events survived, one writer crashed, 525 events shared a clock value. On 0.6.0: 2000 of 2000, intact.
+
 ## [0.5.1] — 2026-11-13
 
 ### Changed

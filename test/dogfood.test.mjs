@@ -10,12 +10,15 @@ import { changedSince, scanSecrets } from '../lib/secscan.mjs';
 import { parseClauses } from '../lib/trace.mjs';
 import { gitInit, story, tmp, write } from './helpers.mjs';
 
+// in-memory stories have no journal file to verify; these tests state the fact that `facet` establishes by running verifyJournal
+const VERIFIED = { project: { journalIntact: true } };
+
 test('govern: the first level consists of exactly the rules that make a result reproduced', () => {
     assert.deepEqual(DEFAULT_POLICY.filter((r) => r.level === 1).map((r) => r.id), ['verdict', 'independent', 'no-forced-steps', 'journal-intact', 'scan', 'approvals']);
     const s = story();
     s.open('A', [{ id: 'build', agent: 'builder' }, { id: 'proof', agent: 'inspector', verdict: true }]);
     s.run('A', 'build', 'builder');
-    const open = gate(evaluate(s.events, 'A'), { required: 1 });
+    const open = gate(evaluate(s.events, 'A', VERIFIED), { required: 1 });
     assert.deepEqual(open.failing.map((r) => r.id), ['verdict', 'scan'], 'no verdict yet: level 1 is not reached');
 });
 
@@ -31,7 +34,7 @@ test('govern: evidence measured during the proof is fresh; evidence measured in 
     s.say({ kind: 'step.end', item: 'A', step: 'proof', agent: 'inspector', status: 'DONE' });
     s.say({ kind: 'verdict', item: 'A', verdict: 'PASS' });
     s.run('A', 'close', 'conductor');
-    const e = evaluate(s.events, 'A');
+    const e = evaluate(s.events, 'A', VERIFIED);
     assert.deepEqual([e.evidence.early.stale, e.evidence.accept.stale], [true, false], 'the inspector, the gates and bookkeeping do not change the product');
     assert.equal(e.results.find((r) => r.id === 'specified').pass, true);
 });

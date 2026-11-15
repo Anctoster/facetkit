@@ -1,0 +1,78 @@
+{
+ "item": "A",
+ "events": [
+  {
+   "at": "2026-01-05T09:00:00.000Z",
+   "kind": "item.open",
+   "item": "A",
+   "tier": "normal",
+   "steps": [
+    {
+     "id": "build",
+     "agent": "builder",
+     "phase": "build"
+    },
+    {
+     "id": "proof",
+     "agent": "builder",
+     "phase": "proof",
+     "verdict": true
+    }
+   ],
+   "rerun": [
+    "proof"
+   ]
+  },
+  {
+   "at": "2026-01-05T09:01:00.000Z",
+   "kind": "step.start",
+   "item": "A",
+   "step": "build",
+   "agent": "builder",
+   "model": "sonnet"
+  },
+  {
+   "at": "2026-01-05T09:10:00.000Z",
+   "kind": "step.end",
+   "item": "A",
+   "step": "build",
+   "agent": "builder",
+   "status": "DONE"
+  },
+  {
+   "at": "2026-01-05T09:11:00.000Z",
+   "kind": "step.start",
+   "item": "A",
+   "step": "proof",
+   "agent": "builder",
+   "model": "sonnet"
+  },
+  {
+   "at": "2026-01-05T09:15:00.000Z",
+   "kind": "evidence",
+   "item": "A",
+   "name": "scan",
+   "ok": true,
+   "value": 0,
+   "approvals": []
+  },
+  {
+   "at": "2026-01-05T09:20:00.000Z",
+   "kind": "step.end",
+   "item": "A",
+   "step": "proof",
+   "agent": "builder",
+   "status": "DONE"
+  },
+  {
+   "at": "2026-01-05T09:21:00.000Z",
+   "kind": "verdict",
+   "item": "A",
+   "verdict": "PASS",
+   "fixes": []
+  }
+ ],
+ "project": {
+  "journalIntact": true
+ }
+}

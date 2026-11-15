@@ -10,6 +10,9 @@ import { trust } from '../lib/govern.mjs';
 import { closedItems } from '../lib/journal.mjs';
 import { tmp, write } from './helpers.mjs';
 
+// in-memory stories have no journal file to verify; these tests state the fact that `facet` establishes by running verifyJournal
+const VERIFIED = { project: { journalIntact: true } };
+
 const KIT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const f = (root, ...args) => spawnSync('node', [path.join(KIT, 'bin', 'facet'), ...args], { cwd: root, encoding: 'utf-8' });
 
@@ -56,7 +59,7 @@ test('demo: the synthetic journal is a valid history, and the page is written wi
     assert.equal(closedItems(events).length, 6);
     assert.equal(itemState(events, 'T08').steps.find((s) => s.id === 'build').status, 'running');
     assert.equal(itemState(events, 'T07').steps.find((s) => s.id === 'map').status, 'needs-user');
-    const t = trust(events);
+    const t = trust(events, VERIFIED);
     assert.deepEqual([t.escapes.n, t.calibration.length], [1, 2]);
     const root = tmp();
     const r = f(root, 'demo');

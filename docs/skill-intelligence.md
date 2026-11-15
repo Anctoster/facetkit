@@ -81,3 +81,15 @@ The direction is deliberate: prose is the weakest way to hold a line. A healthy 
 - Adherence is as good as the footprint: "ran `facet mutate`" does not prove the survivors were handled well.
 - Small numbers: nothing is concluded from fewer than five steps on either side, and intervals are 80 %.
 - A failure nobody recorded with a cause guards nothing and blames nobody.
+
+## Experiments (0.6.0)
+
+Seeded withholding answers "what happens without this rule" in passing. An experiment asks it on purpose:
+
+```bash
+facet experiment new EXP-001 --facet thrift-loop:digest-runs --seed 2026 --min 20 --model sonnet
+facet experiment start EXP-001      # from now on each step that loads the facet is assigned an arm
+facet experiment report             # control vs treatment, with intervals, and what may be concluded
+```
+
+The manifest is written once, before the data. The arm of a unit (one step of one item) is a function of the seed, so the assignment can be recomputed by anyone. Units on another model or of another task class are left out and counted. A facet marked `ablatable: no` is never withheld. With fewer than `--min` units in either arm the verdict is "not enough data"; a difference found once is *exploratory*; a second experiment declared with `--confirms EXP-001` makes it *validated* only if it shows the same direction. The report ends with a decision for a person — nothing is retired automatically.

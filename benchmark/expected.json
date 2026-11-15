@@ -1,0 +1,99 @@
+{
+ "journal/clean": {
+  "intact": true,
+  "events": 7,
+  "conflicts": 0
+ },
+ "journal/edited-line": {
+  "intact": false
+ },
+ "journal/missing-event": {
+  "intact": false
+ },
+ "journal/duplicate-sequence": {
+  "intact": false
+ },
+ "journal/foreign-writer": {
+  "intact": false
+ },
+ "journal/clock-backwards": {
+  "intact": false,
+  "problem": "logical clock 1 does not advance past 6"
+ },
+ "journal/torn-tail": {
+  "intact": false,
+  "events": 7
+ },
+ "journal/double-open": {
+  "conflicts": 1
+ },
+ "governance/all-established": {
+  "level": 1,
+  "allow": true
+ },
+ "governance/journal-not-verified": {
+  "level": 0,
+  "allow": false,
+  "unknown": [
+   "journal-intact"
+  ]
+ },
+ "governance/journal-damaged": {
+  "level": 0,
+  "allow": false,
+  "failing": [
+   "journal-intact"
+  ]
+ },
+ "governance/evidence-missing": {
+  "level": 0,
+  "allow": false,
+  "failing": [
+   "scan"
+  ]
+ },
+ "governance/judge-is-producer": {
+  "level": 0,
+  "allow": false,
+  "failing": [
+   "independent"
+  ]
+ },
+ "governance/waiver-on-unknown": {
+  "level": 0,
+  "allow": false
+ },
+ "proof/lifecycle": {
+  "fresh": "VALID",
+  "tampered": "TAMPERED",
+  "unverifiedJournal": "UNKNOWN",
+  "rewrittenHistory": "MISMATCH",
+  "afterEdit": "STALE",
+  "evidenceAfterEdit": false
+ },
+ "experiments/replay": {
+  "arms": [
+   "treatment",
+   "control",
+   "treatment",
+   "control",
+   "treatment",
+   "treatment",
+   "control",
+   "control"
+  ],
+  "again": true,
+  "safetyRefused": true,
+  "emptyVerdict": true,
+  "emptyStage": "exploratory"
+ },
+ "ownership/plan": {
+  "ok": false,
+  "unassigned": [
+   "docs/x.md"
+  ],
+  "conflicts": [
+   "ab/x.mjs"
+  ]
+ }
+}

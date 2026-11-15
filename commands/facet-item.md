@@ -14,7 +14,7 @@ First run `facet compose --role orchestrator --phase run` and follow it as writt
    4. After the inspector: `facet flow verdict PASS|REWORK --item <ITEM> --fix <agent:cause,…> --score <agent=n,…>`.
 3. ASK THE USER: show me the question exactly as printed and stop. When I answer: `facet flow answer <step> --item <ITEM>`, then continue.
 4. The `commit` step is yours: commit with the message from the build report. Do not push.
-5. CLOSE: run `facet compose --role orchestrator --phase close` and follow it. `facet flow close --item <ITEM>` refuses until the policy is met. A waiver or an approval is my decision, recorded in my name — ask me, never issue one yourself. Then `facet board`.
+5. CLOSE: run `facet compose --role orchestrator --phase close` and follow it. `facet proof verify --item <ITEM>` must say VALID (STALE means the sources changed after the checks: run the proof step again). `facet flow close --item <ITEM>` refuses until the policy is met. A waiver or an approval is my decision, recorded in my name — ask me, never issue one yourself. Then `facet board`.
 6. Report in at most 12 lines: item, the assurance level exactly as printed and what it does not cover, verdict, rework cycles, `facet ledger --item <ITEM>` totals, what `facet timeline` says looks wrong, anything not verified.
 
 Never: call an agent that `facet flow next` did not print; use `--force` without telling me why; write `facet waive` or `facet approve` without my explicit yes to that exact thing; paste handoff contents into your replies; continue past ASK THE USER.

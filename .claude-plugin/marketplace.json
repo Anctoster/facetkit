@@ -11,6 +11,11 @@
       "name": "facetkit",
       "source": "./plugin",
       "description": "Skills as composable facets, a nine-agent team and three commands; the `facet` command comes from npm (npm i -g facetkit)."
+    },
+    {
+      "name": "viz-flow",
+      "source": "./domains/viz",
+      "description": "The same method for architectural visualization (Archicad \u2192 Blender \u2192 renders \u2192 website images): briefs with checkable criteria, five cheap agents, measured stage checks. Self-contained: Python scripts, no npm."
     }
   ]
 }

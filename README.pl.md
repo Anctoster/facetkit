@@ -12,7 +12,7 @@ Bez zależności. Node 20+. Działa z każdym agentem, który potrafi uruchomić
 
 ![Jeden element pracy: specyfikacja, budowa, próba, dowód, bramka polityki — dowody przybywają, a poziom pewności rośnie](docs/assets/flow.svg)
 
-> **Stan: 0.5.0, wersja eksperymentalna.** Narzędzia są przetestowane (ponad 100 testów; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **69 niesprawdzonych hipotez** o zachowaniu agentów — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
+> **Stan: 0.6.0, wersja eksperymentalna.** Narzędzia są przetestowane (ponad 100 testów; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **69 niesprawdzonych hipotez** o zachowaniu agentów — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
 
 ## Jaki problem rozwiązuje
 

@@ -9,7 +9,11 @@ import { DEFAULT_FLOW, itemState, modelFor, next, planSteps, resumeCard, statusL
 import { buildAtlas, card, findSymbol, hiddenCoupling, hotspots, pathBetween, stats as atlasStats } from '../lib/atlas.mjs';
 import { boardData, renderBoard } from '../lib/board.mjs';
 import { attest, calibration, DEFAULT_POLICY, digestOf, evaluate, gate, renderEvaluation, renderTrust, trust } from '../lib/govern.mjs';
-import { closedItems, holderOf, isSegmented, ofItem, openItems, readJournal, record, verifyJournal, writerId } from '../lib/journal.mjs';
+import { closedItems, holderOf, isSegmented, ofItem, openItems, readJournal, record, repairJournal, verifyJournal, writerId } from '../lib/journal.mjs';
+import { benchmarkReport, regressions, renderBenchmark, runBenchmark } from '../lib/benchmark.mjs';
+import { analyse, assertAblatable, assign, loadExperiments, newExperiment, renderAnalysis, saveExperiment, unitOf } from '../lib/experiments.mjs';
+import { checkOwners, renderOwners } from '../lib/ownership.mjs';
+import { createProof, proofPath, renderProof, sourceState, verifyProof } from '../lib/proof.mjs';
 import { planMutants, probe } from '../lib/mutaprobe.mjs';
 import { route } from '../lib/router.mjs';
 import { scan } from '../lib/secscan.mjs';
@@ -54,22 +58,26 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
     const checkNames = () => [...Object.keys(govern.checks ?? {}), ...extensions.flatMap((x) => Object.keys(x.checks ?? {}))];
     const projectFacts = () => {
         const v = verifyJournal(journal);
-        return { journalIntact: v.broken.length === 0 };
+        return { journalIntact: v.intact };
     };
+    // evidence belongs to the state of the sources it was measured on; "off" restores time-only staleness
+    const sourceIgnore = () => [...(govern.sourceIgnore ?? []), `${path.relative(CWD, journal).split(path.sep).join('/')}${isSegmented(journal) ? '/**' : ''}`, `${path.relative(CWD, journal).split(path.sep).join('/')}.lock`];
+    let sourceMemo;
+    const sourceNow = () => (govern.source === 'off' ? null : (sourceMemo ??= sourceState(CWD, { ignore: sourceIgnore() }).state));
     const judged = (item) => {
         const cal = calibration(events());
-        return evaluate(events(), item, { policy: policy(), checks: checkNames(), project: { ...projectFacts(), guardCatchLow: cal.length ? Math.min(...cal.map((c) => c.low)) : 0 } });
+        return evaluate(events(), item, { policy: policy(), checks: checkNames(), source: sourceNow(), project: { ...projectFacts(), guardCatchLow: cal.length ? Math.min(...cal.map((c) => c.low)) : 0 } });
     };
     const evidence = (name, ok, value, detail, extra = {}) => {
         const item = opt('item', process.env.FACET_ITEM) ?? (openItems(events(), me).length === 1 ? openItems(events(), me)[0] : null);
         if (!item || !openItems(events()).includes(item)) return false;
-        say({ kind: 'evidence', item, name, ok, value, detail, ...extra });
+        say({ kind: 'evidence', item, name, ok, value, detail, src: sourceNow() ?? undefined, ...extra });
         return true;
     };
     const baseOf = (item) => ofItem(events(), item).find((e) => e.kind === 'item.open')?.base ?? 'HEAD';
     const runScan = (item) => {
         const r = scan(CWD, { ref: baseOf(item), forbidden: govern.forbidden ?? ['.env', '**/.env', '**/*.pem', '**/id_rsa*'], ignore: govern.scanIgnore ?? [], runs: ledgerOf(item), stores: [path.relative(CWD, path.join(work, item)), ...(govern.stores ?? [])] });
-        say({ kind: 'evidence', item, name: 'scan', ok: r.blocking === 0, value: r.findings.length, approvals: r.approvals, detail: r.findings.slice(0, 5).map((f) => `${f.kind} ${f.where}`).join('; ') || undefined });
+        say({ kind: 'evidence', item, name: 'scan', ok: r.blocking === 0, value: r.findings.length, src: sourceNow() ?? undefined, approvals: r.approvals, detail: r.findings.slice(0, 5).map((f) => `${f.kind} ${f.where}`).join('; ') || undefined });
         return r;
     };
     const pickModel = (step, state) => {
@@ -83,17 +91,27 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
     const allFacets = () => skills().flatMap((s) => s.facets);
     const loadedRefs = () => new Set(Object.keys(loadouts().roles ?? {}).flatMap((role) => loadoutPicks(loadouts(), role).picks).flatMap((pick) => resolvePicks(skills(), [pick]).facets.map((f) => f.ref)));
     const rulesFor = (step, item) => {
-        if (!step.agent || !step.phase || !loadouts().roles?.[step.agent]?.phases?.[step.phase]) return { facets: [], withheld: [], file: null };
+        if (!step.agent || !step.phase || !loadouts().roles?.[step.agent]?.phases?.[step.phase]) return { facets: [], withheld: [], file: null, experiments: [] };
         const lo = loadoutPicks(loadouts(), step.agent, step.phase);
         const used = compose(resolvePicks(skills(), lo.picks).facets, { budget: lo.budget }).used;
         const withheld = withheldFor(used, { item, step: step.id, rate: project.skillint?.ablate?.rate ?? 0, seed: project.skillint?.ablate?.seed });
+        // running experiments decide their own facet for this unit: the arm is a function of the seed, not of anybody's choice
+        const experiments = [];
+        for (const x of loadExperiments(CWD).filter((m) => m.status === 'running')) {
+            const facet = used.find((f) => f.ref === x.facet);
+            if (!facet || !facet.ablatable) continue;
+            const arm = assign(x, unitOf(item, step.id));
+            experiments.push({ id: x.id, facet: x.facet, arm, taskClass: routing()[item]?.class ?? null });
+            if (arm === 'treatment' && !withheld.includes(x.facet)) withheld.push(x.facet);
+            if (arm === 'control' && withheld.includes(x.facet)) withheld.splice(withheld.indexOf(x.facet), 1);
+        }
         let file = null;
         if (withheld.length) {
             file = path.join(work, item, `rules-${step.id}.md`);
             fs.mkdirSync(path.dirname(file), { recursive: true });
             fs.writeFileSync(file, renderLoadout(compose(used.filter((f) => !withheld.includes(f.ref)), { budget: lo.budget }), { role: step.agent, phase: step.phase }));
         }
-        return { facets: used.map((f) => f.ref).filter((r) => !withheld.includes(r)), withheld, file };
+        return { facets: used.map((f) => f.ref).filter((r) => !withheld.includes(r)), withheld, file, experiments };
     };
 
     function describe(n) {
@@ -159,7 +177,7 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             if (n.step !== stepId && !flag('force')) fail(`flow start: the next step of ${item} is "${n.step ?? n.action}", not "${stepId}". Steps are not skipped; --force records an exception.`);
             const { model } = n.step === stepId && n.model ? n : pickModel(step, state);
             const rules = rulesFor(step, item);
-            say({ kind: 'step.start', item, step: stepId, agent: step.agent, mode: step.mode, model: opt('model', model ?? undefined), rework: step.rework || undefined, assist: opt('assist'), forced: n.step !== stepId || undefined, facets: rules.facets.length ? rules.facets : undefined, withheld: rules.withheld.length ? rules.withheld : undefined });
+            say({ kind: 'step.start', item, step: stepId, agent: step.agent, mode: step.mode, model: opt('model', model ?? undefined), rework: step.rework || undefined, assist: opt('assist'), forced: n.step !== stepId || undefined, facets: rules.facets.length ? rules.facets : undefined, withheld: rules.withheld.length ? rules.withheld : undefined, experiments: rules.experiments.length ? rules.experiments : undefined });
             if (rules.file) console.log(`rules for this step (give the agent this file instead of its usual one): ${path.relative(CWD, rules.file)}`);
             const wanted = project.eval?.snapshot ?? [];
             if (wanted.includes(stepId) || flag('snapshot')) {
@@ -395,11 +413,18 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             console.log(odd.length ? `\nlooks wrong:\n${odd.map((a) => `  ${a.kind.padEnd(11)} ${a.step}: ${a.why}`).join('\n')}` : '\nnothing looks wrong');
         },
         journal() {
+            if (positional[0] === 'repair') {
+                const moved = repairJournal(journal);
+                for (const m of moved) console.log(`journal: set aside the torn line ${m.line} of ${m.segment} in ${m.to} — look at it before deleting it`);
+                return void console.log(moved.length ? `${moved.length} torn line(s) set aside; the journal can be appended to again` : 'nothing to repair: no segment ends in a torn line');
+            }
             const v = verifyJournal(journal);
             const ev = events();
             for (const b of v.broken) console.error(`journal: ${b.segment} line ${b.line} does not follow the line before it — the history was edited`);
+            for (const x of v.structure) console.error(`journal: ${x.segment} line ${x.line}: ${x.problem}`);
             for (const c of v.conflicts) console.error(`journal: ${c.item} was opened by ${c.loser} while ${c.winner} held it — ${c.loser} must run: facet flow yield --item ${c.item}`);
-            if (v.broken.length || v.conflicts.length) process.exit(1);
+            if (v.broken.length || v.structure.length || v.conflicts.length) process.exit(1);
+            if (!v.segments) return void console.log('journal: nothing recorded yet');
             console.log(`journal intact: ${v.events} events${v.segments > 1 || me ? ` in ${v.segments} segment(s)` : ''}, ${openItems(ev).length} open, ${closedItems(ev).length} closed`);
         },
         // ---- quality and governance ----------------------------------------------------------
@@ -426,7 +451,7 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
                     value = `exit ${r.exit}`;
                 } else if (ext) ({ ok, value } = await ext.checks[name]({ cwd: CWD, item, events: events() }));
                 else fail(`check: unknown check "${name}" (known: ${checkNames().join(', ')})`);
-                say({ kind: 'evidence', item, name, ok: !!ok, value });
+                say({ kind: 'evidence', item, name, ok: !!ok, value, src: sourceNow() ?? undefined });
                 console.log(`${ok ? '✓' : '✗'} ${name}${value !== undefined ? ` (${value})` : ''}`);
                 if (!ok) failed++;
             }
@@ -452,6 +477,81 @@ export function opsCommands({ CWD, project, opt, flag, list, fail, positional, w
             if (!positional[0] || !opt('by')) fail('approve: facet approve <what, e.g. dependency:zod> --by <person>');
             say({ kind: 'approval', item, what: positional[0], by: opt('by'), note: opt('note') });
             console.log(`approval recorded: ${positional[0]} for ${item} by ${opt('by')}`);
+        },
+        /** proof create|verify|status [--item ID]: the manifest that ties a result to the sources it was checked on. */
+        proof() {
+            const sub = positional[0] ?? 'status';
+            const item = opt('item') ?? positional[1] ?? openItems(events(), me)[0] ?? closedItems(events()).at(-1);
+            if (!item) fail('proof: no item (facet proof create|verify|status --item ID)');
+            const options = { policy: policy(), checks: checkNames(), project: projectFacts(), ignore: sourceIgnore() };
+            const file = proofPath(work, item);
+            if (sub === 'create') {
+                const m = createProof(CWD, events(), item, options);
+                fs.mkdirSync(path.dirname(file), { recursive: true });
+                fs.writeFileSync(file, `${JSON.stringify(m, null, 2)}\n`);
+                if (openItems(events()).includes(item)) say({ kind: 'proof.create', item, digest: m.digest, src: m.source.state, level: m.level });
+                return void console.log(`${renderProof(m)}\nwritten: ${path.relative(CWD, file)}`);
+            }
+            if (!fs.existsSync(file)) fail(`proof: ${item} has no proof pack — facet proof create --item ${item}`);
+            const m = JSON.parse(fs.readFileSync(file, 'utf-8'));
+            const v = verifyProof(CWD, events(), m, options);
+            console.log(renderProof(m, v));
+            if (sub === 'verify' && v.status !== 'VALID') process.exit(1);
+        },
+        /** owners [files…] [--changed] [--agent A]: does every file of the plan have exactly one owner? */
+        owners() {
+            const manifest = project.owners ?? readJson(path.resolve(CWD, opt('owners', 'owners.json')), null);
+            if (!manifest) fail('owners: no manifest — add owners.json ({ "owners": { "src/**": "agent" }, "shared": [] }) or "owners" to the project settings', 2);
+            const files = positional.length ? positional : changedFiles().filter((f) => !sourceIgnore().concat(['.work/', '.facet/']).some((p) => f.startsWith(p.replace('/**', '/'))));
+            if (!files.length) return void console.log('owners: no files to check (pass paths, or change something)');
+            const c = checkOwners(files, manifest, { agent: opt('agent') ?? null });
+            console.log(renderOwners(c, { agent: opt('agent') ?? null }));
+            evidence('owners', c.ok, c.unassigned.length + c.conflicts.length + c.foreign.length);
+            if (!c.ok) process.exit(1);
+        },
+        /** experiment new|start|stop|report|arm: controlled trials of single facets. */
+        experiment() {
+            const sub = positional[0] ?? 'report';
+            const all = loadExperiments(CWD);
+            const one = () => all.find((m) => m.id === positional[1]) ?? fail(`experiment: no experiment "${positional[1] ?? ''}" (known: ${all.map((m) => m.id).join(', ') || 'none'})`);
+            if (sub === 'new') {
+                const facet = allFacets().find((f) => f.ref === opt('facet'));
+                if (!positional[1] || !facet) fail('experiment: facet experiment new <ID> --facet skill:facet --seed S [--min 20] [--model M] [--class C] [--confirms ID]');
+                if (all.some((m) => m.id === positional[1])) fail(`experiment: ${positional[1]} exists; a manifest is written once, before the data`);
+                try {
+                    assertAblatable(facet);
+                    saveExperiment(CWD, newExperiment({ id: positional[1], facet: facet.ref, seed: opt('seed'), minSamples: Number(opt('min', 20)), model: opt('model') ?? null, taskClass: opt('class') ?? null, confirms: opt('confirms') ?? null }));
+                } catch (e) {
+                    fail(`experiment: ${e.message}`);
+                }
+                return void console.log(`experiment ${positional[1]} planned for ${facet.ref}. Start it: facet experiment start ${positional[1]}`);
+            }
+            if (sub === 'start' || sub === 'stop') {
+                const m = one();
+                saveExperiment(CWD, { ...m, status: sub === 'start' ? 'running' : 'stopped', [sub === 'start' ? 'startedAt' : 'stoppedAt']: new Date().toISOString() });
+                return void console.log(`experiment ${m.id}: ${sub === 'start' ? 'running — units are assigned as steps start' : 'stopped — no further units are assigned'}`);
+            }
+            if (sub === 'arm') return void console.log(assign(one(), opt('unit') ?? fail('experiment: --unit "ITEM|step"')));
+            const chosen = positional[1] ? [one()] : all;
+            if (!chosen.length) return void console.log('no experiments yet: facet experiment new <ID> --facet skill:facet --seed S');
+            const read = (m) => analyse(events(), m, { comparisons: chosen.filter((x) => x.status !== 'planned').length || 1, prior: m.confirms && all.find((x) => x.id === m.confirms) ? analyse(events(), all.find((x) => x.id === m.confirms)) : null });
+            console.log(chosen.map((m) => `${renderAnalysis(read(m))}\n  status: ${m.status} · seed ${m.seed} · held equal: model ${m.model ?? 'any'}, task class ${m.taskClass ?? 'any'}`).join('\n\n'));
+        },
+        /** benchmark [--write]: the guards against cases they did not write. */
+        benchmark() {
+            const dir = path.resolve(CWD, opt('dir', 'benchmark'));
+            if (!fs.existsSync(path.join(dir, 'expected.json'))) fail(`benchmark: no ${path.relative(CWD, dir)}/expected.json`, 2);
+            const version = readJson(path.resolve(CWD, 'package.json'), {}).version ?? '0.0.0';
+            const report = benchmarkReport(runBenchmark(dir), { root: CWD, version });
+            const results = path.join(dir, 'results');
+            const earlier = fs.existsSync(results) ? fs.readdirSync(results).filter((f) => f.endsWith('.json') && f !== `${version}.json`).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })) : [];
+            const lost = earlier.length ? regressions(JSON.parse(fs.readFileSync(path.join(results, earlier.at(-1)), 'utf-8')), report) : [];
+            console.log(renderBenchmark(report, lost));
+            if (flag('write')) {
+                fs.mkdirSync(results, { recursive: true });
+                fs.writeFileSync(path.join(results, `${version}.json`), `${JSON.stringify(report, null, 1)}\n`);
+            }
+            if (report.failed) process.exit(1);
         },
         attest() {
             const options = { policy: policy(), checks: checkNames(), project: projectFacts() };
