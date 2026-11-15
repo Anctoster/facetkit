@@ -300,6 +300,37 @@
     ],
     "checks": [],
     "approve_brief": false
+   },
+   "variants": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "sketch",
+      "agent": "variant-sketcher",
+      "mode": "sketch",
+      "model": "sonnet",
+      "gate": "the comparison of the variants: choose one, or say what the next round should explore"
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "numbers",
+      "model": "haiku"
+     }
+    ],
+    "checks": [
+     "variants.inputs",
+     "variants.limits",
+     "variants.distinct",
+     "variants.compared",
+     "variants.chosen"
+    ],
+    "approve_brief": true
    }
   },
   "plans": {
@@ -354,6 +385,60 @@
       2
      ]
     ]
+   ],
+   "design": [
+    [
+     "estimate",
+     "Schedule and risk before the work",
+     []
+    ],
+    [
+     "variants",
+     "Variants of the site plan",
+     []
+    ],
+    [
+     "variants",
+     "Variants of the layouts",
+     [
+      2
+     ]
+    ],
+    [
+     "variants",
+     "Variants of the facades",
+     [
+      3
+     ]
+    ],
+    [
+     "intake",
+     "The chosen variants into a checked description",
+     [
+      4
+     ]
+    ],
+    [
+     "model",
+     "Model in Archicad on the right layers",
+     [
+      5
+     ]
+    ],
+    [
+     "sheets-pb",
+     "Drawing set: projekt budowlany",
+     [
+      6
+     ]
+    ],
+    [
+     "sheets-pw",
+     "Drawing set: projekt wykonawczy",
+     [
+      7
+     ]
+    ]
    ]
   }
  },
@@ -381,7 +466,12 @@
   "sheets.trace",
   "titleblock.fields",
   "schedule.inputs",
-  "schedule.result"
+  "schedule.result",
+  "variants.inputs",
+  "variants.limits",
+  "variants.distinct",
+  "variants.compared",
+  "variants.chosen"
  ],
  "project": {
   "project": "",

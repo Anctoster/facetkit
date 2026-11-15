@@ -200,12 +200,74 @@ class Schedule(unittest.TestCase):
             self.assertIn(detail, r.stdout)
 
 
+class Variants(unittest.TestCase):
+    def run_v(self, change=lambda d: None, *extra):
+        d = copy.deepcopy(load("variants.example.json"))
+        change(d)
+        return tool("variants.py", dump(d), *extra)
+
+    def test_indicators_come_from_geometry_and_the_tool_does_not_choose(self):
+        r = self.run_v(lambda d: None, "--chosen", "C")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        for line in ("OK   variants.limits: 3 of 3", "OK   variants.distinct", "OK   variants.compared: 3 variants scored on 5 weighted criteria", "OK   variants.chosen: variant C"):
+            self.assertIn(line, r.stdout)
+        self.assertRegex(r.stdout, r"A\s+0\.\d+\s+1800\s+37\.5")  # green 900 m2 of a 2400 m2 plot
+
+    def test_what_makes_a_comparison_worthless_is_refused(self):
+        cases = [
+            (lambda d: d["variants"].pop(), "variants given, at least 3 are needed"),
+            (lambda d: d["variants"][0].__setitem__("idea", " "), "variant A has no one-line idea"),
+            (lambda d: d.__setitem__("weights", {}), "the architect has not said what matters"),
+            (lambda d: d["limits"].__setitem__("max_noise", 1), "limit 'max_noise' is not known"),
+            (lambda d: d["variants"][1].pop("green_m2"), "variant B lacks what 'green_pct' is computed from"),
+            (lambda d: d["variants"][0]["buildings"][0]["outline"].__setitem__(1, [70, 24]), "building corners lie outside the plot"),
+        ]
+        for change, detail in cases:
+            r = self.run_v(change)
+            self.assertEqual(r.returncode, 1, detail)
+            self.assertIn(detail, r.stdout)
+            self.assertIn("SKIP variants.compared", r.stdout)
+
+    def test_a_variant_over_a_limit_is_shown_and_marked_and_cannot_be_chosen(self):
+        over = lambda d: d["variants"][2]["buildings"][0].__setitem__("height_m", 19.0)
+        r = self.run_v(over, "--chosen", "C")
+        self.assertIn("2 of 3 variants keep every limit; over a limit: C - height_m 19.0 (limit <= 16)", r.stdout)
+        self.assertIn("[OVER A LIMIT]", r.stdout)
+        self.assertIn("FAIL variants.chosen: the chosen variant C is over a limit", r.stdout)
+        tight = self.run_v(lambda d: d["limits"].__setitem__("min_setback_m", 20))
+        self.assertIn("FAIL variants.limits: 0 of 3", tight.stdout)
+        self.assertIn("FAIL variants.chosen: the chosen variant 'Z' is not in the set", self.run_v(lambda d: None, "--chosen", "Z").stdout)
+
+    def test_three_versions_of_one_idea_are_not_three_variants(self):
+        def twin(d):
+            d["variants"][1] = dict(copy.deepcopy(d["variants"][0]), id="B", idea="the same bar, 20 cm longer", usable_m2=1810)
+        r = self.run_v(twin)
+        self.assertIn("FAIL variants.distinct: A and B differ by less than 5% on every criterion", r.stdout)
+
+    def test_a_variant_beaten_on_every_criterion_is_named(self):
+        def weak(d):
+            d["variants"].append(dict(copy.deepcopy(d["variants"][2]), id="D", idea="the L-block, smaller and dearer", usable_m2=1700, cost_index=1.2, green_m2=700, parking_places=30, flats=30))
+        self.assertRegex(self.run_v(weak).stdout, r"D\s+0\.0 .*\[beaten on every criterion by [ABC]\]")
+
+    def test_facades_and_layouts_have_their_own_indicators(self):
+        d = {"aspect": "facade", "weights": {"south_glazing_share": 2, "glazing_ratio": 1}, "limits": {"max_glazing_ratio": 0.5},
+             "variants": [{"id": i, "idea": "idea %s" % i, "facade": {"walls_m2": {"N": 300, "S": 300}, "glazing_m2": {"N": n, "S": s}}} for i, n, s in (("A", 60, 60), ("B", 30, 120), ("C", 100, 220))]}
+        r = tool("variants.py", dump(d))
+        self.assertIn("over a limit: C - glazing_ratio 0.533", r.stdout)
+        lay = {"aspect": "layout", "weights": {"circulation_share": -1, "usable_m2": 1},
+               "variants": [{"id": i, "idea": "idea %s" % i, "rooms": [{"name": "pokoj", "area_m2": a}, {"name": "hol", "kind": "circulation", "area_m2": c}]} for i, a, c in (("A", 40, 10), ("B", 44, 6), ("C", 30, 20))]}
+        self.assertRegex(tool("variants.py", dump(lay)).stdout, r"B\s+0\.75\s+0\.12\s+50")
+
+
 class Flow(unittest.TestCase):
     def test_the_engine_runs_the_architecture_routes(self):
         root = os.path.join(tempfile.mkdtemp(), "a")
         f = lambda *a: subprocess.run([sys.executable, os.path.join(SCRIPTS, "archflow.py"), "--root", root, *a], capture_output=True, text=True).stdout
         f("init")
         self.assertIn("NEXT: archflow.py open D1-01", f("plan", "documentation", "--prefix", "D1"))
+        design = f("plan", "design", "--prefix", "E1")
+        for line in ("E1-02    variants", "Variants of the layouts  (waits for E1-02)", "E1-08    sheets-pw"):
+            self.assertIn(line, design)
         f("open", "D1-02")
         self.assertIn("AGENT arch-conductor  step=order", f("next"))
         f("start", "order"); f("end", "order", "--status", "DONE")

@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [0.6.0] — 2026-11-15
 
+- **arch domain 0.2.0 — variant sketching before the drawing sets.** Route `variants` (site plan, layouts, facades, in that order): an agent proposes three to five different ideas with geometry; `variants.py` derives the indicators, tests the architect's limits, refuses near-identical variants, scores by the architect's weights and names variants beaten on every criterion. A variant over a limit is shown and marked, never dropped; the choice is a person's gate. Plan `design` lays out a commission from the first sketch to both drawing sets.
+
 ### Added
 - **Journal writer protocol.** Appends run under one lock per journal (exclusive-create lock file with owner, takeover of a dead owner's lock, a bounded wait). `verifyJournal` now checks structure as well as the hash chain — sequence numbers, the logical clock, the writer of each segment, lines cut off mid-write — and answers with a single `intact`. `facet journal repair` sets a torn tail aside in `<segment>.torn`; nothing is repaired silently.
 - **Proof packs** (`facet proof create|verify|status`, `facetkit/proof`): one manifest per item tying its rules and evidence to a source state — a hash over the content of the working tree, unchanged by a commit of the same content, changed by any edit. Verification answers VALID, STALE, TAMPERED, MISMATCH or UNKNOWN and is reproducible on another clone.

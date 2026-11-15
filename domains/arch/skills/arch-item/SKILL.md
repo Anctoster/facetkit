@@ -17,13 +17,14 @@ Carry out one item with the agent team. You are the coordinator: the journal dec
 | Route | Result | Steps (model) |
 |---|---|---|
 | `estimate` | dates at 50 / 80 / 95 %, chance of missing the deadline, measures with their gain | brief → schedule tool (haiku) → proof by numbers (haiku) |
+| `variants` | three to five different variants of the site plan, the layouts or the facades, compared by measured indicators; **the architect chooses** | brief → sketcher (sonnet) → **architect chooses or asks for another round** → proof by numbers (haiku) |
 | `intake` | a checked building description from texts and raster drawings, with the architect's answers | brief → reader (sonnet) → **architect answers the questions** → proof (haiku) |
 | `model` | the model in Archicad, every element on its layer and traceable to the description | brief → build → readback (haiku once a procedure exists) → proof (sonnet) |
 | `sheets-pb` | the drawing set of projekt budowlany as PDF and DWG | brief → layouts → publish with preview → proof |
 | `sheets-pw` | the drawing set of projekt wykonawczy, traced to the PB sheets | brief → detail → layouts → publish with preview → proof |
 | `revise`, `audit` | a change to an existing model; its state without changes | |
 
-`archflow.py plan documentation --prefix D1` lays out a whole commission; `plan pw-from-pb` the executive stage of an existing model.
+`archflow.py plan design --prefix D1` lays out a commission from the first sketch: schedule, variants of the site, of the layouts and of the facades, the chosen variants as a description, the model, both drawing sets. `plan documentation` starts from existing drawings instead; `plan pw-from-pb` the executive stage of an existing model.
 
 ## Steps
 
@@ -36,8 +37,9 @@ Carry out one item with the agent team. You are the coordinator: the journal dec
    4. `archflow.py end <step> --status <status word> --tokens <total reported>`.
    5. **The brief.** Show `work/<ITEM>/brief.md` in full, in the user's language; apply their corrections; `brief check`; `brief approve --by <name>`. Never approve for them.
    6. **The questions** (route `intake`). Show every open question of `spec.json` with its proposed default, all at once. Write the answers into `spec.json`, then `archflow.py answer`. Nothing is built while a question is open.
-   7. **Preview before publishing.** Show the sheet list with one preview per sheet; `answer`, or `answer --no "<remarks>"`.
-   8. After the inspector: first line of `proof.md`, then `verdict PASS | REWORK --fix <agent:cause,…> | NEEDS-USER --question "…"`.
+   7. **The choice** (route `variants`). Show `variants.md` with the tool's table. The architect names a variant - `archflow.py answer`, then write the choice into `work/<ITEM>/choice.md` and have the inspector run `variants.py --chosen <ID>` - or asks for another round: `answer --no "<their remarks>"`. Never choose for them, and never present the highest score as the answer.
+   8. **Preview before publishing.** Show the sheet list with one preview per sheet; `answer`, or `answer --no "<remarks>"`.
+   9. After the inspector: first line of `proof.md`, then `verdict PASS | REWORK --fix <agent:cause,…> | NEEDS-USER --question "…"`.
 4. ASK THE USER: show the question as printed and stop.
 5. CLOSE: `archflow.py close`.
 6. **Acceptance.** Show the result and the "For the architect" lines. Record: `accept <ITEM> --by <name>`, or `remark <ITEM> "…" --cause agent|brief|taste` per remark. A remark becomes a new item.

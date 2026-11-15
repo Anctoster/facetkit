@@ -16,6 +16,21 @@ Risks worth listing for documentation work: source material late, incomplete or 
 
 Measures that shorten the work, each reported with its gain in working days: list missing inputs on day one with a date for each; have every stage's layout signed off as frozen; start waiting periods early with a partial set; put a second person on the longest chain or split it; build the executive set from the building set's sheets instead of redrawing; run a pilot on one storey or one sheet before the whole.
 
+## variants - several ways to do it, before anything is drawn in detail
+One item per aspect, in this order, each building on the choice before it: the site plan, the layouts, the facades.
+
+1. At least three variants, each with its idea in one line, its geometry and every number the comparison needs [check: variants.inputs]
+2. Every variant is tested against the limits given for the plot; at least one keeps them all, and one that does not is shown and marked [check: variants.limits]
+3. The variants differ in kind: no two are within 5 % of each other on every criterion [check: variants.distinct]
+4. They are scored by the weights given, and those no other variant beats on every criterion are named [check: variants.compared]
+5. The chosen variant is one of the set and keeps every limit [check: variants.chosen]
+6. The choice is the architect's [user: the variant, and what the next stage takes from the others]
+
+Indicators the tool computes from the geometry. Site: plot and footprint area, coverage, gross area and intensity, biologically active share, smallest distance to the boundary, height, parking places per flat, usable-to-gross efficiency. Layouts: number of rooms, usable area, share of circulation. Facades: share of glazing and how much of it faces south. Anything else the architect weighs - a cost index, a count of flats with two exposures - goes in as a number under `extra`.
+
+The limits are the architect's statement of what the local plan or the decision on building conditions allows; the tool tests against them and knows no regulation itself.
+Goes wrong: three versions of one idea; a favourite dressed as a comparison; a variant that breaks a limit quietly removed; numbers typed instead of derived; the highest score presented as the decision.
+
 ## intake - sources into a checked description
 1. Every element has an id, a layer role and the source it was read from [check: spec.schema]
 2. Every raster drawing is tied to a written dimension, and several agree [check: spec.scale]

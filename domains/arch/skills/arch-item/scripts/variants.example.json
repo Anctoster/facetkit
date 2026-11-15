@@ -1,0 +1,169 @@
+{
+ "aspect": "site",
+ "plot": {
+  "outline": [
+   [
+    0,
+    0
+   ],
+   [
+    60,
+    0
+   ],
+   [
+    60,
+    40
+   ],
+   [
+    0,
+    40
+   ]
+  ]
+ },
+ "limits": {
+  "max_coverage_pct": 30,
+  "max_intensity": 1.2,
+  "min_green_pct": 25,
+  "max_height_m": 16,
+  "min_setback_m": 4,
+  "min_parking_per_flat": 1.2
+ },
+ "weights": {
+  "usable_m2": 3,
+  "green_pct": 1,
+  "parking_per_flat": 1,
+  "efficiency": 2,
+  "cost_index": -2
+ },
+ "variants": [
+  {
+   "id": "A",
+   "idea": "one bar along the street, courtyard to the south",
+   "buildings": [
+    {
+     "outline": [
+      [
+       6,
+       24
+      ],
+      [
+       54,
+       24
+      ],
+      [
+       54,
+       36
+      ],
+      [
+       6,
+       36
+      ]
+     ],
+     "storeys": 4,
+     "height_m": 13.5
+    }
+   ],
+   "green_m2": 900,
+   "parking_places": 34,
+   "flats": 28,
+   "usable_m2": 1800,
+   "cost_index": 1.0
+  },
+  {
+   "id": "B",
+   "idea": "two blocks with a green passage between them",
+   "buildings": [
+    {
+     "outline": [
+      [
+       6,
+       6
+      ],
+      [
+       24,
+       6
+      ],
+      [
+       24,
+       24
+      ],
+      [
+       6,
+       24
+      ]
+     ],
+     "storeys": 4,
+     "height_m": 13.5
+    },
+    {
+     "outline": [
+      [
+       36,
+       6
+      ],
+      [
+       54,
+       6
+      ],
+      [
+       54,
+       24
+      ],
+      [
+       36,
+       24
+      ]
+     ],
+     "storeys": 4,
+     "height_m": 13.5
+    }
+   ],
+   "green_m2": 820,
+   "parking_places": 32,
+   "flats": 26,
+   "usable_m2": 1950,
+   "cost_index": 1.08
+  },
+  {
+   "id": "C",
+   "idea": "L-shaped block closing the corner",
+   "buildings": [
+    {
+     "outline": [
+      [
+       6,
+       6
+      ],
+      [
+       18,
+       6
+      ],
+      [
+       18,
+       24
+      ],
+      [
+       40,
+       24
+      ],
+      [
+       40,
+       36
+      ],
+      [
+       6,
+       36
+      ]
+     ],
+     "storeys": 4,
+     "height_m": 13.5
+    }
+   ],
+   "green_m2": 760,
+   "parking_places": 36,
+   "flats": 30,
+   "usable_m2": 2050,
+   "cost_index": 1.05
+  }
+ ]
+}
