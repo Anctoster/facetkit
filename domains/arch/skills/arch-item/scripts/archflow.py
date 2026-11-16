@@ -5,6 +5,9 @@ Python 3.8+, standard library only.  Usage: archflow.py [--root DIR] <command> .
 Exit codes: 0 ok, 1 refused, 3 cap spent or loop (stop and report BLOCKED)."""
 import argparse, hashlib, json, os, re, sys, time
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import efficiency  # noqa: E402  (next to this script)
+
 LADDER = ["haiku", "sonnet", "opus"]
 def _r(*steps, checks=(), approve=True):
     return {"steps": list(steps), "checks": list(checks), "approve_brief": approve}
@@ -623,10 +626,15 @@ def main():
     p = sub.add_parser("accept"); p.add_argument("item"); p.add_argument("--by", required=True)
     p = sub.add_parser("remark"); p.add_argument("item"); p.add_argument("text"); p.add_argument("--cause", required=True, choices=["agent", "brief", "taste"])
     p = sub.add_parser("diff"); p.add_argument("before"); p.add_argument("after"); p.add_argument("--only", default="")
+    efficiency.add_parsers(sub)
     a = ap.parse_args()
     j = Journal(a.root)
     routes = load_routes(a.root)
 
+    done = efficiency.dispatch(j, routes, state, a, os.path.join(a.root, "project.json"))
+    if done is not None:
+        print(done[0])
+        sys.exit(done[1])
     if a.cmd == "init":
         os.makedirs(os.path.join(a.root, "work"), exist_ok=True)
         for name, data in (("routes.json", DEFAULT_ROUTES), ("project.json", PROJECT_TEMPLATE)):

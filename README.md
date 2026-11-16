@@ -196,9 +196,18 @@ From record to knowledge — hypotheses with computed verdicts, lessons whose co
 
 `facet benchmark` runs the guards against damaged journals, dishonest stories and doctored proofs whose expected outcomes are kept apart from the code (`benchmark/expected.json`); `--write` records the result per version, and a later run names regressions. What is still open is listed, ticket by ticket, in [docs/roadmap-0.6.0.md](docs/roadmap-0.6.0.md).
 
+## Not only for programmers
+
+| You are | What facetkit gives you | Start with |
+|---|---|---|
+| **tester** | a risk map of what changed, with the tests each area needs and why; time-boxed exploratory sessions; bug reports that carry their reproduction and count once a second run or a second person reproduces them; fixes that must leave a test that names the bug; GO/NO-GO with every reason. A bug in closed work is that item's escape, so the team's trust record learns from testers. | [for testers](docs/for-testers.md), `facet qa`, plugin `qa-flow` |
+| **software architect** | architecture rules on the import graph as a ratchet (no new violations); decision records whose predictions are measured (`facet decide check`); hot spots and hidden coupling; routes that call the architect when a change turns out bigger than planned | [for architects](docs/for-architects.md), `facet fitness`, `facet decide` |
+| **building architect** | Archicad production and visualization run by cheap agents with briefs, measured checks and an independent inspector; the client's page in Polish | [for architects](docs/for-architects.md), plugins `arch-flow`, `viz-flow` |
+| **team lead, client, auditor** | the same record in their words | `facet explain --for lead|client|auditor` |
+
 ## Beyond code: domains
 
-The method does not depend on the work being code. [`domains/arch`](domains/arch) applies it to architectural production in Archicad — source texts and raster drawings into a checked model description, a model on the right layers, complete drawing sets and a schedule with quantified risk (`arch-flow`). [`domains/viz`](domains/viz) applies it to architectural visualization — Archicad → Blender → renders → website images — as a second, self-contained plugin (`viz-flow`): a brief with checkable acceptance criteria instead of a specification, measured stage checks instead of tests, and a quality report that tells agent defects, missing criteria and new wishes apart.
+The method does not depend on the work being code. [`domains/qa`](domains/qa) gives it to testers (`qa-flow`). [`domains/arch`](domains/arch) applies it to architectural production in Archicad — source texts and raster drawings into a checked model description, a model on the right layers, complete drawing sets and a schedule with quantified risk (`arch-flow`). [`domains/viz`](domains/viz) applies it to architectural visualization — Archicad → Blender → renders → website images — as a second, self-contained plugin (`viz-flow`): a brief with checkable acceptance criteria instead of a specification, measured stage checks instead of tests, and a quality report that tells agent defects, missing criteria and new wishes apart.
 
 ## Many developers, many teams
 
@@ -336,7 +345,7 @@ Written after studying these projects; none of their text is included.
 
 ## Documentation
 
-[Hypotheses](HYPOTHESES.md) · [Dogfood report](docs/dogfood.md) · [Architecture](docs/architecture.md) · [Governance](docs/governance.md) · [Skill intelligence](docs/skill-intelligence.md) · [Extensions](docs/extensions.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+[How it works, by role](docs/how-it-works.md) · [For testers](docs/for-testers.md) · [For architects](docs/for-architects.md) · [Roadmap to 2.0](docs/roadmap-2.0.md) · [Hypotheses](HYPOTHESES.md) · [Dogfood report](docs/dogfood.md) · [Architecture](docs/architecture.md) · [Governance](docs/governance.md) · [Skill intelligence](docs/skill-intelligence.md) · [Extensions](docs/extensions.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ## Licence
 

@@ -1,6 +1,6 @@
 {
   "name": "arch-flow",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Evidence-first architectural production in Archicad by a small team of cheap agents: source text and raster drawings become a checked model description, the description becomes a model on the right layers, the model becomes complete drawing sets (projekt budowlany, projekt wykonawczy) - each step with a brief, measured checks and a schedule with quantified risk.",
   "author": { "name": "arch-flow" },
   "license": "MIT",

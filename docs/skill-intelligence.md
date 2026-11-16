@@ -17,8 +17,11 @@ A facet declares in its front matter what the record shows when it was followed:
 ```yaml
 guards: [false-green]          # the failure modes it exists to prevent (facet skill modes)
 footprint: [tool:mutate]       # tool:<facet command> · evidence:<name> · event:<kind> · note · runs · red-first
-ablatable: no                  # only for rules whose absence could do harm no later check would catch
+ablatable: replay              # no · replay · live — may the rule be left out to learn what it is worth?
+backstop: [mutate]             # (live only) the check a tool enforces when the rule is absent
 ```
+
+Every facet must say `ablatable`. **no** — never left out, not even in a replay (safety rules: budget caps, the inspector's independence, threshold guards, the gate). **replay** — only in a counterfactual replay of finished work (`facet cf`). **live** — also in real work, and only while every backstop is required by the project's policy at the level it demands (`caps` always is). A facet that says nothing is treated as `no`, and `facet audit` fails it.
 
 Every `facet` command used with `--item` leaves a line in the item's ledger, so "the agent ran `facet capsule verify` during this step" is a fact, not a claim. A rule whose observance leaves no trace has no footprint — on purpose — and is then judged only by withholding.
 
@@ -38,9 +41,17 @@ Comparing steps where a rule was followed with steps where it was not is a corre
 "facetkit": { "skillint": { "ablate": { "rate": 0.1, "seed": "2026" } } }
 ```
 
-With a rate above zero, `facet flow start` withholds **at most one** facet from a step, chosen by a seeded draw over the facets that may be withheld, writes the reduced rules to `.work/<item>/rules-<step>.md` and prints the path for the coordinator to pass on. Rules marked `ablatable: no` — budget caps, the inspector's independence, threshold guards, the gate — are never withheld. Withholding is **off by default**: it trades a little quality now for knowledge, and that is the project owner's decision.
+With a rate above zero, **an item** — not a step — may go without **one** rule. The draw is made once, when the item opens, over the `live` rules of every role on its route whose backstop the policy enforces; it is recorded on `item.open` with its probability, and every step that would have had the rule gets a reduced rules file (`.work/<item>/rules-<step>.md`). Steps of one item share its outcome, so they are one observation, not several. Withholding is **off by default**: it trades a little quality now for knowledge, and that is the project owner's decision.
 
-Faster and without risk to real work: replay a recorded step without the facet (`facet eval replay`, then `facet compose --take …` for the reduced rules) and compare the checks.
+Without any risk to real work: **counterfactual replay**. A finished step whose start was snapshotted is run again twice from the same snapshot — once with the rule, once without — and the project's checks judge both. Each pair is its own control; a sign test over the pairs decides.
+
+```bash
+facet cf candidates --facet anchored-handoff:verify-on-read
+facet cf setup --item P07 --step build --facet anchored-handoff:verify-on-read --arm without
+# run the agent in the printed worktree with the printed rules file, then:
+facet cf judge --item P07 --step build --facet anchored-handoff:verify-on-read --arm without --dir <worktree>
+facet cf report
+```
 
 ## Diagnoses
 
@@ -92,7 +103,7 @@ facet experiment start EXP-001      # from now on each step that loads the facet
 facet experiment report             # control vs treatment, with intervals, and what may be concluded
 ```
 
-The manifest is written once, before the data. The arm of a unit (one step of one item) is a function of the seed, so the assignment can be recomputed by anyone. Units on another model or of another task class are left out and counted. A facet marked `ablatable: no` is never withheld. With fewer than `--min` units in either arm the verdict is "not enough data"; a difference found once is *exploratory*; a second experiment declared with `--confirms EXP-001` makes it *validated* only if it shows the same direction. The report ends with a decision for a person — nothing is retired automatically.
+The manifest is written once, before the data. The unit is the item (manifests from before 0.7 keep the step); its arm is a function of the seed, so the assignment can be recomputed by anyone. Units on another model or of another task class are left out and counted. A facet marked `ablatable: no` is never withheld. With fewer than `--min` units in either arm the verdict is "not enough data"; a difference found once is *exploratory*; a second experiment declared with `--confirms EXP-001` makes it *validated* only if it shows the same direction. The report ends with a decision for a person — nothing is retired automatically.
 
 ## The Facet Intelligence Engine (0.6.0)
 
@@ -107,7 +118,7 @@ facet intel report IO-1
 ```
 
 - **Arms** differ in presence (`off`/`on`), wording (`--variant FILE`), model, or position among the other rules.
-- **Strata.** Every unit — one step of one item — belongs to a stratum of role, task class and difficulty, all fixed before the work. Arms are dealt in shuffled blocks inside each stratum, so no arm collects the easy tasks. Units whose stratum lacks the other arm are not compared with anything.
+- **Strata.** Every unit — one item; its steps are collapsed into one observation — belongs to a stratum of role, task class and difficulty, all fixed before the work. Arms are dealt in shuffled blocks inside each stratum, so no arm collects the easy tasks. Units whose stratum lacks the other arm are not compared with anything.
 - **Outcomes** come from the journal, never from the agent under test: `clean` (closed without rework or a later defect), `errors`, `falsePasses`, `retries`, `tokens`, `minutes`. One is primary and decides; the rest describe.
 - **Inference.** A stratified permutation test and bootstrap interval, seeded: the same journal gives the same numbers. Thresholds are adjusted for every arm read (Holm).
 - **Stages.** exploratory → confirmed by an independent repetition (`--confirms`). Only a confirmed result may change a rule.

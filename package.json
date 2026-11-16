@@ -50,7 +50,9 @@
     "./fitness": "./lib/fitness.mjs",
     "./explain": "./lib/explain.mjs",
     "./counterfactual": "./lib/counterfactual.mjs",
-    "./crosslearn": "./lib/crosslearn.mjs"
+    "./crosslearn": "./lib/crosslearn.mjs",
+    "./qa": "./lib/qa.mjs",
+    "./decisions": "./lib/decisions.mjs"
   },
   "files": ["bin", "lib", "skills", "agents", "commands", "templates", "presets", "trials", "benchmark", "domains", "docs", "examples", "HYPOTHESES.md", "loadouts.json", "README.md", "CHANGELOG.md", "AUDIT.md", "LICENSE"],
   "engines": { "node": ">=20" },

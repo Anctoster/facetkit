@@ -37,6 +37,7 @@
 //   facet owners · experiment · benchmark · journal repair
 //   facet init [--minimal] [--claude] · facet demo · facet hypotheses [--write FILE]
 //   facet explain --for dev|lead|client|auditor [--lang en|pl|ru] [--html FILE] · facet fitness [--accept] · facet handoff check STEP
+//   facet qa plan|bug|charter|readiness · facet decide new|check|list
 //   facet cf candidates|setup|judge|report · facet learn export|import|pool · facet key new|trust|list · facet proof witness
 //
 // Configuration (optional) in the project's package.json:
@@ -62,7 +63,7 @@ const argv = process.argv.slice(2);
 const split = argv.indexOf('--');
 const own = split < 0 ? argv : argv.slice(0, split);
 const rest = split < 0 ? [] : argv.slice(split + 1);
-const [command, ...positional] = own.filter((a, i) => !a.startsWith('--') && !(own[i - 1]?.startsWith('--') && !['--json', '--verbose', '--plan', '--check', '--force', '--record', '--snapshot', '--no-atlas', '--no-history', '--neighbours', '--minimal', '--claude', '--rerun', '--no-sign', '--accept', '--provisional'].includes(own[i - 1])));
+const [command, ...positional] = own.filter((a, i) => !a.startsWith('--') && !(own[i - 1]?.startsWith('--') && !['--json', '--verbose', '--plan', '--check', '--force', '--record', '--snapshot', '--no-atlas', '--no-history', '--neighbours', '--minimal', '--claude', '--rerun', '--no-sign', '--accept', '--provisional', '--all'].includes(own[i - 1])));
 const flag = (name) => own.includes(`--${name}`);
 const opt = (name, fallback) => (own.includes(`--${name}`) ? own[own.indexOf(`--${name}`) + 1] : fallback);
 const opts = (name) => own.flatMap((a, i) => (a === `--${name}` ? [own[i + 1]] : []));
@@ -273,7 +274,7 @@ for (const spec of project.extensions ?? []) {
     const mod = await import(spec.startsWith('.') ? pathToFileURL(path.resolve(CWD, spec)).href : spec);
     extensions.push(mod.default ?? mod);
 }
-const ops = opsCommands({ CWD, KIT, project, opt, flag, list, fail, positional, work, readJson, loadoutsFile, extensions, skills: () => loadSkills(skillDirs) });
+const ops = opsCommands({ CWD, KIT, project, opt, opts, flag, list, fail, positional, work, readJson, loadoutsFile, extensions, skills: () => loadSkills(skillDirs) });
 const { evidence, ...opsRest } = ops;
 Object.assign(commands, opsRest, setupCommands({ CWD, KIT, opt, flag, fail, skills: () => loadSkills(skillDirs) }), ...extensions.map((x) => x.commands ?? {}));
 

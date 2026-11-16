@@ -301,5 +301,131 @@ class Images(unittest.TestCase):
         self.assertEqual(self.tool("contact_sheet.py", d, os.path.join(out, "sheet.jpg"), "--pick", "4").returncode, 0)
 
 
+class Efficiency(unittest.TestCase):
+    """Is the agent team worth it on this kind of task - from the journal, plus two records only the architect can give."""
+    SCRIPT = "vizflow.py"
+    ROUTE = "materials"
+
+    def setUp(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("flow_under_test", os.path.join(SCRIPTS, self.SCRIPT))
+        self.m = importlib.util.module_from_spec(spec)
+        sys.path.insert(0, SCRIPTS)
+        spec.loader.exec_module(self.m)
+        self.root = os.path.join(tempfile.mkdtemp(), "j")
+        self.f("init")
+        self.j = self.m.Journal(self.root)
+
+    def f(self, *a):
+        return subprocess.run([sys.executable, os.path.join(SCRIPTS, self.SCRIPT), "--root", self.root, *a], capture_output=True, text=True)
+
+    def item(self, it, rework=False, minutes=10, model="sonnet", hand=None, spent=None, remark=None, fail=None):
+        """A finished item written straight into the journal, with timestamps an agent run would leave."""
+        if hand is not None:
+            self.assertEqual(self.f("hand", it, "--hours", str(hand), "--by", "arch").returncode, 0)
+        route = self.m.DEFAULT_ROUTES["routes"][self.ROUTE]
+        self.j.add("open", item=it, route=self.ROUTE, title="")
+        clock = [0]
+
+        def ts():
+            clock[0] += 1
+            return "2026-11-02T%02d:%02d:00" % divmod(clock[0] * minutes, 60)
+        steps = [s for s in route["steps"]]
+        worker = next(s["agent"] for s in steps if s["id"] not in ("order", "proof"))
+        rounds = [True, False] if rework else [False]
+        for again in rounds:
+            for s in steps:
+                self.j.add("start", item=it, step=s["id"], agent=s["agent"], model=model, ts=ts())
+                if s["id"] == "proof" and fail:
+                    self.j.add("evidence", item=it, check=fail, status="FAIL")
+                self.j.add("end", item=it, step=s["id"], status="DONE", tokens=1000, agent=s["agent"], model=model, ts=ts())
+            self.j.add("verdict", item=it, verdict="REWORK" if again else "PASS", fix=["%s:other" % worker] if again else None)
+        self.j.add("close", item=it)
+        if spent is not None:
+            self.assertEqual(self.f("spent", it, "--minutes", str(spent), "--on", "review").returncode, 0)
+        if remark:
+            self.j.add("remark", item=it, text="x", cause=remark)
+        else:
+            self.j.add("accept", item=it, by="arch")
+
+    def test_nothing_is_concluded_from_unfinished_work(self):
+        self.assertIn("No closed item yet", self.f("efficiency").stdout)
+
+    def test_savings_come_from_the_estimate_given_before_the_work(self):
+        for i in range(5):
+            self.item("A%d" % i, hand=4, spent=60, rework=(i == 0))
+        r = self.f("efficiency").stdout
+        self.assertIn("worth it: saves 3.0 h per item and is right the first time in 80%", r)
+        self.assertIn("right the first time", r)
+        self.assertIn("80% (4/5, 80%:", r)
+        self.assertRegex(r, r"same work by hand\s+4\.0 h")
+        self.assertNotIn("! ", r.split("Agents")[0])
+
+    def test_an_estimate_given_after_the_agents_started_is_not_used(self):
+        self.item("L1", spent=30)
+        out = self.f("hand", "L1", "--hours", "8", "--by", "arch")
+        self.assertIn("LATE", out.stdout)
+        r = self.f("efficiency").stdout
+        self.assertIn("1 estimates given after the work started", r)
+        self.assertIn("too few items to judge", r)
+        self.assertEqual(self.f("hand", "L1", "--hours", "2", "--by", "arch").returncode, 1, "the first estimate stands")
+
+    def test_missing_records_are_named_not_guessed(self):
+        self.item("M1")
+        r = self.f("efficiency").stdout
+        self.assertIn("the architect's time was not recorded", r)
+        self.assertIn("no estimate of the hand work", r)
+        self.assertRegex(r, r"time saved per item\s+unknown")
+
+    def test_when_the_architect_spends_more_than_by_hand_it_says_so(self):
+        for i in range(5):
+            self.item("B%d" % i, hand=1, spent=90)
+        self.assertIn("not worth it yet", self.f("efficiency").stdout)
+
+    def test_a_cheaper_model_is_compared_only_with_enough_items_and_separated_intervals(self):
+        for i in range(6):
+            self.item("H%d" % i, model="haiku", rework=True)
+        for i in range(6):
+            self.item("S%d" % i, model="sonnet")
+        rep = json.loads(self.f("efficiency", "--json").stdout)
+        cmp_ = rep["routes"][self.ROUTE]["models"][0]
+        self.assertEqual(cmp_["better"], "sonnet")
+        r = self.f("efficiency", "--lang", "ru").stdout
+        self.assertIn("sonnet здесь лучше, чем haiku", r)
+        self.assertIn("поднять на модель выше", r)
+
+    def test_checks_that_caught_a_defect_and_the_remarks_are_counted(self):
+        self.item("C1", fail="invariants", remark="brief")
+        self.item("C2", remark="taste")
+        sm = json.loads(self.f("efficiency", "--json").stdout)["routes"][self.ROUTE]
+        self.assertEqual(sm["caught"], {"invariants": 1})
+        self.assertEqual((sm["remarks"]["brief"], sm["remarks"]["taste"], sm["accepted"]["k"]), (1, 1, 0))
+        self.assertEqual(sm["agent_min"], 10 * (len(self.m.DEFAULT_ROUTES["routes"][self.ROUTE]["steps"]) - 0))
+
+    def test_cost_needs_a_price_for_every_model_used(self):
+        self.item("P1")
+        sm = json.loads(self.f("efficiency", "--json").stdout)["routes"][self.ROUTE]
+        self.assertIsNone(sm["cost"])
+        pj = os.path.join(self.root, "project.json")
+        with open(pj, encoding="utf-8") as fh:
+            d = json.load(fh)
+        d["prices"] = {"sonnet": 3.0}
+        with open(pj, "w", encoding="utf-8") as fh:
+            json.dump(d, fh)
+        sm = json.loads(self.f("efficiency", "--json").stdout)["routes"][self.ROUTE]
+        self.assertAlmostEqual(sm["cost"], len(self.m.DEFAULT_ROUTES["routes"][self.ROUTE]["steps"]) * 1000 / 1e6 * 3.0)
+
+    def test_a_page_for_the_office(self):
+        for i in range(5):
+            self.item("W%d" % i, hand=3, spent=40)
+        out = os.path.join(self.root, "eff.html")
+        self.f("efficiency", "--lang", "pl", "--html", out)
+        with open(out, encoding="utf-8") as fh:
+            page = fh.read()
+        self.assertIn("opłaca się", page)
+        self.assertIn("prefers-color-scheme:dark", page)
+        self.assertEqual(self.f("verify").returncode, 0, "the records sit in the same hash chain")
+
+
 if __name__ == "__main__":
     unittest.main()

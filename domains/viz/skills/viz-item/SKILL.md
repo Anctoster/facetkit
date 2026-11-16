@@ -40,6 +40,8 @@ Carry out one item with the agent team. You are the coordinator: you hold no pla
 
 When the user asks how the agents are doing: `vizflow.py quality`, relayed in their language with its own caveats - "not enough data" stays "not enough data".
 
+**Measuring whether the agents are worth it.** When the user approves the brief, ask once how long this work takes the office by hand and record it before any agent starts: `vizflow.py hand <ITEM> --hours <H> --by <name>` (no answer, no record - never estimate it yourself). At acceptance ask how much of their own time the item took and record it: `vizflow.py spent <ITEM> --minutes <M> --on brief|questions|preview|review|fix`. When they ask whether the agents pay off: `vizflow.py efficiency --lang <their language>` (or `--html <file>` for a page), relayed with its own caveats.
+
 ## Never
 
 - Call an agent that `vizflow.py next` did not print, or on a different model than it printed.

@@ -1,0 +1,8 @@
+{
+  "name": "qa-flow",
+  "version": "0.1.0",
+  "description": "The facetkit method for testers: a risk map of what changed, exploratory sessions with a time box, bug reports that carry their reproduction and are confirmed by a second run or a second person, fixes that must leave a test behind, and a release readiness verdict with every reason listed. Uses the `facet` command (npm i -g facetkit).",
+  "author": { "name": "Anctoster" },
+  "license": "MIT",
+  "keywords": ["testing", "qa", "exploratory testing", "bug reports", "release readiness", "risk-based testing", "agents"]
+}

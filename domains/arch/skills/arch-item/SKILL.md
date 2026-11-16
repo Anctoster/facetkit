@@ -47,6 +47,8 @@ Carry out one item with the agent team. You are the coordinator: the journal dec
 
 `archflow.py quality` reports the agents, the inspector and the briefs separately.
 
+**Measuring whether the agents are worth it.** When the user approves the brief, ask once how long this work takes the office by hand and record it before any agent starts: `archflow.py hand <ITEM> --hours <H> --by <name>` (no answer, no record - never estimate it yourself). At acceptance ask how much of their own time the item took and record it: `archflow.py spent <ITEM> --minutes <M> --on brief|questions|preview|review|fix`. When they ask whether the agents pay off: `archflow.py efficiency --lang <their language>` (or `--html <file>` for a page), relayed with its own caveats.
+
 ## Never
 
 - Call an agent or a model the journal did not print; do an agent's work yourself.
