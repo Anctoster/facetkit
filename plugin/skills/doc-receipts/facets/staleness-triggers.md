@@ -5,6 +5,7 @@ needs: [receipt]
 bounds: topics=4
 guards: [doc-drift]
 footprint: [tool:receipt check]
+ablatable: replay
 ---
 # Know when your memory is not a source
 

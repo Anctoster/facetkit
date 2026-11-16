@@ -5,6 +5,8 @@ needs: [trace]
 bounds: rounds=2
 guards: [spec-gap, scope-creep]
 footprint: [evidence:trace]
+ablatable: live
+backstop: [trace]
 ---
 # Each test claims one clause by its id
 

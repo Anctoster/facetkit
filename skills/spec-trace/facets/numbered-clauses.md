@@ -5,6 +5,8 @@ needs: [trace]
 bounds: clauses=12
 guards: [spec-gap]
 footprint: [tool:trace]
+ablatable: live
+backstop: [trace]
 ---
 # Write the request as numbered, refutable clauses
 

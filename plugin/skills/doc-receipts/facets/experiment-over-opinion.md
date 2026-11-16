@@ -4,6 +4,7 @@ phase: [build]
 needs: [run]
 bounds: probes=2, lines=15
 guards: [doc-drift]
+ablatable: replay
 ---
 # Let the installed version settle the argument
 

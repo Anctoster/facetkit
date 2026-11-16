@@ -5,6 +5,7 @@ needs: [ui]
 bounds: handchecks=5
 guards: [regression]
 footprint: [tool:ui]
+ablatable: replay
 ---
 # Treat every rule line as a defect
 

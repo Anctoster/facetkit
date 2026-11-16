@@ -4,6 +4,8 @@ phase: [red, ui, proof]
 needs: [ui]
 bounds: attempts=2
 guards: [spec-gap]
+ablatable: live
+backstop: [ui]
 ---
 # Turn every number in the goal into a budget
 

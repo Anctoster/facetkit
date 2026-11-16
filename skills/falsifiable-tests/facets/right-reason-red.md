@@ -5,6 +5,7 @@ needs: [run]
 bounds: attempts=3
 guards: [false-green]
 footprint: [red-first]
+ablatable: replay
 ---
 # A new test must fail for the behaviour it names
 

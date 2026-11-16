@@ -4,6 +4,7 @@ phase: [map]
 bounds: cards=2, words=220
 guards: [seam-break, budget-burn]
 footprint: [tool:atlas]
+ablatable: replay
 ---
 # Ask for the card before you read the code
 

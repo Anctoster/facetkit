@@ -5,6 +5,8 @@ needs: [run]
 bounds: minutes=10, rounds=2
 guards: [seam-break, regression]
 footprint: [evidence:neighbours]
+ablatable: live
+backstop: [neighbours]
 ---
 # Run the tests of the slices you touch, not only your own
 

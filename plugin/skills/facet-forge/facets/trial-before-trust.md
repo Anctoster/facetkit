@@ -3,6 +3,7 @@ id: trial-before-trust
 phase: [forge]
 bounds: trials=2, runs=3
 guards: [other]
+ablatable: replay
 ---
 # Keep a facet only if it changes what an agent does
 

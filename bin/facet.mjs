@@ -27,7 +27,17 @@
 //   facet atlas card|find|path|hotspots|coupling     the code, without reading it
 //   facet board [--out FILE]                         the whole system on one page
 //   facet skill report|coverage|modes                which rules work, why, and what to do about each
+//   facet intel design|start|stop|report|size        controlled trials of a facet: presence, wording, model, position
+//   facet evolve scan|list|test|adopt|reject         recurring mistakes → diagnosed rules → tested changes → a person's decision
+//   facet hypo new|list · learn [apply --by N|retire ID]      predictions the journal can refute; what was learned from them
+//   facet trustgraph [--item ID] · heal [scan|apply|undo KEY]  who and what a result rests on; own weak points and their repair
+//   facet economy [--role AGENT --phase PHASE --risk R]       what each rule, agent and check costs and returns
+//   facet route [files…] [--task "…"] [--item ID --apply]   owners, reach, risk and the route, before the work
+//   facet proof create|verify|status|decay · check --stale   what a result is proven for; what a change sends back
+//   facet owners · experiment · benchmark · journal repair
 //   facet init [--minimal] [--claude] · facet demo · facet hypotheses [--write FILE]
+//   facet explain --for dev|lead|client|auditor [--lang en|pl|ru] [--html FILE] · facet fitness [--accept] · facet handoff check STEP
+//   facet cf candidates|setup|judge|report · facet learn export|import|pool · facet key new|trust|list · facet proof witness
 //
 // Configuration (optional) in the project's package.json:
 //   "facetkit": { "skills": ["docs/agents/skills"], "loadouts": "docs/agents/loadouts.json", "work": ".work", "dirs": ["src","server","tests"] }
@@ -52,7 +62,7 @@ const argv = process.argv.slice(2);
 const split = argv.indexOf('--');
 const own = split < 0 ? argv : argv.slice(0, split);
 const rest = split < 0 ? [] : argv.slice(split + 1);
-const [command, ...positional] = own.filter((a, i) => !a.startsWith('--') && !(own[i - 1]?.startsWith('--') && !['--json', '--verbose', '--plan', '--check', '--force', '--record', '--snapshot', '--no-atlas', '--no-history', '--neighbours', '--minimal', '--claude'].includes(own[i - 1])));
+const [command, ...positional] = own.filter((a, i) => !a.startsWith('--') && !(own[i - 1]?.startsWith('--') && !['--json', '--verbose', '--plan', '--check', '--force', '--record', '--snapshot', '--no-atlas', '--no-history', '--neighbours', '--minimal', '--claude', '--rerun', '--no-sign', '--accept', '--provisional'].includes(own[i - 1])));
 const flag = (name) => own.includes(`--${name}`);
 const opt = (name, fallback) => (own.includes(`--${name}`) ? own[own.indexOf(`--${name}`) + 1] : fallback);
 const opts = (name) => own.flatMap((a, i) => (a === `--${name}` ? [own[i + 1]] : []));
@@ -156,9 +166,9 @@ const commands = {
         const files = list(opt('files'));
         const test = opt('test');
         if (!files.length || !test) fail('mutate: facet mutate --files a.ts,b.ts --test "npm test -- a" [--ref HEAD] [--max 12] [--allow 0]');
-        const r = probe({ cwd: CWD, files, test, ref: opt('ref'), max: Number(opt('max', 12)), timeoutSec: Number(opt('timeout', 120)), maxMinutes: Number(opt('max-minutes', 10)), log: flag('verbose') ? console.log : undefined });
+        const r = probe({ cwd: CWD, files, test, ref: opt('ref'), max: Number(opt('max', 12)), timeoutSec: Number(opt('timeout', 120)), maxMinutes: Number(opt('max-minutes', 10)), log: flag('verbose') ? console.log : undefined, equivalents: opt('equivalents') ? readJson(path.resolve(CWD, opt('equivalents')), []) : [] });
         if (r.baseline !== 'green') fail(`mutate: ${r.message}`, 2);
-        console.log(`mutants: ${r.planned} of ${r.total} possible · killed ${r.killed} · survived ${r.survived.length}${r.notRun ? ` · not run ${r.notRun} (time limit)` : ''} · ${r.minutes} min`);
+        console.log(`mutants: ${r.planned} of ${r.total} possible · detected ${r.killed} · survived ${r.survived.length} · equivalent (declared) ${r.equivalent.length} · invalid (did not load) ${r.invalid.length}${r.notRun ? ` · not executed ${r.notRun} (time limit)` : ''} · ${r.minutes} min`);
         for (const s of r.survived) console.log(`  SURVIVED ${s.file}:${s.line} [${s.op}]  ${s.before}  →  ${s.after}`);
         if (r.survived.length) console.log('A survivor means no test noticed that change: add the missing assertion, or note in one line why the mutant is equivalent.');
         if (opt('out')) fs.writeFileSync(path.resolve(CWD, opt('out')), JSON.stringify(r, null, 2));
@@ -263,7 +273,7 @@ for (const spec of project.extensions ?? []) {
     const mod = await import(spec.startsWith('.') ? pathToFileURL(path.resolve(CWD, spec)).href : spec);
     extensions.push(mod.default ?? mod);
 }
-const ops = opsCommands({ CWD, project, opt, flag, list, fail, positional, work, readJson, loadoutsFile, extensions, skills: () => loadSkills(skillDirs) });
+const ops = opsCommands({ CWD, KIT, project, opt, flag, list, fail, positional, work, readJson, loadoutsFile, extensions, skills: () => loadSkills(skillDirs) });
 const { evidence, ...opsRest } = ops;
 Object.assign(commands, opsRest, setupCommands({ CWD, KIT, opt, flag, fail, skills: () => loadSkills(skillDirs) }), ...extensions.map((x) => x.commands ?? {}));
 

@@ -3,6 +3,7 @@ id: contract-pin
 phase: [red]
 bounds: contracts=3
 guards: [seam-break]
+ablatable: replay
 ---
 # One shared example pins both sides of a seam
 

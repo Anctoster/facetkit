@@ -4,6 +4,7 @@ phase: [retro]
 bounds: proposals=2
 guards: [other]
 footprint: [tool:retro report]
+ablatable: replay
 ---
 # Act on one-sided evidence only
 

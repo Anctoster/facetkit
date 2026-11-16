@@ -5,3 +5,5 @@ facet-board.html
 *.log
 .DS_Store
 facet-demo.html
+__pycache__/
+*.pyc

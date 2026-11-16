@@ -1,6 +1,6 @@
 {
   "name": "facetkit",
-  "version": "0.5.1",
+  "version": "0.7.0",
   "author": "anctoster",
   "description": "Evidence-first engineering for teams of AI agents: composable skill facets, measuring tools, and one journal from which state, cost, evaluation and the trust in a result are computed.",
   "type": "module",
@@ -38,15 +38,31 @@
     "./atlas": "./lib/atlas.mjs",
     "./board": "./lib/board.mjs",
     "./skillint": "./lib/skillint.mjs",
-    "./lang": "./lib/lang.mjs"
+    "./lang": "./lib/lang.mjs",
+    "./proof": "./lib/proof.mjs",
+    "./experiments": "./lib/experiments.mjs",
+    "./ownership": "./lib/ownership.mjs",
+    "./benchmark": "./lib/benchmark.mjs",
+    "./sign": "./lib/sign.mjs",
+    "./envinfo": "./lib/envinfo.mjs",
+    "./adapt": "./lib/adapt.mjs",
+    "./handoff": "./lib/handoff.mjs",
+    "./fitness": "./lib/fitness.mjs",
+    "./explain": "./lib/explain.mjs",
+    "./counterfactual": "./lib/counterfactual.mjs",
+    "./crosslearn": "./lib/crosslearn.mjs"
   },
-  "files": ["bin", "lib", "skills", "agents", "commands", "templates", "presets", "trials", "docs", "examples", "HYPOTHESES.md", "loadouts.json", "README.md", "CHANGELOG.md", "AUDIT.md", "LICENSE"],
+  "files": ["bin", "lib", "skills", "agents", "commands", "templates", "presets", "trials", "benchmark", "domains", "docs", "examples", "HYPOTHESES.md", "loadouts.json", "README.md", "CHANGELOG.md", "AUDIT.md", "LICENSE"],
   "engines": { "node": ">=20" },
   "facetkit": { "govern": { "scanIgnore": ["test/**"] } },
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "build:plugin": "node scripts/build-plugin.mjs",
-    "audit": "node bin/facet.mjs audit"
+    "audit": "node bin/facet.mjs audit",
+    "benchmark": "node bin/facet.mjs benchmark",
+    "demo:proof": "node scripts/demo-proof.mjs",
+    "test:viz": "python3 -m unittest discover -s domains/viz/tests",
+    "test:arch": "python3 -m unittest discover -s domains/arch/tests"
   },
   "peerDependencies": { "playwright": ">=1.40" },
   "peerDependenciesMeta": { "playwright": { "optional": true } },

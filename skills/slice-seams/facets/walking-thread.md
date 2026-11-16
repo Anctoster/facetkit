@@ -4,6 +4,7 @@ phase: [red, probe]
 needs: [mutate]
 bounds: threads=1, seconds=60
 guards: [seam-break]
+ablatable: replay
 ---
 # One real thread through every layer the slice touched
 

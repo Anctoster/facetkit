@@ -4,6 +4,7 @@ phase: [map, build, ops, close]
 needs: [run]
 bounds: lines=3
 guards: [stale-handoff, lost-work]
+ablatable: replay
 ---
 # End with what a stranger needs to continue
 

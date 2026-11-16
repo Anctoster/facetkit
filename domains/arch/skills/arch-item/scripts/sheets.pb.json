@@ -1,0 +1,63 @@
+{
+ "stage": "PB",
+ "note": "A starting list for the architectural part only. It is NOT the regulation: compare it with the text in force on the day of the task and with the client's requirements, edit it, and write the date into project.json -> regulations_checked_on. Basis to check: rozporzadzenie w sprawie szczegolowego zakresu i formy projektu budowlanego (Dz.U. 2022 poz. 1679 with later changes) - three bound parts, each with a title page, a table of contents, a descriptive part and a drawing part.",
+ "sheets": [
+  {
+   "no": "PZT-A-01",
+   "title": "Projekt zagospodarowania dzialki lub terenu",
+   "scale": "1:500",
+   "format": "A2",
+   "part": "PZT"
+  },
+  {
+   "no": "PAB-A-01",
+   "title": "Rzut parteru",
+   "scale": "1:100",
+   "format": "A2",
+   "part": "PAB"
+  },
+  {
+   "no": "PAB-A-02",
+   "title": "Rzut dachu",
+   "scale": "1:100",
+   "format": "A2",
+   "part": "PAB"
+  },
+  {
+   "no": "PAB-A-03",
+   "title": "Przekroj A-A",
+   "scale": "1:100",
+   "format": "A2",
+   "part": "PAB"
+  },
+  {
+   "no": "PAB-A-04",
+   "title": "Elewacje",
+   "scale": "1:100",
+   "format": "A2",
+   "part": "PAB"
+  }
+ ],
+ "documents": [
+  {
+   "id": "PZT-tytul",
+   "title": "PZT: strona tytulowa i spis tresci",
+   "file": "PZT-00.pdf"
+  },
+  {
+   "id": "PZT-opis",
+   "title": "PZT: czesc opisowa",
+   "file": "PZT-opis.pdf"
+  },
+  {
+   "id": "PAB-tytul",
+   "title": "PAB: strona tytulowa i spis tresci",
+   "file": "PAB-00.pdf"
+  },
+  {
+   "id": "PAB-opis",
+   "title": "PAB: czesc opisowa",
+   "file": "PAB-opis.pdf"
+  }
+ ]
+}

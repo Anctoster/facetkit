@@ -3,6 +3,7 @@ id: resume-by-card
 phase: [run]
 bounds: checks=3
 guards: [lost-work, budget-burn]
+ablatable: replay
 ---
 # Resume from the card, not from the beginning
 

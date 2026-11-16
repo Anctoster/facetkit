@@ -1,0 +1,18 @@
+{
+ "manifest": {
+  "id": "EXP-BENCH",
+  "facet": "thrift-loop:digest-runs",
+  "seed": "2026",
+  "minSamples": 20
+ },
+ "units": [
+  "A|build",
+  "B|build",
+  "C|build",
+  "D|build",
+  "E|build",
+  "F|build",
+  "G|build",
+  "H|build"
+ ]
+}

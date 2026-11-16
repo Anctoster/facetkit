@@ -5,6 +5,8 @@ needs: [run, read]
 bounds: reads=2
 guards: [budget-burn]
 footprint: [runs]
+ablatable: live
+backstop: [caps]
 ---
 # Run through the meter, read the digest
 

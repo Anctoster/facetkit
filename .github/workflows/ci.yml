@@ -21,3 +21,16 @@ jobs:
       - run: git config --global user.name ci && git config --global user.email ci@example.invalid
       - run: npm test
       - run: npm run audit
+      - run: npm run benchmark -- --write
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-node${{ matrix.node }}-${{ github.sha }}
+          path: benchmark/results/
+      - run: npm run demo:proof
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install numpy pillow pypdf
+      - run: npm run test:viz
+      - run: npm run test:arch

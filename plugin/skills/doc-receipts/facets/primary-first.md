@@ -3,6 +3,7 @@ id: primary-first
 phase: [design, ops]
 bounds: fetches=3
 guards: [doc-drift]
+ablatable: replay
 ---
 # Read the nearest primary source
 

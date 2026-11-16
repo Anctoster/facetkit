@@ -1,0 +1,3 @@
+{"at":"2026-01-05T09:00:00.000Z","kind":"item.open","item":"A","steps":[],"w":"ann","n":1,"lc":1,"prev":"00000000"}
+{"at":"2026-01-05T09:05:00.000Z","kind":"note","item":"A","text":"one","w":"ann","n":2,"lc":2,"prev":"130b1f0a"}
+{"at":"2026-01-05T09:05:00.001Z","kind":"note","item":"A","text":"its twin, written without the lock","w":"ann","n":2,"lc":2,"prev":"130b1f0a"}

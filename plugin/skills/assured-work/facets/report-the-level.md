@@ -3,6 +3,7 @@ id: report-the-level
 phase: [run]
 bounds: lines=4
 guards: [unverified-claim]
+ablatable: no
 ---
 # Say how far the result can be trusted, and why
 

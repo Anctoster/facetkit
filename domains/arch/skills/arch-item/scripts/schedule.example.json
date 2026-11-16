@@ -1,0 +1,108 @@
+{
+ "start": "2026-12-01",
+ "deadline": "2027-03-31",
+ "hours_per_day": 6,
+ "packages": [
+  {
+   "id": "intake",
+   "title": "Source material into a model description",
+   "hours": [
+    8,
+    14,
+    30
+   ],
+   "people": 1,
+   "after": []
+  },
+  {
+   "id": "model",
+   "title": "Model in Archicad",
+   "hours": [
+    30,
+    50,
+    100
+   ],
+   "people": 1,
+   "after": [
+    "intake"
+   ]
+  },
+  {
+   "id": "pb",
+   "title": "Drawing set PB",
+   "hours": [
+    40,
+    60,
+    110
+   ],
+   "people": 1,
+   "after": [
+    "model"
+   ]
+  },
+  {
+   "id": "uzgodnienia",
+   "title": "Agreements and opinions",
+   "days": [
+    10,
+    21,
+    45
+   ],
+   "external": true,
+   "after": [
+    "pb"
+   ]
+  },
+  {
+   "id": "pw",
+   "title": "Drawing set PW",
+   "hours": [
+    60,
+    100,
+    180
+   ],
+   "people": 1,
+   "after": [
+    "pb"
+   ]
+  }
+ ],
+ "risks": [
+  {
+   "id": "late-inputs",
+   "text": "source drawings arrive late or incomplete",
+   "probability": 0.4,
+   "delay_days": [
+    2,
+    5,
+    15
+   ],
+   "hits": "intake",
+   "measure": "list the missing inputs on day one and fix a date for each with the client"
+  },
+  {
+   "id": "client-changes",
+   "text": "the client changes the layout after PB",
+   "probability": 0.3,
+   "delay_days": [
+    3,
+    8,
+    20
+   ],
+   "hits": "pw",
+   "measure": "have the PB layout signed off as frozen; later changes are a new item with its own date"
+  },
+  {
+   "id": "regulation",
+   "text": "the required content changes during the work",
+   "probability": 0.1,
+   "delay_days": [
+    2,
+    5,
+    10
+   ],
+   "measure": "check the text in force at the start of each stage"
+  }
+ ],
+ "history": []
+}

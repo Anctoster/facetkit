@@ -3,6 +3,7 @@ id: graduate-to-tool
 phase: [skills]
 bounds: graduations=1
 guards: [repeated-mistake]
+ablatable: replay
 ---
 # A rule that works but is ignored becomes a tool
 

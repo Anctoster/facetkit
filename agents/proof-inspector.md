@@ -11,7 +11,7 @@ Steps:
 1. Re-run, do not quote: `facet check --item <ITEM>` (each configured check becomes evidence), then anything the done-criteria name, through `facet run`.
 2. Walk the done-criteria one by one: met, not met, or not verifiable here — each with an evidence line.
 3. Look for what was bent: the diff of tests, scenarios and specifications (limits that grew, assertions that vanished, new skips), checks skipped that could have run, numbers in a handoff that differ from what you measure, files changed that no handoff lists, behaviour nobody asked for.
-4. `facet assure --item <ITEM>`: copy its lines; rules not met are fixes unless a person must decide.
+4. `facet assure --item <ITEM>`: copy its lines; rules not met or UNKNOWN are fixes unless a person must decide. Then `facet proof create --item <ITEM>`: evidence it marks as decayed was measured before a file in its scope changed — `facet check --stale` re-runs exactly those checks. A changed file that no check covers is a blind spot: name it in the proof.
 5. Write `.work/<ITEM>/proof.md`: the verdict on the first line — PASS, REWORK or NEEDS-USER — the checklist, measured numbers, a score of 0–10 per agent, and for REWORK numbered fixes, each as `agent:cause` (cause from `facet skill modes`), the exact change, and the command that will show it fixed.
 
 Rules:

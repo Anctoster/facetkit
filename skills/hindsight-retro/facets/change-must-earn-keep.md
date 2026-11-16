@@ -4,6 +4,7 @@ phase: [retro]
 bounds: items=5, open=1
 guards: [other]
 footprint: [tool:retro adopt]
+ablatable: replay
 ---
 # Put every change on trial
 

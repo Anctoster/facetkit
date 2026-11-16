@@ -13,6 +13,9 @@ import { route } from '../lib/router.mjs';
 import { newDependencies, scan, scanCommands, scanInjection, scanSecrets } from '../lib/secscan.mjs';
 import { gitInit, story, tmp, write } from './helpers.mjs';
 
+// in-memory stories have no journal file to verify; these tests state the fact that `facet` establishes by running verifyJournal
+const VERIFIED = { project: { journalIntact: true } };
+
 // look-alike secrets are assembled at run time, so that this file itself contains none
 const FAKE = { github: ['gh', 'p_', '0123456789abcdefghij', 'ABCDEFGHIJ012345'].join(''), stripe: ['sk', '_live_', '0123456789abcdefghij'].join(''), slack: ['xo', 'xb-', '123456789012-abcdefghijkl'].join(''), pem: ['-----BEGIN', ' PRIVATE KEY', '-----'].join('') };
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'facet.mjs');
@@ -76,19 +79,19 @@ const governed = () => {
 
 test('govern: the level is the highest one whose rules all hold; missing evidence is "not met", never assumed', () => {
     const s = governed();
-    let e = evaluate(s.events, 'A');
+    let e = evaluate(s.events, 'A', VERIFIED);
     assert.equal(e.level, 0, 'a PASS without a scan is only a claim');
     assert.equal(e.results.find((r) => r.id === 'scan').got, 'no evidence');
     s.say({ kind: 'evidence', item: 'A', name: 'scan', ok: true, value: 0 });
-    e = evaluate(s.events, 'A');
+    e = evaluate(s.events, 'A', VERIFIED);
     assert.equal(e.label, 'L1 reproduced');
     assert.equal(gate(e, { required: 1 }).allow, true);
     assert.deepEqual(gate(e, { required: 2 }).failing.map((r) => r.id), ['specified']);
     s.say({ kind: 'evidence', item: 'A', name: 'accept', ok: true });
     s.say({ kind: 'evidence', item: 'A', name: 'mutate', ok: true, value: 0.9 });
     s.say({ kind: 'evidence', item: 'A', name: 'neighbours', ok: true });
-    assert.equal(evaluate(s.events, 'A').label, 'L3 falsified');
-    assert.equal(evaluate(s.events, 'A', { project: { guardCatchLow: 0.7 } }).label, 'L4 calibrated');
+    assert.equal(evaluate(s.events, 'A', VERIFIED).label, 'L3 falsified');
+    assert.equal(evaluate(s.events, 'A', { project: { journalIntact: true, guardCatchLow: 0.7 } }).label, 'L4 calibrated');
 });
 
 test('govern: evidence older than the last change is stale; the judge must not be a producer', () => {
@@ -99,7 +102,7 @@ test('govern: evidence older than the last change is stale; the judge must not b
     s.run('A', 'build', 'builder');
     s.run('A', 'proof', 'builder');
     s.say({ kind: 'verdict', item: 'A', verdict: 'PASS' });
-    const e = evaluate(s.events, 'A');
+    const e = evaluate(s.events, 'A', VERIFIED);
     assert.equal(e.evidence.mutate.stale, true);
     assert.equal(e.evidence.red.stale, false, 'a red test is evidence from before the change by design');
     assert.equal(e.results.find((r) => r.id === 'independent').pass, false);
@@ -108,25 +111,25 @@ test('govern: evidence older than the last change is stale; the judge must not b
 
 test('govern: a waiver lets the gate open, is recorded, and never raises the level', () => {
     const s = governed();
-    const before = gate(evaluate(s.events, 'A'));
+    const before = gate(evaluate(s.events, 'A', VERIFIED));
     assert.deepEqual(before.failing.map((r) => r.id), ['scan']);
     s.say({ kind: 'waiver', item: 'A', rule: 'scan', reason: 'scanner offline', by: 'lead' });
-    const e = evaluate(s.events, 'A');
+    const e = evaluate(s.events, 'A', VERIFIED);
     const g = gate(e);
     assert.deepEqual([g.allow, g.waived.length, e.level], [true, 1, 0]);
-    const a = attest(s.events, 'A');
+    const a = attest(s.events, 'A', VERIFIED);
     assert.deepEqual(a.waivers, [{ rule: 'scan', reason: 'scanner offline', by: 'lead' }]);
-    assert.equal(attest(s.events, 'A').digest, a.digest, 'the same journal gives the same attestation');
+    assert.equal(attest(s.events, 'A', VERIFIED).digest, a.digest, 'the same journal gives the same attestation');
     s.say({ kind: 'approval', item: 'A', what: 'dependency:zod', by: 'lead' });
-    assert.notEqual(attest(s.events, 'A').digest, a.digest);
+    assert.notEqual(attest(s.events, 'A', VERIFIED).digest, a.digest);
 });
 
 test('govern: a change that needs approval blocks until a person approves it', () => {
     const s = governed();
     s.say({ kind: 'evidence', item: 'A', name: 'scan', ok: true, value: 1, approvals: ['dependency:left-pad'] });
-    assert.deepEqual(gate(evaluate(s.events, 'A')).failing.map((r) => r.id), ['approvals']);
+    assert.deepEqual(gate(evaluate(s.events, 'A', VERIFIED)).failing.map((r) => r.id), ['approvals']);
     s.say({ kind: 'approval', item: 'A', what: 'dependency:left-pad', by: 'lead' });
-    assert.equal(gate(evaluate(s.events, 'A')).allow, true);
+    assert.equal(gate(evaluate(s.events, 'A', VERIFIED)).allow, true);
 });
 
 test('trust: the track record is a rate with an upper bound; guards are calibrated by planted defects', () => {
@@ -137,7 +140,7 @@ test('trust: the track record is a rate with an upper bound; guards are calibrat
     }
     s.say({ kind: 'escape', item: 'A3', fix: 'abc' });
     for (let i = 0; i < 8; i++) s.say({ kind: 'canary', guard: 'tests', caught: i !== 0 });
-    const t = trust(s.events);
+    const t = trust(s.events, VERIFIED);
     assert.deepEqual([t.closed, t.escapes.n, t.escapes.rate, t.levels['L1 reproduced']], [10, 1, 0.1, 10]);
     assert.ok(t.escapes.atMost > 0.1 && t.escapes.atMost < 0.35, String(t.escapes.atMost));
     const [c] = calibration(s.events);

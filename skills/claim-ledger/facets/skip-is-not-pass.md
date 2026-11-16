@@ -3,6 +3,7 @@ id: skip-is-not-pass
 phase: [red, proof, close]
 bounds: minutes=5
 guards: [unverified-claim]
+ablatable: no
 ---
 # Count four states, report four numbers
 

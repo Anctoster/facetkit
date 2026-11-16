@@ -120,26 +120,31 @@ test('the shipped collection: every facet names what it guards, and most can be 
 
 test('cli: a step records what it was given; withholding writes a rules file without the rule; tools leave a footprint; a rework needs a cause', () => {
     const root = tmp();
-    write(root, 'package.json', JSON.stringify({ facetkit: { skillint: { ablate: { rate: 1 }, requireCause: true } } }));
+    // the policy enforces "neighbours", so the rules whose backstop it is may go missing from real work; caps-backed rules always may
+    write(root, 'policy.json', JSON.stringify([{ id: 'seams', level: 1, evidence: ['neighbours'], ok: true }]));
+    write(root, 'package.json', JSON.stringify({ facetkit: { skillint: { ablate: { rate: 1, seed: 'w' } , requireCause: true }, govern: { policy: 'policy.json', required: 1 } } }));
     write(root, 'routing.json', JSON.stringify({ items: { A: { deps: [], route: [], gates: [] } } }));
     const f = (...args) => spawnSync('node', [CLI, ...args], { cwd: root, encoding: 'utf-8' });
-    f('flow', 'open', 'A');
-    f('flow', 'start', 'open');
-    f('flow', 'end', 'open', '--status', 'DONE');
-    const started = f('flow', 'start', 'map');
-    assert.match(started.stdout, /rules for this step.*\.work\/A\/rules-map\.md/);
-    const start = readJournal(path.join(root, '.work', 'journal.jsonl')).filter((e) => e.kind === 'step.start').at(-1);
-    assert.equal(start.withheld.length, 1);
-    assert.ok(start.facets.length >= 4 && !start.facets.includes(start.withheld[0]));
-    const rules = fs.readFileSync(path.join(root, '.work', 'A', 'rules-map.md'), 'utf-8');
-    assert.ok(!rules.includes(`\`${start.withheld[0]}\``) && rules.includes(`\`${start.facets[0]}\``));
-    f('seams', '--changed', 'x.js', '--item', 'A');
-    assert.ok(fs.readFileSync(path.join(root, '.work', 'A', 'ledger.jsonl'), 'utf-8').includes('"kind":"tool","cmd":"seams"'));
-    f('flow', 'end', 'map', '--status', 'DONE');
-    for (const step of ['red', 'build', 'proof']) {
-        f('flow', 'start', step);
+    assert.match(f('flow', 'open', 'A').stdout, /this item goes without \S+ \(seeded draw, p=/);
+    const journal = () => readJournal(path.join(root, '.work', 'journal.jsonl'));
+    const gone = journal().find((e) => e.kind === 'item.open').withheld.ref;
+    assert.ok(!['thrift-loop:hard-caps', 'claim-ledger:reproduce-not-quote'].includes(gone), 'a safety rule is never drawn');
+    let starts = [];
+    for (const step of ['open', 'map', 'red', 'build', 'proof']) {
+        const out = f('flow', 'start', step);
+        const start = journal().filter((e) => e.kind === 'step.start').at(-1);
+        starts.push(start);
+        if (start.withheld?.length) {
+            assert.deepEqual(start.withheld, [gone], 'the step goes without the rule drawn for the item, and only that one');
+            assert.ok(!start.facets.includes(gone));
+            assert.match(out.stdout, new RegExp(`rules for this step.*rules-${step}\\.md`));
+            assert.ok(!fs.readFileSync(path.join(root, '.work', 'A', `rules-${step}.md`), 'utf-8').includes(`\`${gone}\``));
+        } else assert.ok(!(start.facets ?? []).includes(gone) || false, 'a step that had the rule in its loadout must go without it');
+        if (step === 'map') f('seams', '--changed', 'x.js', '--item', 'A');
         f('flow', 'end', step, '--status', 'DONE');
     }
+    assert.ok(starts.some((x) => x.withheld?.length), 'the drawn rule belongs to some step of the route');
+    assert.ok(fs.readFileSync(path.join(root, '.work', 'A', 'ledger.jsonl'), 'utf-8').includes('"kind":"tool","cmd":"seams"'));
     assert.match(f('flow', 'verdict', 'REWORK', '--fix', 'slice-builder').stderr, /name the cause/);
     assert.match(f('flow', 'verdict', 'REWORK', '--fix', 'slice-builder:nonsense').stderr, /unknown cause/);
     assert.equal(f('flow', 'verdict', 'REWORK', '--fix', 'slice-builder:seam-break').status, 0);

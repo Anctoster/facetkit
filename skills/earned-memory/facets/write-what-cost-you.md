@@ -4,6 +4,7 @@ phase: [rework, probe]
 bounds: memories=2
 guards: [repeated-mistake]
 footprint: [tool:mem add]
+ablatable: replay
 ---
 # Store only what cost you something
 

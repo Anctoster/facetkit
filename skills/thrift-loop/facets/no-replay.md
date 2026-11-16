@@ -3,6 +3,8 @@ id: no-replay
 phase: [rework, close]
 bounds: rewrites=1, lines=8
 guards: [budget-burn]
+ablatable: live
+backstop: [caps]
 ---
 # Point at what exists; do not repeat it
 

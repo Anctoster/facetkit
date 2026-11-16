@@ -5,6 +5,8 @@ needs: [mutate]
 bounds: mutants=12, minutes=10, rounds=2
 guards: [false-green]
 footprint: [tool:mutate]
+ablatable: live
+backstop: [mutate]
 ---
 # Green tests must notice broken code
 

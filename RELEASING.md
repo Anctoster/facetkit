@@ -11,6 +11,7 @@ A checklist for the first public release and for every later one. Commands assum
    git status --ignored
    node bin/facet scan --ref "$(git hash-object -t tree /dev/null)"    # scans every file as if it were new
    grep -rIl "VIS\|Marina" . --exclude-dir=.git                         # the project facetkit grew up in: only the README may mention it
+   npm run benchmark && npm run test:viz && npm run test:arch                                # the guards against adversarial cases; the domain tools
    ```
 4. **Create the repository** (public, no template, no auto-generated README or licence), then:
    ```bash

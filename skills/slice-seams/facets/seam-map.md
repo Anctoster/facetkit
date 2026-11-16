@@ -5,6 +5,8 @@ needs: [seams]
 bounds: depth=2, neighbours=25
 guards: [seam-break]
 footprint: [tool:seams]
+ablatable: live
+backstop: [neighbours]
 ---
 # Know who stands on the other side of your change
 

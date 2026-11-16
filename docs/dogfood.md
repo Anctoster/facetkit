@@ -56,3 +56,20 @@ $ facet atlas stats                          modules, exports and imports of lib
 ```
 
 To repeat any of this: clone, `npm test`, and run the commands above.
+
+## 0.7.0: the new modules, probed the same way (16 November 2026)
+
+Ten mutants per module, tests of 0.7 (`test/v07`, `test/fencing`, `test/journal-concurrency`).
+
+| Module | First run | After `test/dogfood-07.test.mjs` | Left, and why |
+|---|---|---|---|
+| `handoff` | 8 / 10 | — | the limit of a template without a limit (`?? 0` → `?? 1`): equivalent for every template that has one; now tested |
+| `adapt` | **1 / 10** | 6 / 10 | `have.add` after `add` (the key set is also checked by the journal: each recorded change is skipped next time); a gate inserted by default `true`/`false` in a field nobody reads; `judgeAt >= 0` vs `>= 1` (the verdict is never the first step) |
+| `fitness` | 6 / 10 | 8 / 10 | the Tarjan counter starting at 0 or 1: equivalent; a default `isTest` nobody uses without passing one |
+| `counterfactual` | **2 / 10** | 8 / 10 | `mkdirSync` of a directory the replay worktree already has |
+| `crosslearn` | 5 / 10 | 9 / 10 | `exposed \|\| withheld` with a zero — equivalent for the counts the diagnosis gives |
+| `sign` | 5 / 10 | — | file modes and a return value the CLI does not read |
+| `journal` | 7 / 10 | — | the fallback of a writer name that slugs to nothing |
+| **all** | **34 / 70 (49 %)** | | |
+
+The adaptive orchestrator was the weakest module, as `govern` was in 0.5: its tests showed that it adds the right steps, not that it adds nothing when it must not. The added tests pin exactly that — no growth after a passed verdict, none for a closed item, no escalation below five items, none above the top of the ladder.

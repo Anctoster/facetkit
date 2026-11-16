@@ -3,6 +3,7 @@ id: stale-means-recheck
 phase: [retro]
 bounds: stale=3
 guards: [repeated-mistake, stale-handoff]
+ablatable: replay
 ---
 # A stale memory is a question, not a fact
 

@@ -1,0 +1,540 @@
+{
+ "routes": {
+  "note": "One route per kind of item. A step with a registered script runs on the smallest model; until one exists the builder writes it. checks = results the inspector must reproduce before PASS.",
+  "caps": {
+   "runs": 40,
+   "minutes": 90
+  },
+  "rework_max": 2,
+  "routes": {
+   "estimate": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "work",
+      "agent": "model-operator",
+      "mode": "estimate",
+      "model": "haiku",
+      "script": "estimate",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      }
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "numbers",
+      "model": "haiku"
+     }
+    ],
+    "checks": [
+     "schedule.inputs",
+     "schedule.result"
+    ],
+    "approve_brief": false
+   },
+   "intake": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "read",
+      "agent": "source-reader",
+      "mode": "read",
+      "model": "sonnet",
+      "gate": "the list of open questions and the interpreted model description"
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "numbers",
+      "model": "haiku"
+     }
+    ],
+    "checks": [
+     "spec.schema",
+     "spec.scale",
+     "spec.layers",
+     "spec.stories",
+     "spec.walls",
+     "spec.loops",
+     "spec.openings",
+     "spec.zones",
+     "spec.confidence",
+     "spec.questions"
+    ],
+    "approve_brief": true
+   },
+   "model": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "work",
+      "agent": "model-operator",
+      "mode": "build-model",
+      "model": "haiku",
+      "script": "build-model",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      }
+     },
+     {
+      "id": "readback",
+      "agent": "model-operator",
+      "mode": "readback",
+      "model": "haiku",
+      "script": "readback",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      }
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "full",
+      "model": "sonnet"
+     }
+    ],
+    "checks": [
+     "spec.questions",
+     "model.counts",
+     "model.layers",
+     "model.dimensions",
+     "model.areas"
+    ],
+    "approve_brief": true
+   },
+   "sheets-pb": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "work",
+      "agent": "model-operator",
+      "mode": "layouts",
+      "model": "haiku",
+      "script": "layouts",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      }
+     },
+     {
+      "id": "publish",
+      "agent": "model-operator",
+      "mode": "publish",
+      "model": "haiku",
+      "script": "publish",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      },
+      "gate": "the sheet list with one preview page per sheet"
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "full",
+      "model": "sonnet"
+     }
+    ],
+    "checks": [
+     "sheets.complete",
+     "sheets.naming",
+     "sheets.scales",
+     "sheets.format",
+     "sheets.dwg",
+     "titleblock.fields"
+    ],
+    "approve_brief": true
+   },
+   "sheets-pw": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "work",
+      "agent": "model-operator",
+      "mode": "detail",
+      "model": "haiku",
+      "script": "detail",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      }
+     },
+     {
+      "id": "layouts",
+      "agent": "model-operator",
+      "mode": "layouts",
+      "model": "haiku",
+      "script": "layouts",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      }
+     },
+     {
+      "id": "publish",
+      "agent": "model-operator",
+      "mode": "publish",
+      "model": "haiku",
+      "script": "publish",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      },
+      "gate": "the sheet list with one preview page per sheet"
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "full",
+      "model": "sonnet"
+     }
+    ],
+    "checks": [
+     "sheets.complete",
+     "sheets.naming",
+     "sheets.scales",
+     "sheets.format",
+     "sheets.dwg",
+     "titleblock.fields",
+     "sheets.trace"
+    ],
+    "approve_brief": true
+   },
+   "revise": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "work",
+      "agent": "model-operator",
+      "mode": "revise",
+      "model": "haiku",
+      "script": "revise",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      }
+     },
+     {
+      "id": "readback",
+      "agent": "model-operator",
+      "mode": "readback",
+      "model": "haiku",
+      "script": "readback",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      }
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "full",
+      "model": "sonnet"
+     }
+    ],
+    "checks": [
+     "model.layers",
+     "model.counts"
+    ],
+    "approve_brief": true
+   },
+   "audit": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "readback",
+      "agent": "model-operator",
+      "mode": "readback",
+      "model": "haiku",
+      "script": "readback",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      }
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "numbers",
+      "model": "haiku"
+     }
+    ],
+    "checks": [],
+    "approve_brief": false
+   },
+   "variants": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "sketch",
+      "agent": "variant-sketcher",
+      "mode": "sketch",
+      "model": "sonnet",
+      "gate": "the comparison of the variants: choose one, or say what the next round should explore"
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "numbers",
+      "model": "haiku"
+     }
+    ],
+    "checks": [
+     "variants.inputs",
+     "variants.limits",
+     "variants.distinct",
+     "variants.compared",
+     "variants.chosen"
+    ],
+    "approve_brief": true
+   }
+  },
+  "plans": {
+   "documentation": [
+    [
+     "estimate",
+     "Schedule and risk before the work",
+     []
+    ],
+    [
+     "intake",
+     "Source material into a checked model description",
+     []
+    ],
+    [
+     "model",
+     "Model in Archicad on the right layers",
+     [
+      2
+     ]
+    ],
+    [
+     "sheets-pb",
+     "Drawing set: projekt budowlany",
+     [
+      3
+     ]
+    ],
+    [
+     "sheets-pw",
+     "Drawing set: projekt wykonawczy",
+     [
+      4
+     ]
+    ]
+   ],
+   "pw-from-pb": [
+    [
+     "estimate",
+     "Schedule and risk",
+     []
+    ],
+    [
+     "audit",
+     "State of the existing model",
+     []
+    ],
+    [
+     "sheets-pw",
+     "Drawing set: projekt wykonawczy",
+     [
+      2
+     ]
+    ]
+   ],
+   "design": [
+    [
+     "estimate",
+     "Schedule and risk before the work",
+     []
+    ],
+    [
+     "variants",
+     "Variants of the site plan",
+     []
+    ],
+    [
+     "variants",
+     "Variants of the layouts",
+     [
+      2
+     ]
+    ],
+    [
+     "variants",
+     "Variants of the facades",
+     [
+      3
+     ]
+    ],
+    [
+     "intake",
+     "The chosen variants into a checked description",
+     [
+      4
+     ]
+    ],
+    [
+     "model",
+     "Model in Archicad on the right layers",
+     [
+      5
+     ]
+    ],
+    [
+     "sheets-pb",
+     "Drawing set: projekt budowlany",
+     [
+      6
+     ]
+    ],
+    [
+     "sheets-pw",
+     "Drawing set: projekt wykonawczy",
+     [
+      7
+     ]
+    ]
+   ]
+  }
+ },
+ "checks": [
+  "spec.schema",
+  "spec.scale",
+  "spec.layers",
+  "spec.stories",
+  "spec.walls",
+  "spec.loops",
+  "spec.openings",
+  "spec.zones",
+  "spec.confidence",
+  "spec.questions",
+  "model.counts",
+  "model.layers",
+  "model.dimensions",
+  "model.areas",
+  "model.program",
+  "sheets.complete",
+  "sheets.naming",
+  "sheets.scales",
+  "sheets.format",
+  "sheets.dwg",
+  "sheets.trace",
+  "titleblock.fields",
+  "schedule.inputs",
+  "schedule.result",
+  "variants.inputs",
+  "variants.limits",
+  "variants.distinct",
+  "variants.compared",
+  "variants.chosen"
+ ],
+ "project": {
+  "project": "",
+  "arch_dir": "",
+  "archicad_file": "",
+  "archicad_copy_dir": "",
+  "template_file": "",
+  "layers": {
+   "walls_ext": "",
+   "walls_int": "",
+   "slabs": "",
+   "roofs": "",
+   "columns": "",
+   "beams": "",
+   "stairs": "",
+   "doors": "",
+   "windows": "",
+   "zones": "",
+   "site": "",
+   "dimensions": "",
+   "annotation": ""
+  },
+  "tolerances": {
+   "length_m": 0.01,
+   "area_pct": 2.0,
+   "scale_pct": 1.0
+  },
+  "sheets": {
+   "naming": "^[A-Z]{2,3}-[A-Z]{1,3}-\\d{2,3}$",
+   "formats": [
+    "A4",
+    "A3",
+    "A2",
+    "A1",
+    "A0"
+   ],
+   "dwg": true,
+   "publisher_set_pb": "",
+   "publisher_set_pw": ""
+  },
+  "titleblock": {
+   "required": [
+    "project_name",
+    "address",
+    "investor",
+    "designer",
+    "licence_no",
+    "stage",
+    "sheet_title",
+    "sheet_no",
+    "scale",
+    "date",
+    "revision"
+   ]
+  },
+  "stage_lists": {
+   "pb": "tools/sheets.pb.json",
+   "pw": "tools/sheets.pw.json"
+  },
+  "scripts": {},
+  "regulations_checked_on": ""
+ },
+ "builtin_modes": [
+  "estimate"
+ ]
+}

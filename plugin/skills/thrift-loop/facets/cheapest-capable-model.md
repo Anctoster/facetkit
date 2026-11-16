@@ -3,6 +3,8 @@ id: cheapest-capable-model
 phase: [open]
 bounds: escalations=1
 guards: [budget-burn]
+ablatable: live
+backstop: [caps]
 ---
 # Choose the model by the kind of work
 

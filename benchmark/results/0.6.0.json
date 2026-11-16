@@ -1,0 +1,309 @@
+{
+ "schema": "facetkit-benchmark/1",
+ "version": "0.6.0",
+ "commit": "39d3bd73d562261a2a80fa93398b5c036df017c9",
+ "dirty": true,
+ "node": "v22.23.4",
+ "at": "2026-11-15T17:31:09.012Z",
+ "passed": 17,
+ "failed": 0,
+ "cases": [
+  {
+   "id": "experiments/replay",
+   "expected": {
+    "arms": [
+     "treatment",
+     "control",
+     "treatment",
+     "control",
+     "treatment",
+     "treatment",
+     "control",
+     "control"
+    ],
+    "again": true,
+    "safetyRefused": true,
+    "emptyVerdict": true,
+    "emptyStage": "exploratory"
+   },
+   "got": {
+    "arms": [
+     "treatment",
+     "control",
+     "treatment",
+     "control",
+     "treatment",
+     "treatment",
+     "control",
+     "control"
+    ],
+    "again": true,
+    "safetyRefused": true,
+    "emptyVerdict": true,
+    "emptyStage": "exploratory"
+   },
+   "pass": true
+  },
+  {
+   "id": "governance/all-established",
+   "expected": {
+    "level": 1,
+    "allow": true
+   },
+   "got": {
+    "level": 1,
+    "allow": true,
+    "failing": [],
+    "unknown": []
+   },
+   "pass": true
+  },
+  {
+   "id": "governance/evidence-missing",
+   "expected": {
+    "level": 0,
+    "allow": false,
+    "failing": [
+     "scan"
+    ]
+   },
+   "got": {
+    "level": 0,
+    "allow": false,
+    "failing": [
+     "scan"
+    ],
+    "unknown": []
+   },
+   "pass": true
+  },
+  {
+   "id": "governance/journal-damaged",
+   "expected": {
+    "level": 0,
+    "allow": false,
+    "failing": [
+     "journal-intact"
+    ]
+   },
+   "got": {
+    "level": 0,
+    "allow": false,
+    "failing": [
+     "journal-intact"
+    ],
+    "unknown": []
+   },
+   "pass": true
+  },
+  {
+   "id": "governance/journal-not-verified",
+   "expected": {
+    "level": 0,
+    "allow": false,
+    "unknown": [
+     "journal-intact"
+    ]
+   },
+   "got": {
+    "level": 0,
+    "allow": false,
+    "failing": [
+     "journal-intact"
+    ],
+    "unknown": [
+     "journal-intact"
+    ]
+   },
+   "pass": true
+  },
+  {
+   "id": "governance/judge-is-producer",
+   "expected": {
+    "level": 0,
+    "allow": false,
+    "failing": [
+     "independent"
+    ]
+   },
+   "got": {
+    "level": 0,
+    "allow": false,
+    "failing": [
+     "independent"
+    ],
+    "unknown": []
+   },
+   "pass": true
+  },
+  {
+   "id": "governance/waiver-on-unknown",
+   "expected": {
+    "level": 0,
+    "allow": false
+   },
+   "got": {
+    "level": 0,
+    "allow": false,
+    "failing": [
+     "journal-intact"
+    ],
+    "unknown": [
+     "journal-intact"
+    ]
+   },
+   "pass": true
+  },
+  {
+   "id": "journal/clean",
+   "expected": {
+    "intact": true,
+    "events": 7,
+    "conflicts": 0
+   },
+   "got": {
+    "intact": true,
+    "events": 7,
+    "problem": null,
+    "conflicts": 0
+   },
+   "pass": true
+  },
+  {
+   "id": "journal/clock-backwards",
+   "expected": {
+    "intact": false,
+    "problem": "logical clock 1 does not advance past 6"
+   },
+   "got": {
+    "intact": false,
+    "events": 7,
+    "problem": "logical clock 1 does not advance past 6",
+    "conflicts": 0
+   },
+   "pass": true
+  },
+  {
+   "id": "journal/double-open",
+   "expected": {
+    "conflicts": 1
+   },
+   "got": {
+    "intact": true,
+    "events": 2,
+    "problem": null,
+    "conflicts": 1
+   },
+   "pass": true
+  },
+  {
+   "id": "journal/duplicate-sequence",
+   "expected": {
+    "intact": false
+   },
+   "got": {
+    "intact": false,
+    "events": 8,
+    "problem": "chain broken at bob.jsonl:4",
+    "conflicts": 0
+   },
+   "pass": true
+  },
+  {
+   "id": "journal/edited-line",
+   "expected": {
+    "intact": false
+   },
+   "got": {
+    "intact": false,
+    "events": 7,
+    "problem": "chain broken at ann.jsonl:3",
+    "conflicts": 0
+   },
+   "pass": true
+  },
+  {
+   "id": "journal/foreign-writer",
+   "expected": {
+    "intact": false
+   },
+   "got": {
+    "intact": false,
+    "events": 7,
+    "problem": "chain broken at bob.jsonl:2",
+    "conflicts": 0
+   },
+   "pass": true
+  },
+  {
+   "id": "journal/missing-event",
+   "expected": {
+    "intact": false
+   },
+   "got": {
+    "intact": false,
+    "events": 6,
+    "problem": "chain broken at ann.jsonl:3",
+    "conflicts": 0
+   },
+   "pass": true
+  },
+  {
+   "id": "journal/torn-tail",
+   "expected": {
+    "intact": false,
+    "events": 7
+   },
+   "got": {
+    "intact": false,
+    "events": 7,
+    "problem": "chain broken at ann.jsonl:5",
+    "conflicts": 0
+   },
+   "pass": true
+  },
+  {
+   "id": "ownership/plan",
+   "expected": {
+    "ok": false,
+    "unassigned": [
+     "docs/x.md"
+    ],
+    "conflicts": [
+     "ab/x.mjs"
+    ]
+   },
+   "got": {
+    "ok": false,
+    "unassigned": [
+     "docs/x.md"
+    ],
+    "conflicts": [
+     "ab/x.mjs"
+    ]
+   },
+   "pass": true
+  },
+  {
+   "id": "proof/lifecycle",
+   "expected": {
+    "fresh": "VALID",
+    "tampered": "TAMPERED",
+    "unverifiedJournal": "UNKNOWN",
+    "rewrittenHistory": "MISMATCH",
+    "afterEdit": "STALE",
+    "evidenceAfterEdit": false
+   },
+   "got": {
+    "fresh": "VALID",
+    "level": "L1 reproduced",
+    "tampered": "TAMPERED",
+    "unverifiedJournal": "UNKNOWN",
+    "rewrittenHistory": "MISMATCH",
+    "afterEdit": "STALE",
+    "evidenceAfterEdit": false
+   },
+   "pass": true
+  }
+ ]
+}

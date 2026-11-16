@@ -6,13 +6,13 @@ commands `/facet-item`, `/facet-session` and `/facet-retro`, and the fourteen sk
 The agents and commands call the `facet` command. It is not part of the plugin; install it once:
 
 ```bash
-npm i -g facetkit@0.5.1        # or let the agents run `npx --yes facetkit@0.5.1 …`
+npm i -g facetkit@0.7.0        # or let the agents run `npx --yes facetkit@0.7.0 …`
 facet init --minimal     # in your project
 ```
 
 ## What it runs and touches
 
-- **Runs:** the `facet` command from the npm package `facetkit@0.5.1` (pinned; no dependencies), and the
+- **Runs:** the `facet` command from the npm package `facetkit@0.7.0` (pinned; no dependencies), and the
   commands of your own project that you list as checks in `facet.json` (tests, build, lint).
 - **Reads and writes:** files in your project only — the journal and memory (`.facet/` after `facet init`, or
   what `facet.json` names), `.work/` for the handoffs of the item in progress, and `facet-board.html`. `facet cost import`

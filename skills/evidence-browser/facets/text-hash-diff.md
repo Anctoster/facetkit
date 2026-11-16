@@ -4,6 +4,7 @@ phase: [ui]
 bounds: snapshots=1
 guards: [regression]
 footprint: [tool:ui]
+ablatable: replay
 ---
 # Use the text hash to see what changed
 

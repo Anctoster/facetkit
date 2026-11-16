@@ -3,6 +3,8 @@ id: independent-oracle
 phase: [red]
 bounds: attempts=2
 guards: [false-green]
+ablatable: live
+backstop: [mutate]
 ---
 # Expected values come from outside the code under test
 

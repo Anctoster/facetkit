@@ -5,6 +5,8 @@ needs: [receipt]
 bounds: checks=1
 guards: [budget-burn, doc-drift]
 footprint: [tool:receipt check]
+ablatable: live
+backstop: [caps]
 ---
 # Check the drawer before going to the library
 

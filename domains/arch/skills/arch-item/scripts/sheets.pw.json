@@ -1,0 +1,60 @@
+{
+ "stage": "PW",
+ "note": "A starting list for the architectural part only. It is NOT the regulation: compare it with the text in force on the day of the task and with the client's requirements, edit it, and write the date into project.json -> regulations_checked_on. Basis to check: the contract and, for public work, rozporzadzenie z 20.12.2021 (Dz.U. 2021 poz. 2454): the executive design supplements and details the building design; its scope is set by the client.",
+ "sheets": [
+  {
+   "no": "PW-A-01",
+   "title": "Rzut parteru",
+   "scale": "1:50",
+   "format": "A1",
+   "part": "PW"
+  },
+  {
+   "no": "PW-A-02",
+   "title": "Rzut dachu",
+   "scale": "1:50",
+   "format": "A1",
+   "part": "PW"
+  },
+  {
+   "no": "PW-A-03",
+   "title": "Przekroj A-A",
+   "scale": "1:50",
+   "format": "A1",
+   "part": "PW"
+  },
+  {
+   "no": "PW-A-04",
+   "title": "Elewacje",
+   "scale": "1:50",
+   "format": "A1",
+   "part": "PW"
+  },
+  {
+   "no": "PW-A-10",
+   "title": "Zestawienie stolarki",
+   "scale": "1:50",
+   "format": "A2",
+   "part": "PW"
+  },
+  {
+   "no": "PW-A-20",
+   "title": "Detale",
+   "scale": "1:10",
+   "format": "A2",
+   "part": "PW"
+  }
+ ],
+ "documents": [
+  {
+   "id": "PW-tytul",
+   "title": "Strona tytulowa i spis rysunkow",
+   "file": "PW-00.pdf"
+  },
+  {
+   "id": "PW-opis",
+   "title": "Opis techniczny",
+   "file": "PW-opis.pdf"
+  }
+ ]
+}

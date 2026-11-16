@@ -3,6 +3,8 @@ id: delta-only
 phase: [rework]
 bounds: passes=1
 guards: [budget-burn]
+ablatable: live
+backstop: [caps]
 ---
 # Hand over the difference
 

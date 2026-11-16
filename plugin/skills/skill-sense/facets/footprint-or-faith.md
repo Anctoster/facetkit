@@ -5,6 +5,7 @@ needs: [audit]
 bounds: atoms=2
 guards: [other]
 footprint: [tool:audit]
+ablatable: replay
 ---
 # Say how a rule's observance is seen
 

@@ -12,7 +12,17 @@ No dependencies. Node 20+. Works with any agent that can run a shell command; sh
 
 ![One item of work: specification, build, probe, proof, policy gate — evidence accumulates and the assurance level rises](docs/assets/flow.svg)
 
-> **Status: 0.5.0, experimental.** The tools are tested (100+ tests; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **69 untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute.
+> **Status: 0.7.0, experimental.** The tools are tested (185 tests and a guard benchmark of 22 adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **69 untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute.
+
+
+## Try it in five minutes
+
+```bash
+git clone https://github.com/Anctoster/facetkit && cd facetkit
+npm run demo:proof
+```
+
+An agent changes code; another run checks it; a proof pack ties the verdict to those exact sources; a second party verifies it from one file; one edited line later the proof says STALE, and an edited bundle says TAMPERED. Nothing is installed and nothing outside a temp folder is touched. Where this is going: [ROADMAP.md](ROADMAP.md) · the map of the code: [ARCHITECTURE.md](ARCHITECTURE.md) · first contributions: [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md).
 
 ## The problem
 
@@ -141,6 +151,54 @@ thrift-loop:hard-caps — followed, no measurable effect
 ```
 
 Optional, seeded **withholding** turns correlation into an experiment (never for safety rules, off by default). `facet skill coverage` lists failure modes with incidents and no guarding rule, each with a trial harvested from the real incident. The intended direction is that a collection gets *shorter*: rules that matter graduate into tools, rules that do not are deleted. See [docs/skill-intelligence.md](docs/skill-intelligence.md).
+
+## Who reads what
+
+The same record, told to the person who acts on it — see [docs/how-it-works.md](docs/how-it-works.md):
+
+| You are | Run | You get |
+|---|---|---|
+| developer | `facet explain --for dev` | the next command, what is not met yet |
+| team lead | `facet explain --for lead` | first-time-right, why work was sent back, where the tokens go |
+| client, product owner | `facet explain --for client --lang pl --html status.html` (en, pl, ru) | what is done and how sure the team is, in words |
+| auditor | `facet explain --for auditor`, `facet proof witness` | every rule, exception and signature — and the checks re-run by you |
+
+## What 0.7.0 adds
+
+| Guarantee | Command |
+|---|---|
+| **A record has an author.** Proof packs and (optionally) journal events are signed with Ed25519 keys the project trusts by role; an edited pack whose digest was recomputed is TAMPERED, an unsigned one is refused where signatures are required. | `facet key new`, `facet key trust`, `govern.requireSignature` |
+| **A result is reproduced, not quoted.** A witness re-runs the checks on the same sources and compares; a disagreement makes the proof a MISMATCH. | `facet proof witness` |
+| **A paused writer cannot corrupt the journal.** A live owner's lock is never taken over; a forced takeover raises the epoch; a late write under an old epoch is fenced. | `facet journal`, `facet journal unlock`, `facet journal repair` |
+| **The sources are what a result depends on** — content, executable bit, link target, submodule commit, declared ignored inputs — and the environment it was measured in travels with it. | `facet proof create`, `govern.inputs` |
+| **The route adapts while the item runs**: a riskier change than planned adds agents and gates, a recurring cause reinforces the next agent, a weak record escalates its model. Never fewer steps. | `facet flow next`, `facet flow status` |
+| **A handoff is checked when its step ends**, not at the end of the item: sections, evidence lines, drifted anchors, files changed and not listed. | `facet flow end`, `facet handoff check` |
+| **Architecture rules as a ratchet**: forbidden imports, layers, cycles, size, fan-in, untested modules. | `facet fitness` |
+| **Rules measured on finished work**: a step re-run with and without one rule, paired, sign test. Every facet says whether it may be withheld: never, only in a replay, or live with a backstop the policy enforces; withholding is per item. | `facet cf`, `ablatable: no|replay|live` |
+| **What one project learned is a hypothesis for the next**: knowledge packs without file names or text, imported lessons that must prove themselves, pooled effects that show disagreement. | `facet learn export|import|pool` |
+
+Answers to the review of 0.6.0, finding by finding: [docs/roadmap-0.7.0.md](docs/roadmap-0.7.0.md). Where this is going: [docs/roadmap-2.0.md](docs/roadmap-2.0.md).
+
+## What 0.6.0 hardens
+
+Five things an outside review asked for; each is a tool with tests, and each is exercised by `facet benchmark`:
+
+| Guarantee | Command | What it refuses |
+|---|---|---|
+| **Concurrent writers do not corrupt the journal.** Every append runs under one lock per journal; a lock left by a dead process is taken over; a line cut off mid-write is reported, never appended after, and set aside only by `facet journal repair`. | `facet journal` | duplicate sequence numbers, a clock that runs backwards, a foreign writer in a segment, a torn tail |
+| **Unknown is not pass.** A journal nobody verified, a judge nobody named, evidence nobody produced fail their rule like a bad result would. A waiver accepts a known failure; it cannot stand in for an unknown, and it never raises the level. | `facet assure` | closing on what was not established |
+| **Trust decays with the thing it vouches for.** A check declares what it covers; its evidence stands for those files and everything they import, and for nothing else. An edit sends back exactly the checks whose scope it reaches — `facet check --stale` runs only those. A check with no declared scope (and every security check) decays on any change. A change no check covers is named as a blind spot. | `facet proof create\|verify\|decay`, `facet check --stale` | reusing yesterday's green run for today's code; re-running everything for a comment |
+| **Competences are managed by experiment.** A design fixed before the data; arms that differ in presence, wording, model or position of a facet; units dealt in shuffled blocks inside strata of role, task class and difficulty; outcomes read from the journal; a seeded permutation test; thirty units per arm as a floor and a calculator for the real number. | `facet intel design\|start\|report\|size` | a verdict from five observations; comparing easy tasks with hard ones |
+| **Rules evolve by evidence, not by opinion.** A mistake that recurs is traced to the rule that should have stopped it: missing, not delivered, unmeasurable, ignored, or followed in vain. Each diagnosis becomes a proposal, each proposal an experiment, and a change is adopted only after an independent repetition — by a person. | `facet evolve scan\|test\|adopt` | changing a rule because a model finds the new wording better |
+| **Responsibility is settled before the work.** From the files a task touches: one owner per file, the modules that depend on them, a risk level with its reasons, and a route with only the agents that risk calls for. A security gate the plan locks cannot be removed by any option. | `facet route`, `facet owners` | unowned files, two claims, a full team for a typo, a skipped audit to save tokens |
+
+From record to knowledge — hypotheses with computed verdicts, lessons whose confidence follows experience, a trust graph in which unknown is the lowest trust, bounded self-repair with a follow-up, and an economy that prices each rule by what it measurably prevents — is described in [docs/cognitive.md](docs/cognitive.md).
+
+`facet benchmark` runs the guards against damaged journals, dishonest stories and doctored proofs whose expected outcomes are kept apart from the code (`benchmark/expected.json`); `--write` records the result per version, and a later run names regressions. What is still open is listed, ticket by ticket, in [docs/roadmap-0.6.0.md](docs/roadmap-0.6.0.md).
+
+## Beyond code: domains
+
+The method does not depend on the work being code. [`domains/arch`](domains/arch) applies it to architectural production in Archicad — source texts and raster drawings into a checked model description, a model on the right layers, complete drawing sets and a schedule with quantified risk (`arch-flow`). [`domains/viz`](domains/viz) applies it to architectural visualization — Archicad → Blender → renders → website images — as a second, self-contained plugin (`viz-flow`): a brief with checkable acceptance criteria instead of a specification, measured stage checks instead of tests, and a quality report that tells agent defects, missing criteria and new wishes apart.
 
 ## Many developers, many teams
 

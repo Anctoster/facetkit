@@ -3,6 +3,7 @@ id: hint-not-authority
 phase: [plan, design]
 bounds: conflicts=1
 guards: [scope-creep]
+ablatable: no
 ---
 # The specification outranks any memory
 

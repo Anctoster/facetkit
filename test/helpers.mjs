@@ -16,7 +16,7 @@ export function gitInit(root) {
     git('add', '-A');
     git('-c', 'user.name=t', '-c', 'user.email=t@example.invalid', 'commit', '-q', '-m', 'init');
 }
-export const facet = (id, { body, meta = '' } = {}) => `---\nid: ${id}\n${meta}---\n# ${id} title\n\n${body ?? `Do: perform the ${id} step with care.\nCheck: \`facet run -- echo ${id}\` prints the id back.\nStop: after 3 attempts report BLOCKED.\nWhy: prevents ${id} mistakes.`}\n`;
+export const facet = (id, { body, meta = '' } = {}) => `---\nid: ${id}\n${meta}${meta.includes('ablatable:') ? '' : 'ablatable: replay\n'}---\n# ${id} title\n\n${body ?? `Do: perform the ${id} step with care.\nCheck: \`facet run -- echo ${id}\` prints the id back.\nStop: after 3 attempts report BLOCKED.\nWhy: prevents ${id} mistakes.`}\n`;
 export const skillIndex = (name, ids) => `---\nname: ${name}\ndescription: Use when testing ${name}.\n---\n# ${name}\n\n## Facets\n${ids.map((i) => `- \`${i}\``).join('\n')}\n\n## Trials\n1. Pressure: hurry. Pass: follows the facet.\n2. Pressure: sunk cost. Pass: stops at the bound.\n`;
 
 /** An in-memory journal with a clock that advances by `step` minutes per event. */
