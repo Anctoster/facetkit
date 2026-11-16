@@ -283,3 +283,13 @@ test('journal: events signed by a trusted key; an event rewritten with a fresh i
     assert.deepEqual([v.signatures.bad, v.intact, v.status], [1, false, 'tampered']);
     assert.equal(read(file)[1].text, 'two (edited)', 'the edit is readable — and reported');
 });
+
+test('two-arm experiments: new manifests deal one arm per item; manifests from before 0.7 keep the step', async () => {
+    const { assign, newExperiment, unitOf } = await import('../lib/experiments.mjs');
+    const m = newExperiment({ id: 'E', facet: 'x:rule', seed: 1, now: 'x' });
+    assert.equal(m.unit, 'item');
+    assert.equal(unitOf('P1', 'red', m), unitOf('P1', 'build', m));
+    assert.equal(assign(m, unitOf('P1', 'red', m)), assign(m, unitOf('P1', 'build', m)));
+    const old = { ...m, unit: undefined };
+    assert.equal(unitOf('P1', 'red', old), 'P1|red');
+});

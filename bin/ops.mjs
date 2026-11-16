@@ -24,6 +24,9 @@ import { exportKnowledge, importLessons, IMPORT_START, pool, renderPool } from '
 import { AUDIENCES, explain, explainHtml } from '../lib/explain.mjs';
 import { checkFitness, renderFitness } from '../lib/fitness.mjs';
 import { addTrust, newKey, saveKey, trustFile } from '../lib/sign.mjs';
+import { closeCharter, chartersDir, confirmByHand, loadBug, loadBugs, newBug, newCharter, nextStatus, OPEN as OPEN_BUGS, readiness, renderReadiness, renderRiskMap, riskMap, runRepro, saveBug, SEVERITIES, testsNaming } from '../lib/qa.mjs';
+import { history as gitHistory } from '../lib/atlas.mjs';
+import { checkDecision, loadDecisions, newDecision, renderDecisionCheck, saveDecision } from '../lib/decisions.mjs';
 import { ADAPT, adapt, adaptationFor, adaptationsOf, renderAdaptations } from '../lib/adapt.mjs';
 import { blocking, checkHandoff, findTemplate, renderHandoff, TEMPLATE_OF, workingChanges } from '../lib/handoff.mjs';
 import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, stepsOf } from '../lib/planner.mjs';
@@ -44,7 +47,7 @@ import { environment } from '../lib/envinfo.mjs';
 import { eventSigner, eventVerifiers, loadKey, loadTrust, sign } from '../lib/sign.mjs';
 import { sha256 } from '../lib/text.mjs';
 
-export function opsCommands({ CWD, KIT = null, project, opt, flag, list, fail, positional, work, readJson, loadoutsFile, extensions = [], skills = () => [] }) {
+export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], flag, list, fail, positional, work, readJson, loadoutsFile, extensions = [], skills = () => [] }) {
     const journal = path.resolve(CWD, opt('journal', project.journal ?? path.join(work, 'journal.jsonl')));
     const me = isSegmented(journal) ? writerId() : undefined; // in a segmented journal every writer has its own file and its own open item
     const usageFile = path.resolve(CWD, project.usage ?? (isSegmented(journal) ? path.join(journal, `${me}.usage`) : path.join(path.dirname(journal), 'usage.jsonl')));
@@ -200,7 +203,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, flag, list, fail, p
         for (const x of loadExperiments(CWD).filter((m) => m.status === 'running')) {
             const facet = used.find((f) => f.ref === x.facet);
             if (!facet || !facet.ablatable) continue;
-            const arm = assign(x, unitOf(item, step.id));
+            const arm = assign(x, unitOf(item, step.id, x));
             experiments.push({ id: x.id, facet: x.facet, arm, taskClass: routing()[item]?.class ?? null });
             if (arm === 'treatment' && !withheld.includes(x.facet)) withheld.push(x.facet);
             if (arm === 'control' && withheld.includes(x.facet)) withheld.splice(withheld.indexOf(x.facet), 1);
@@ -1037,6 +1040,133 @@ export function opsCommands({ CWD, KIT = null, project, opt, flag, list, fail, p
             const item = opt('item') ?? closedItems(events()).at(-1);
             if (!item) fail('attest: no closed item');
             console.log(JSON.stringify(attest(events(), item, options), null, 2));
+        },
+        /** decide new|check|list: architecture decisions with the measures that must keep holding. */
+        decide() {
+            const sub = positional[0] ?? 'list';
+            if (sub === 'new') {
+                const measures = [...list(opt('fitness')).map((f) => ({ fitness: f })), ...opts('measure').map((run) => ({ run, ...(opt('max') !== undefined ? { max: Number(opt('max')) } : {}), ...(opt('min') !== undefined ? { min: Number(opt('min')) } : {}) }))];
+                try {
+                    const d = saveDecision(CWD, newDecision({ id: positional[1], title: opt('title'), context: opt('context', ''), decision: opt('decision'), alternatives: opts('rejected'), measures, by: opt('by') ?? me ?? null }));
+                    return void console.log(`${d.id} recorded in docs/decisions/ (${d.measures.length} measure(s)) — facet decide check`);
+                } catch (e) {
+                    fail(`decide: ${e.message}\nfacet decide new ADR-1 --title "…" --decision "…" [--context "…"] [--rejected "…"]… (--fitness RULE,… | --measure "CMD" [--max N | --min N])`);
+                }
+            }
+            const all = loadDecisions(CWD);
+            if (!all.length) return void console.log('no decisions recorded: facet decide new ADR-1 --title … --decision … --fitness <rule>');
+            if (sub === 'list') return void console.log(all.map((d) => `${d.id.padEnd(8)} ${d.status.padEnd(10)} ${d.title}`).join('\n'));
+            if (sub !== 'check') fail('decide: new | check [ID] | list');
+            const rules = project.fitness ?? readJson(path.resolve(CWD, 'fitness.json'), []) ?? [];
+            let fresh = null;
+            const fitnessFresh = (id) => {
+                if (!rules.some((r) => r.id === id)) return null;
+                fresh ??= checkFitness(rules, { graph: graphNow(), root: CWD, isTest, baseline: readJson(path.resolve(CWD, project.fitnessBaseline ?? '.facet/fitness-baseline.json'), { keys: [] }).keys ?? [] });
+                return fresh.fresh.filter((v) => v.rule === id).length;
+            };
+            const results = all.filter((d) => !positional[1] || d.id === positional[1]).map((d) => checkDecision(CWD, d, { fitnessFresh }));
+            for (const c of results) {
+                console.log(renderDecisionCheck(c));
+                evidence(`decision:${c.id}`, c.state !== 'review', c.state);
+            }
+            if (results.some((c) => c.state === 'review')) process.exit(1);
+        },
+        /** qa plan | bug | charter | readiness: the tester's side of the record. */
+        qa() {
+            const sub = positional[0] ?? 'plan';
+            const changedSince = (ref) => {
+                const git = (...a) => (spawnSync('git', a, { cwd: CWD, encoding: 'utf-8' }).stdout ?? '').split('\n').filter(Boolean);
+                return [...new Set([...git('diff', '--name-only', ref), ...git('ls-files', '--others', '--exclude-standard')])];
+            };
+            const riskNow = () => {
+                const graph = graphNow();
+                const known = new Set(graph.files);
+                const files = (positional.slice(1).length ? positional.slice(1) : opt('since') ? changedSince(opt('since')) : graph.files).filter((f) => known.has(f));
+                const h = gitHistory(CWD, known, { commits: Number(opt('commits', 300)) });
+                const escapes = {};
+                for (const b of loadBugs(CWD)) for (const f of b.area ?? []) escapes[f] = (escapes[f] ?? 0) + 1;
+                return riskMap(files, { graph, churn: Object.fromEntries(h.churn), escapes, isTest, planning: { ...DEFAULT_PLANNING, ...(project.planning ?? {}) } });
+            };
+            if (sub === 'plan') return void console.log(flag('json') ? JSON.stringify(riskNow(), null, 2) : renderRiskMap(riskNow(), { top: Number(opt('top', 15)) }));
+            if (sub === 'bug') {
+                const what = positional[1] ?? 'list';
+                const id = positional[2];
+                if (what === 'list') {
+                    const all = loadBugs(CWD).filter((b) => flag('all') || OPEN_BUGS.includes(b.status));
+                    return void console.log(all.length ? all.map((b) => `${b.id.padEnd(10)} ${b.severity.padEnd(9)} ${b.status.padEnd(15)} ${b.title}${b.item ? ` (escaped from ${b.item})` : ''}`).join('\n') : 'no open bugs');
+                }
+                if (what === 'new') {
+                    if (loadBug(CWD, id)) fail(`qa bug: ${id} exists`);
+                    const bug = newBug({ id, title: opt('title'), severity: opt('severity', 'major'), repro: opt('repro') ?? null, steps: list(opt('steps')?.replaceAll(';', ',')), expected: opt('expect'), actual: opt('actual') ?? null, by: opt('by') ?? process.env.FACET_ACTOR ?? me ?? null, item: opt('item') ?? null, area: list(opt('area')), mode: opt('mode') ?? null });
+                    saveBug(CWD, bug);
+                    say({ kind: 'qa.bug', bug: id, severity: bug.severity, status: bug.status, by: bug.found.by });
+                    // a defect in work an item had closed is that item's escape: trust and the diagnosis of rules learn from it
+                    if (bug.item && closedItems(events()).includes(bug.item)) say({ kind: 'escape', item: bug.item, bug: id, mode: bug.mode ?? undefined, found: 'qa' });
+                    return void console.log(`${id} reported (${bug.severity})${bug.item ? ` as an escape of ${bug.item}` : ''} — next: facet qa bug verify ${id}${bug.repro ? '' : ' cannot run steps: a second person confirms with facet qa bug confirm ' + id + ' --by NAME'}`);
+                }
+                const bug = loadBug(CWD, id) ?? fail(`qa bug: no bug "${id ?? ''}" (facet qa bug list --all)`);
+                if (what === 'verify') {
+                    if (!bug.repro) fail(`qa bug verify: ${id} has steps, not a command — a second person confirms it by hand: facet qa bug confirm ${id} --by NAME`);
+                    const r = runRepro(CWD, bug, { n: Number(opt('runs', 3)) });
+                    const tests = testsNaming(CWD, id, graphNow().files.filter(isTest));
+                    const status = nextStatus(bug, r, { regressionTests: tests });
+                    saveBug(CWD, { ...bug, status, runs: [...bug.runs, { at: new Date().toISOString(), outcome: r.outcome, failed: r.failed, n: r.runs.length, src: sourceNow() }], tests });
+                    say({ kind: 'qa.verify', bug: id, outcome: r.outcome, status, src: sourceNow() ?? undefined, tests: tests.length });
+                    console.log(`${id}: the reproduction ${r.outcome === 'fails' ? `fails ${r.failed}/${r.runs.length} times` : r.outcome === 'passes' ? `passes ${r.runs.length}/${r.runs.length} times` : `fails ${r.failed} of ${r.runs.length} times — flaky`} → ${status}${status === 'fixed' ? ' (a test that names the bug is still missing)' : ''}${tests.length ? ` · regression test: ${tests.join(', ')}` : ''}`);
+                    return void (r.outcome === 'flaky' && process.exit(1));
+                }
+                if (what === 'confirm') {
+                    const next = confirmByHand(bug, opt('by') ?? fail('qa bug confirm: --by NAME — the person who reproduced it'));
+                    saveBug(CWD, next);
+                    say({ kind: 'qa.verify', bug: id, outcome: 'confirmed-by-hand', status: next.status, by: opt('by') });
+                    return void console.log(`${id} reproduced by ${opt('by')} → ${next.status}`);
+                }
+                if (what === 'close') {
+                    const why = opt('reason') ?? fail('qa bug close: --reason "…" --by NAME (a bug closed without a verified fix is a person\'s decision)');
+                    const by = opt('by') ?? fail('qa bug close: --by NAME');
+                    saveBug(CWD, { ...bug, status: 'closed', closed: { at: new Date().toISOString(), by, reason: why } });
+                    say({ kind: 'qa.verify', bug: id, outcome: 'closed', status: 'closed', by, reason: why });
+                    return void console.log(`${id} closed by ${by}: ${why}`);
+                }
+                fail('qa bug: list [--all] | new ID --title T --expect E (--repro "CMD" | --steps "1. …; 2. …") [--severity S] [--item ITEM] [--area files] [--mode cause] | verify ID | confirm ID --by NAME | close ID --reason R --by NAME');
+            }
+            if (sub === 'charter') {
+                const what = positional[1] ?? 'list';
+                const dir = chartersDir(CWD);
+                const file = (id) => path.join(dir, `${id}.json`);
+                if (what === 'new') {
+                    const c = newCharter({ id: positional[2], mission: opt('mission'), areas: list(opt('areas')), minutes: Number(opt('minutes', 60)), by: opt('by') ?? me ?? null });
+                    fs.mkdirSync(dir, { recursive: true });
+                    fs.writeFileSync(file(c.id), `${JSON.stringify(c, null, 2)}\n`);
+                    return void console.log(`charter ${c.id}: ${c.mission} — ${c.minutes} min; write findings as bugs (facet qa bug new … --area <file>), then: facet qa charter close ${c.id} --minutes N --bugs B1,B2`);
+                }
+                if (what === 'close') {
+                    const c = readJson(file(positional[2]), null) ?? fail(`qa charter: no charter "${positional[2]}"`);
+                    const done = closeCharter(c, { minutes: opt('minutes'), bugs: list(opt('bugs')), covered: list(opt('covered')), notes: opt('notes') ?? null });
+                    fs.writeFileSync(file(c.id), `${JSON.stringify(done, null, 2)}\n`);
+                    say({ kind: 'qa.charter', charter: c.id, minutes: done.spent, bugs: done.bugs, covered: done.covered });
+                    return void console.log(`charter ${c.id} closed: ${done.spent} min, ${done.bugs.length} bug(s), covered ${done.covered.length} area(s)${done.overrun ? ' — ran 50 % over its time box' : ''}`);
+                }
+                const all = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => readJson(path.join(dir, f), null)).filter(Boolean) : [];
+                return void console.log(all.length ? all.map((c) => `${c.id.padEnd(10)} ${c.status.padEnd(7)} ${String(c.spent ?? c.minutes).padStart(4)} min  ${(c.bugs ?? []).length} bug(s)  ${c.mission}`).join('\n') : 'no charters: facet qa charter new ID --mission "explore … to discover …" --areas files');
+            }
+            if (sub === 'readiness') {
+                const ev = events();
+                const items = [...closedItems(ev), ...openItems(ev)].map((i) => ({ item: i, closed: closedItems(ev).includes(i), level: judged(i).level }));
+                const charters = fs.existsSync(chartersDir(CWD)) ? fs.readdirSync(chartersDir(CWD)).map((f) => readJson(path.join(chartersDir(CWD), f), {})) : [];
+                const explored = new Set(charters.filter((c) => c.status === 'closed').flatMap((c) => c.covered ?? []));
+                const flaky = [...trustGraphNow().nodes.values()].filter((n) => n.kind === 'tool' && n.notes.some((x) => /both pass and fail|another answer/.test(x))).map((n) => n.id.slice(5));
+                const r = readiness({ bugs: loadBugs(CWD), items, required: Number(govern.required ?? 1), risk: opt('since') ? riskNow() : [], explored, flaky });
+                const text = renderReadiness(r);
+                if (opt('html')) {
+                    const out = path.resolve(CWD, opt('html'));
+                    fs.writeFileSync(out, explainHtml(`# ${r.go ? 'GO' : 'NO-GO'}\n\n${r.stop.map((x) => `- **stop:** ${x}`).join('\n')}\n${r.warn.map((x) => `- ${x}`).join('\n')}\n\n_${SEVERITIES.map((s) => `${s} ${r.counts[s]}`).join(' · ')}_`, { title: `${project.title ?? path.basename(CWD)} — release readiness` }));
+                    console.log(`written: ${path.relative(CWD, out)}`);
+                }
+                console.log(text);
+                return void (r.go || process.exit(1));
+            }
+            fail('qa: plan [--since REF | files…] | bug … | charter new|close|list | readiness [--since REF] [--html FILE]');
         },
         /** explain --for dev|lead|client|auditor [--html FILE]: the record told to the person who acts on it. */
         explain() {
