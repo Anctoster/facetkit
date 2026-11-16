@@ -1044,11 +1044,11 @@ export function opsCommands({ CWD, KIT = null, project, opt, flag, list, fail, p
             if (!AUDIENCES[who]) fail(`explain: --for one of ${Object.keys(AUDIENCES).join(', ')}`);
             const titles = Object.fromEntries(Object.entries(routing()).map(([k, v]) => [k, v.title ?? null]));
             const open = openItems(events(), me)[0];
-            const r = explain(events(), who, { titles, policy: policy(), checks: checkNames(), project: projectFacts(), cost: who === 'lead' ? costReport(usage(), events(), { prices: project.prices ?? {} }) : null, next: open ? describe(upcoming(open)) : null });
+            const r = explain(events(), who, { titles, policy: policy(), checks: checkNames(), project: projectFacts(), cost: who === 'lead' ? costReport(usage(), events(), { prices: project.prices ?? {} }) : null, next: open ? describe(upcoming(open)) : null, lang: opt('lang', project.lang ?? 'en') });
             if (opt('html')) {
                 const out = path.resolve(CWD, opt('html'));
                 fs.mkdirSync(path.dirname(out), { recursive: true });
-                fs.writeFileSync(out, explainHtml(r.text, { title: `${project.title ?? path.basename(CWD)} — for the ${AUDIENCES[who]}` }));
+                fs.writeFileSync(out, explainHtml(r.text, { title: `${project.title ?? path.basename(CWD)} — for the ${AUDIENCES[who]}`, lang: who === 'client' ? opt('lang', project.lang ?? 'en') : 'en' }));
                 return void console.log(`written for the ${AUDIENCES[who]}: ${path.relative(CWD, out)}`);
             }
             console.log(r.text);

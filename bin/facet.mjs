@@ -36,7 +36,7 @@
 //   facet proof create|verify|status|decay · check --stale   what a result is proven for; what a change sends back
 //   facet owners · experiment · benchmark · journal repair
 //   facet init [--minimal] [--claude] · facet demo · facet hypotheses [--write FILE]
-//   facet explain --for dev|lead|client|auditor [--html FILE] · facet fitness [--accept] · facet handoff check STEP
+//   facet explain --for dev|lead|client|auditor [--lang en|pl|ru] [--html FILE] · facet fitness [--accept] · facet handoff check STEP
 //   facet cf candidates|setup|judge|report · facet learn export|import|pool · facet key new|trust|list · facet proof witness
 //
 // Configuration (optional) in the project's package.json:

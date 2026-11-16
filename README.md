@@ -160,7 +160,7 @@ The same record, told to the person who acts on it — see [docs/how-it-works.md
 |---|---|---|
 | developer | `facet explain --for dev` | the next command, what is not met yet |
 | team lead | `facet explain --for lead` | first-time-right, why work was sent back, where the tokens go |
-| client, product owner | `facet explain --for client --html status.html` | what is done and how sure the team is, in words |
+| client, product owner | `facet explain --for client --lang pl --html status.html` (en, pl, ru) | what is done and how sure the team is, in words |
 | auditor | `facet explain --for auditor`, `facet proof witness` | every rule, exception and signature — and the checks re-run by you |
 
 ## What 0.7.0 adds

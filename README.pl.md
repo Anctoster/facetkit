@@ -116,7 +116,7 @@ Ten sam zapis, opowiedziany osobie, która ma na jego podstawie działać:
 |---|---|---|
 | programistą | `facet explain --for dev` | następne polecenie i to, czego jeszcze brakuje |
 | liderem zespołu | `facet explain --for lead` | ile pracy wraca do poprawki i dlaczego, gdzie idą tokeny |
-| klientem, właścicielem produktu | `facet explain --for client --html status.html` | co jest gotowe i na ile zespół jest pewny — słowami |
+| klientem, właścicielem produktu | `facet explain --for client --lang pl --html status.html` | co jest gotowe i na ile zespół jest pewny — słowami |
 | audytorem | `facet explain --for auditor`, `facet proof witness` | każdą regułę, wyjątek i podpis — oraz kontrole uruchomione ponownie przez ciebie |
 
 ## Co dodaje 0.7.0

@@ -206,6 +206,9 @@ test('explain: one record, four readers — the client gets words, the lead gets
     assert.match(client, /\*\*B — SEO metadata\*\*: in progress/);
     assert.doesNotMatch(client, /L[0-4] |facet |journal/i, 'no jargon for the client');
     assert.match(explain(s.events, 'lead', { titles }).text, /- stale-handoff: 1/);
+    assert.match(explain(s.events, 'client', { titles, lang: 'pl' }).text, /^# Stan prac\n\nUkończone: 1, w toku: 1\./);
+    assert.match(explain(s.events, 'client', { titles, lang: 'ru' }).text, /\*\*B — SEO metadata\*\*: в работе/);
+    assert.match(explainHtml('# x', { lang: 'pl' }), /<html lang="pl">/);
     assert.match(explain(s.events, 'auditor', { titles, project: { journalIntact: true } }).text, /Journal intact: yes/);
     assert.match(explain(s.events, 'dev', { titles, next: 'CALL mapper' }).text, /CALL mapper/);
     const html = explainHtml(client, { title: 'x' });
