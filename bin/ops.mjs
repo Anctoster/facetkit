@@ -381,12 +381,12 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                     const changed = all && filesForStep(all, { claimedElsewhere: others, owners: manifest ? resolveOwners(all, manifest) : null, agent: step.agent });
                     const problems = checkHandoff(fs.readFileSync(hfile, 'utf-8'), tpl, { root: CWD, changed });
                     say({ kind: 'evidence', item, name: 'handoff', ok: blocking(problems).length === 0, value: blocking(problems).length, step: stepId, detail: blocking(problems).slice(0, 4).map((p) => `${p.kind} ${p.what}`).join('; ') || undefined });
-                    if (blocking(problems).length && !flag('force')) fail(`${renderHandoff(path.relative(CWD, hfile), problems)}\n\nflow end: the step is not DONE until its handoff is whole. Give these lines to ${step.agent ?? 'the step'} and end the step again (or --force, which is recorded).`, 1);
+                    if (blocking(problems).length && !flag('force')) fail(`${renderHandoff(path.relative(CWD, hfile), problems)}\n\nflow end: the step is not DONE until its handoff is whole. Give these lines to ${step.agent ?? 'the step'} and end the step again (or --force --reason "…", which is recorded and shown by facet assure and facet trust).`, 1);
                     if (problems.length) console.log(renderHandoff(path.relative(CWD, hfile), problems));
                 } else if (tpl && !fs.existsSync(hfile) && step.agent) console.log(`note: ${path.relative(CWD, hfile)} does not exist — the next agent has no handoff from ${step.agent}`);
             }
             if (status === 'DONE' && step.agent && !opt('tokens')) console.log('note: no --tokens given — the cost of this step will be unknown (copy the total the agent call reported)');
-            say({ kind: 'step.end', item, step: stepId, agent: step.agent, status, tokens: opt('tokens') ? Number(opt('tokens')) : undefined, for: opt('for'), question: opt('question'), forced: status === 'DONE' && flag('force') ? true : undefined });
+            say({ kind: 'step.end', item, step: stepId, agent: step.agent, status, tokens: opt('tokens') ? Number(opt('tokens')) : undefined, for: opt('for'), question: opt('question'), forced: status === 'DONE' && flag('force') ? true : undefined, reason: status === 'DONE' && flag('force') ? opt('reason') : undefined });
             console.log(`${item} / ${stepId} → ${status}\n\n${describe(upcoming(item))}`);
         },
         verdict() {

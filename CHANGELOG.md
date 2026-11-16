@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Fixed
 - Adaptive routes: a step the plan asks for before a step that has **already started** no longer goes in front of it (which reset the started work); it goes after it in `REVIEW` mode and reviews that work.
 - Adaptive routes escalate a step's model only when most of that agent's reworks had a capability cause (`false-green`, `seam-break`, `spec-gap`, `regression`, `weakened-test`, `lost-work`, `loop`, `repeated-mistake`). Reworks for handoffs and documents are answered by reinforced rules, not by a model five times the price.
+- A step ended `DONE` with `--force` over a failed handoff check is still no failed rule, but it is no longer invisible: `facet assure` lists each such step with its `--reason`, and `facet trust` counts them next to forced steps.
 - `facet flow end` no longer asks a step to list changed files that another handoff of the item already lists or that belong to another agent's territory. With a team rule "never list another agent's files", every step that ran after another agent's changes could only end with `--force`. The manifest is `owners`, `owners.json`, or `territories` — a team file of agent → paths.
 
 ### Added

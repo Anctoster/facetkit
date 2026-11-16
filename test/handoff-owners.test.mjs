@@ -23,3 +23,17 @@ test('ownership: a territories file (agent → paths) reads as an ownership mani
     assert.deepEqual(m, { owners: { 'src/**': 'slice-builder', 'tools/**': 'slice-builder', 'tests/unit/**': 'spec-falsifier' } });
     assert.deepEqual(resolveOwners(['tools/x.py'], m).map((o) => o.owner), ['slice-builder']);
 });
+
+test('govern: a step ended DONE with --force is no failed rule, but assure and trust always show it', async () => {
+    const { evaluate, renderEvaluation, trust, renderTrust } = await import('../lib/govern.mjs');
+    const { story } = await import('./helpers.mjs');
+    const s = story();
+    s.open('A', [{ id: 'build', agent: 'builder', phase: 'build' }, { id: 'proof', agent: 'inspector', phase: 'proof', verdict: true }]);
+    s.say({ kind: 'step.start', item: 'A', step: 'build', agent: 'builder' });
+    s.say({ kind: 'step.end', item: 'A', step: 'build', agent: 'builder', status: 'DONE', forced: true, reason: 'checks disagree on files of other agents' });
+    const e = evaluate(s.events, 'A');
+    assert.equal(e.results.find((r) => r.id === 'no-forced-steps').pass, true);
+    assert.match(renderEvaluation(e), /1 step\(s\) ended DONE with --force .*build \(checks disagree on files of other agents\)/);
+    assert.equal(trust(s.events).forcedEnds, 1);
+    assert.match(renderTrust(trust(s.events)), /steps ended with --force: 1/);
+});
