@@ -20,6 +20,7 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: git config --global user.name ci && git config --global user.email ci@example.invalid
       - run: npm test
+      - run: node bin/facet.mjs hypotheses --check HYPOTHESES.md
       - run: npm run audit
       - run: npm run benchmark -- --write
       - uses: actions/upload-artifact@v4
