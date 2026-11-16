@@ -147,7 +147,7 @@ test('adapt: a security file in the change grows the route and locks its gate; a
     for (const i of ['P1', 'P2', 'P3', 'P4', 'P5']) { // slice-builder on haiku, sent back for the same cause again and again
         s.open(i, steps);
         s.run(i, 'build', 'slice-builder', { model: 'haiku' });
-        s.say({ kind: 'verdict', item: i, verdict: 'REWORK', fixes: [{ agent: 'slice-builder', mode: 'stale-handoff' }] });
+        s.say({ kind: 'verdict', item: i, verdict: 'REWORK', fixes: [{ agent: 'slice-builder', mode: 'stale-handoff' }, { agent: 'slice-builder', mode: 'spec-gap' }] });
         s.say({ kind: 'verdict', item: i, verdict: 'PASS', fixes: [] });
         s.say({ kind: 'item.close', item: i });
     }
