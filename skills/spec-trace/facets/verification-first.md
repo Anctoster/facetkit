@@ -5,6 +5,8 @@ needs: [trace]
 bounds: attempts=2
 guards: [spec-gap, false-green]
 footprint: [tool:trace]
+ablatable: live
+backstop: [trace]
 ---
 # Decide how a clause can be refuted before testing it
 

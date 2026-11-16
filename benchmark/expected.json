@@ -95,5 +95,39 @@
   "conflicts": [
    "ab/x.mjs"
   ]
+ },
+ "journal/fenced-fork": {
+  "intact": true,
+  "events": 3,
+  "fenced": 1
+ },
+ "journal/unlocked-twin": {
+  "intact": false,
+  "fenced": 1,
+  "problem": "a second writer appended from the same place in epoch 0: the lock was not honoured"
+ },
+ "proof/authorship": {
+  "honest": "VALID",
+  "reDigested": "TAMPERED",
+  "reDigestedUnsigned": "UNSIGNED",
+  "signatureCopied": "TAMPERED",
+  "foreignKey": "UNSIGNED",
+  "witnessDisagrees": "MISMATCH",
+  "witnessAgrees": "VALID"
+ },
+ "proof/source-state": {
+  "executableBit": "STALE",
+  "linkTarget": "STALE",
+  "caseCollisionReported": true,
+  "ignoredInputDeclared": "STALE"
+ },
+ "withholding/rules": {
+  "safetyLive": false,
+  "replayLive": false,
+  "liveUnbacked": false,
+  "liveBacked": true,
+  "capsBacked": true,
+  "sameForEveryStep": true,
+  "unsaidIsNever": true
  }
 }

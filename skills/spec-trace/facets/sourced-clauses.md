@@ -3,6 +3,7 @@ id: sourced-clauses
 phase: [plan]
 bounds: quotes=12, words=10
 guards: [scope-creep]
+ablatable: replay
 ---
 # Every clause points at the words it came from
 

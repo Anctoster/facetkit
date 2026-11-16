@@ -5,6 +5,8 @@ needs: [read, ledger]
 bounds: files=25, widenings=2
 guards: [budget-burn]
 footprint: [tool:read]
+ablatable: live
+backstop: [caps]
 ---
 # Read ranges, not files
 

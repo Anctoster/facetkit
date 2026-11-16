@@ -5,6 +5,7 @@ needs: [audit]
 bounds: rewrites=2
 guards: [other]
 footprint: [tool:audit]
+ablatable: replay
 ---
 # Measure the distance from what already exists
 

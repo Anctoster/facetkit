@@ -1,6 +1,6 @@
 {
   "name": "facetkit",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "author": "anctoster",
   "description": "Evidence-first engineering for teams of AI agents: composable skill facets, measuring tools, and one journal from which state, cost, evaluation and the trust in a result are computed.",
   "type": "module",
@@ -42,7 +42,15 @@
     "./proof": "./lib/proof.mjs",
     "./experiments": "./lib/experiments.mjs",
     "./ownership": "./lib/ownership.mjs",
-    "./benchmark": "./lib/benchmark.mjs"
+    "./benchmark": "./lib/benchmark.mjs",
+    "./sign": "./lib/sign.mjs",
+    "./envinfo": "./lib/envinfo.mjs",
+    "./adapt": "./lib/adapt.mjs",
+    "./handoff": "./lib/handoff.mjs",
+    "./fitness": "./lib/fitness.mjs",
+    "./explain": "./lib/explain.mjs",
+    "./counterfactual": "./lib/counterfactual.mjs",
+    "./crosslearn": "./lib/crosslearn.mjs"
   },
   "files": ["bin", "lib", "skills", "agents", "commands", "templates", "presets", "trials", "benchmark", "domains", "docs", "examples", "HYPOTHESES.md", "loadouts.json", "README.md", "CHANGELOG.md", "AUDIT.md", "LICENSE"],
   "engines": { "node": ">=20" },

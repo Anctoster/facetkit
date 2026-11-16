@@ -4,6 +4,7 @@ phase: [build, probe, seams, ui]
 bounds: notes=12, chars=200
 guards: [lost-work]
 footprint: [note]
+ablatable: replay
 ---
 # Leave a checkpoint after every finished unit
 

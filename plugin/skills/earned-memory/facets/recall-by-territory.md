@@ -4,6 +4,7 @@ phase: [map]
 bounds: recalls=1, words=120
 guards: [repeated-mistake]
 footprint: [tool:mem recall]
+ablatable: replay
 ---
 # Recall for the files you are about to touch
 

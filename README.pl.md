@@ -12,7 +12,7 @@ Bez zależności. Node 20+. Działa z każdym agentem, który potrafi uruchomić
 
 ![Jeden element pracy: specyfikacja, budowa, próba, dowód, bramka polityki — dowody przybywają, a poziom pewności rośnie](docs/assets/flow.svg)
 
-> **Stan: 0.6.0, wersja eksperymentalna.** Narzędzia są przetestowane (ponad 100 testów; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **69 niesprawdzonych hipotez** o zachowaniu agentów — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
+> **Stan: 0.7.0, wersja eksperymentalna.** Narzędzia są przetestowane (185 testów i 22 przypadki testu odporności; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **69 niesprawdzonych hipotez** o zachowaniu agentów — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
 
 ## Jaki problem rozwiązuje
 
@@ -107,6 +107,29 @@ Poziom mówi, jakie dowody istnieją. Nie mówi, że wystarczają przy twoim ryz
 ## Które umiejętności naprawdę działają?
 
 Każda faseta jest hipotezą mierzoną na trzy sposoby: **ekspozycja** (czy reguła była w tym, co agent przeczytał, czy celowo ją wstrzymano), **przestrzeganie** (czy agent zostawił *ślad* reguły — użyte narzędzie, zapisany dowód, czerwony przebieg przed zielonym) oraz **efekt** (czy błąd, przed którym reguła chroni, zdarza się rzadziej). `facet skill report` stawia każdej diagnozę i przypisuje jedno działanie: zostawić, skrócić, zamienić w narzędzie, wycofać, przetestować. Zamierzony kierunek: kolekcja ma się z czasem *skracać*. Zob. [docs/skill-intelligence.md](docs/skill-intelligence.md).
+
+## Kto co czyta
+
+Ten sam zapis, opowiedziany osobie, która ma na jego podstawie działać:
+
+| Jesteś | Uruchom | Dostajesz |
+|---|---|---|
+| programistą | `facet explain --for dev` | następne polecenie i to, czego jeszcze brakuje |
+| liderem zespołu | `facet explain --for lead` | ile pracy wraca do poprawki i dlaczego, gdzie idą tokeny |
+| klientem, właścicielem produktu | `facet explain --for client --html status.html` | co jest gotowe i na ile zespół jest pewny — słowami |
+| audytorem | `facet explain --for auditor`, `facet proof witness` | każdą regułę, wyjątek i podpis — oraz kontrole uruchomione ponownie przez ciebie |
+
+## Co dodaje 0.7.0
+
+- **Zapis ma autora**: paczki dowodowe (i opcjonalnie zdarzenia dziennika) są podpisywane kluczami Ed25519, którym projekt ufa według ról; paczka zmieniona i ponownie przeliczona jest TAMPERED.
+- **Wynik jest odtworzony, nie zacytowany**: świadek uruchamia kontrole ponownie na tych samych źródłach; rozbieżność daje MISMATCH (`facet proof witness`).
+- **Wstrzymany proces nie zepsuje dziennika**: blokady żyjącego właściciela nikt nie przejmuje; wymuszone przejęcie podnosi epokę, a spóźniony zapis ze starej epoki jest odsuwany (fencing).
+- **Stan źródeł obejmuje to, od czego zależy wynik**: treść, bit wykonywalności, cel dowiązania, commit submodułu, zadeklarowane pliki ignorowane; środowisko pomiaru jest zapisywane razem z wynikiem.
+- **Trasa dostosowuje się w trakcie pracy**: bardziej ryzykowna zmiana dodaje agentów i bramki, powracająca przyczyna wzmacnia reguły następnego agenta, słaby wynik na modelu podnosi model. Nigdy mniej kroków.
+- **Przekazanie jest sprawdzane, gdy krok się kończy**: sekcje, dowody, nieaktualne kotwice, pliki zmienione, a niewymienione.
+- **Funkcje dopasowania architektury** jako zapadka (`facet fitness`), **powtórki kontrfaktyczne** reguł na zakończonej pracy (`facet cf`), **nauka między projektami** (`facet learn export|import|pool`).
+
+Odpowiedzi na przegląd 0.6.0: [docs/roadmap-0.7.0.md](docs/roadmap-0.7.0.md). Plan do wersji 2.0: [docs/roadmap-2.0.md](docs/roadmap-2.0.md).
 
 ## Wielu programistów, wiele zespołów
 

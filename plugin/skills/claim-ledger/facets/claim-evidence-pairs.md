@@ -5,6 +5,7 @@ needs: [run]
 bounds: claims=12
 guards: [unverified-claim]
 footprint: [runs]
+ablatable: no
 ---
 # No claim without the command that could refute it
 

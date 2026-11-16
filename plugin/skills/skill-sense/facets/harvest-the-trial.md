@@ -5,6 +5,7 @@ needs: [skill]
 bounds: gaps=1
 guards: [repeated-mistake]
 footprint: [tool:skill coverage]
+ablatable: replay
 ---
 # Take the trial from what really happened
 

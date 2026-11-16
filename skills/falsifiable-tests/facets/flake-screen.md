@@ -4,6 +4,7 @@ phase: [probe]
 needs: [run]
 bounds: repeats=3
 guards: [flaky]
+ablatable: replay
 ---
 # A test must give the same answer three times
 

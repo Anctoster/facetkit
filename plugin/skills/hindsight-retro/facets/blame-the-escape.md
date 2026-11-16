@@ -4,6 +4,7 @@ phase: [retro]
 bounds: fixes=1
 guards: [repeated-mistake]
 footprint: [tool:retro hindsight]
+ablatable: replay
 ---
 # Charge a late defect to the item that wrote it
 

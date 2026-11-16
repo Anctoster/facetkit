@@ -3,6 +3,7 @@ id: real-edge-mocks
 phase: [red]
 bounds: mocks=3
 guards: [seam-break, false-green]
+ablatable: no
 ---
 # Mock the edge of the process, nothing inside it
 

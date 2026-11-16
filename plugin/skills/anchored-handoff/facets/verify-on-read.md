@@ -5,6 +5,8 @@ needs: [capsule, read]
 bounds: drift=33
 guards: [stale-handoff]
 footprint: [tool:capsule verify]
+ablatable: live
+backstop: [handoff]
 ---
 # Check the anchors before you believe the notes
 

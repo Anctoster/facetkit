@@ -4,6 +4,7 @@ phase: [forge]
 needs: [compose]
 bounds: numbers=3
 guards: [loop, budget-burn]
+ablatable: no
 ---
 # Every rule carries its own limit
 

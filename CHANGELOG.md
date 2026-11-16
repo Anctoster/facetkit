@@ -2,6 +2,33 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] — 2026-11-16
+
+Answers to the review of 0.6.0, finding by finding: `docs/roadmap-0.7.0.md`. Plan to 2.0: `docs/roadmap-2.0.md`.
+
+### Added
+- **Authorship** (`facetkit/sign`): Ed25519 keys (`facet key new|trust|list`), trusted keys by role in `.facet/trust.json`; proof packs signed on creation; journal events signed with `govern.signEvents`; `govern.requireSignature` refuses unsigned packs (status UNSIGNED).
+- **Witnesses**: `facet proof witness` (or `verify --rerun`) runs the checks again on the same sources and compares; a disagreement makes the pack a MISMATCH; witnesses count in the trust graph. Check evidence carries a receipt (hash of command and log).
+- **Fencing**: a forced lock takeover raises the journal's epoch; events carry it; a fork is settled for the higher epoch and the late line is fenced (`facet journal repair` moves it to `.fenced`); a fork inside one epoch is damage. `facet journal unlock` for a stuck live owner.
+- **Environment** (`facetkit/envinfo`): runtime, platform, tool versions, lock-file hashes, container and CI — no variable values; recorded with evidence, proof packs and benchmark reports, with a comparable digest.
+- **Adaptive orchestration** (`facetkit/adapt`): `grow`, `reinforce`, `escalate` — recorded as `route.adapt` events, applied by the flow, shown by `facet flow status`. Never removes a step, a gate or a model rung.
+- **Handoff check** (`facetkit/handoff`, `facet handoff check`): `facet flow end --status DONE` refuses a handoff with a missing or empty section, no evidence line, a drifted anchor, or a changed file not listed.
+- **Architecture fitness functions** (`facetkit/fitness`, `facet fitness [--accept]`): no-import, layers, no-cycle, max-lines, max-fan-in, tested — as a ratchet against a baseline.
+- **Explanations by audience** (`facetkit/explain`, `facet explain --for dev|lead|client|auditor [--html FILE]`); `docs/how-it-works.md`.
+- **Counterfactual replay** (`facetkit/counterfactual`, `facet cf candidates|setup|judge|report`): paired replays with and without a rule, sign test.
+- **Cross-project learning** (`facetkit/crosslearn`, `facet learn export|import|pool`): anonymous knowledge packs, imported lessons start at 0.55 and must prove themselves, pooled effects with disagreement reported.
+- Benchmark: 22 cases (fenced fork, unlocked twin, authorship, source state, withholding rules); reports carry the environment, a suite digest and a result digest.
+- Failure modes `handoff-format` and `architecture`.
+
+### Changed
+- **Every facet says whether it may be withheld**: `ablatable: no` (16), `replay` (33) or `live` with a `backstop` (20). Unsaid means never; `facet audit` fails it.
+- **Withholding is per item**, at most one rule, drawn when the item opens and recorded with its probability; only `live` rules whose backstop the policy enforces at the required level.
+- **Experiments use the item as the unit**: one arm per item, steps of an item collapsed into one observation (`clusterByItem`); new designs carry `unit: "item"`.
+- **SHA-256** for proof packs, bundles, source state and benchmark digests (`PROOF_SCHEMA` 2, benchmark schema 2). Packs from 0.6 verify as MISMATCH (schema) and must be made again.
+- **Source state** records the executable bit, link targets and submodule commits; the hash cache checks ctime, inode and mode; `govern.inputs` adds ignored files a build reads; collisions on folding file systems are listed as `blind`.
+- A lock is taken over only when its owner is known to be gone; an owner releases only its own lock.
+- `/facet-item`: the coordinator keeps its turns short, follows adapted routes, and sends handoff problems back to their author.
+
 ## [0.6.0] — 2026-11-15
 
 - **arch domain 0.2.0 — variant sketching before the drawing sets.** Route `variants` (site plan, layouts, facades, in that order): an agent proposes three to five different ideas with geometry; `variants.py` derives the indicators, tests the architect's limits, refuses near-identical variants, scores by the architect's weights and names variants beaten on every criterion. A variant over a limit is shown and marked, never dropped; the choice is a person's gate. Plan `design` lays out a commission from the first sketch to both drawing sets.

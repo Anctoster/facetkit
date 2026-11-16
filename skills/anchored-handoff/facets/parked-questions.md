@@ -3,6 +3,7 @@ id: parked-questions
 phase: [open, design, ops]
 bounds: questions=5
 guards: [unasked-assumption]
+ablatable: no
 ---
 # Park a question with an owner and a default
 

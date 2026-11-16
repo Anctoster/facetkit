@@ -5,6 +5,7 @@ needs: [skill]
 bounds: rate=10
 guards: [other]
 footprint: [tool:skill report]
+ablatable: replay
 ---
 # Learn an effect by leaving the rule out, safely
 

@@ -3,6 +3,8 @@ id: session-budget
 phase: [run]
 bounds: percent=75
 guards: [budget-burn]
+ablatable: live
+backstop: [caps]
 ---
 # Plan the session, and end it on purpose
 

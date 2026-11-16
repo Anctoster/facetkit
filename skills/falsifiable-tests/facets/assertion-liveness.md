@@ -3,6 +3,7 @@ id: assertion-liveness
 phase: [red, probe]
 bounds: tests=10
 guards: [false-green]
+ablatable: replay
 ---
 # Every test has an assertion that can fire
 

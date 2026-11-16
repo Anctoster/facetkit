@@ -5,6 +5,8 @@ needs: [ui]
 bounds: urls=2, probes=2
 guards: [unverified-claim]
 footprint: [tool:ui]
+ablatable: live
+backstop: [ui]
 ---
 # Prove it with a digest, not a picture
 

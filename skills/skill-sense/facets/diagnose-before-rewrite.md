@@ -5,6 +5,7 @@ needs: [skill]
 bounds: facets=2
 guards: [other]
 footprint: [tool:skill report]
+ablatable: replay
 ---
 # Read the diagnosis before touching a rule
 

@@ -4,6 +4,7 @@ phase: [probe]
 needs: [run]
 bounds: orderings=2
 guards: [flaky]
+ablatable: replay
 ---
 # Find the state your tests share by accident
 

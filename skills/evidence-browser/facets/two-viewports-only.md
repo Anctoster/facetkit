@@ -3,6 +3,8 @@ id: two-viewports-only
 phase: [ui, proof]
 bounds: viewports=2
 guards: [budget-burn]
+ablatable: live
+backstop: [caps]
 ---
 # Desktop and phone, built and cold
 

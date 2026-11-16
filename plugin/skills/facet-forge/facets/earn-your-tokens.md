@@ -5,6 +5,8 @@ needs: [compose, audit]
 bounds: budget=900
 guards: [budget-burn]
 footprint: [tool:compose]
+ablatable: live
+backstop: [caps]
 ---
 # Every facet must be loaded by someone
 

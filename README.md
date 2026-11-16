@@ -12,7 +12,7 @@ No dependencies. Node 20+. Works with any agent that can run a shell command; sh
 
 ![One item of work: specification, build, probe, proof, policy gate — evidence accumulates and the assurance level rises](docs/assets/flow.svg)
 
-> **Status: 0.6.0, experimental.** The tools are tested (130+ tests and a guard benchmark of adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **69 untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute.
+> **Status: 0.7.0, experimental.** The tools are tested (185 tests and a guard benchmark of 22 adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **69 untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute.
 
 
 ## Try it in five minutes
@@ -151,6 +151,33 @@ thrift-loop:hard-caps — followed, no measurable effect
 ```
 
 Optional, seeded **withholding** turns correlation into an experiment (never for safety rules, off by default). `facet skill coverage` lists failure modes with incidents and no guarding rule, each with a trial harvested from the real incident. The intended direction is that a collection gets *shorter*: rules that matter graduate into tools, rules that do not are deleted. See [docs/skill-intelligence.md](docs/skill-intelligence.md).
+
+## Who reads what
+
+The same record, told to the person who acts on it — see [docs/how-it-works.md](docs/how-it-works.md):
+
+| You are | Run | You get |
+|---|---|---|
+| developer | `facet explain --for dev` | the next command, what is not met yet |
+| team lead | `facet explain --for lead` | first-time-right, why work was sent back, where the tokens go |
+| client, product owner | `facet explain --for client --html status.html` | what is done and how sure the team is, in words |
+| auditor | `facet explain --for auditor`, `facet proof witness` | every rule, exception and signature — and the checks re-run by you |
+
+## What 0.7.0 adds
+
+| Guarantee | Command |
+|---|---|
+| **A record has an author.** Proof packs and (optionally) journal events are signed with Ed25519 keys the project trusts by role; an edited pack whose digest was recomputed is TAMPERED, an unsigned one is refused where signatures are required. | `facet key new`, `facet key trust`, `govern.requireSignature` |
+| **A result is reproduced, not quoted.** A witness re-runs the checks on the same sources and compares; a disagreement makes the proof a MISMATCH. | `facet proof witness` |
+| **A paused writer cannot corrupt the journal.** A live owner's lock is never taken over; a forced takeover raises the epoch; a late write under an old epoch is fenced. | `facet journal`, `facet journal unlock`, `facet journal repair` |
+| **The sources are what a result depends on** — content, executable bit, link target, submodule commit, declared ignored inputs — and the environment it was measured in travels with it. | `facet proof create`, `govern.inputs` |
+| **The route adapts while the item runs**: a riskier change than planned adds agents and gates, a recurring cause reinforces the next agent, a weak record escalates its model. Never fewer steps. | `facet flow next`, `facet flow status` |
+| **A handoff is checked when its step ends**, not at the end of the item: sections, evidence lines, drifted anchors, files changed and not listed. | `facet flow end`, `facet handoff check` |
+| **Architecture rules as a ratchet**: forbidden imports, layers, cycles, size, fan-in, untested modules. | `facet fitness` |
+| **Rules measured on finished work**: a step re-run with and without one rule, paired, sign test. Every facet says whether it may be withheld: never, only in a replay, or live with a backstop the policy enforces; withholding is per item. | `facet cf`, `ablatable: no|replay|live` |
+| **What one project learned is a hypothesis for the next**: knowledge packs without file names or text, imported lessons that must prove themselves, pooled effects that show disagreement. | `facet learn export|import|pool` |
+
+Answers to the review of 0.6.0, finding by finding: [docs/roadmap-0.7.0.md](docs/roadmap-0.7.0.md). Where this is going: [docs/roadmap-2.0.md](docs/roadmap-2.0.md).
 
 ## What 0.6.0 hardens
 

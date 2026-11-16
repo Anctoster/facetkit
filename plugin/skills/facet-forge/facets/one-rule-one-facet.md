@@ -5,6 +5,7 @@ needs: [audit]
 bounds: words=170, rewrites=2
 guards: [other]
 footprint: [tool:audit]
+ablatable: replay
 ---
 # One facet changes one behaviour
 

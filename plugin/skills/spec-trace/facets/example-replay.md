@@ -5,6 +5,7 @@ needs: [run]
 bounds: examples=12, minutes=5
 guards: [false-green]
 footprint: [runs]
+ablatable: replay
 ---
 # Replay the examples through the real entrance
 

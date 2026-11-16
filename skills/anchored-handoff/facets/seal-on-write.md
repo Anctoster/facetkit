@@ -5,6 +5,8 @@ needs: [capsule]
 bounds: anchors=30, quoted=5
 guards: [stale-handoff]
 footprint: [tool:capsule seal]
+ablatable: live
+backstop: [handoff]
 ---
 # Cite code as a sealed range
 

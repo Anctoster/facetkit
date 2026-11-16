@@ -4,6 +4,7 @@ phase: [retro]
 bounds: replays=2
 guards: [budget-burn]
 footprint: [tool:eval replay]
+ablatable: replay
 ---
 # Test a cheaper model on the same step before trusting it
 

@@ -5,6 +5,7 @@ needs: [receipt]
 bounds: facts=3
 guards: [doc-drift, repeated-mistake]
 footprint: [tool:receipt add]
+ablatable: replay
 ---
 # Leave a receipt for what you relied on
 
