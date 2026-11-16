@@ -12,7 +12,7 @@ No dependencies. Node 20+. Works with any agent that can run a shell command; sh
 
 ![One item of work: specification, build, probe, proof, policy gate — evidence accumulates and the assurance level rises](docs/assets/flow.svg)
 
-> **Status: 0.7.0, experimental.** The tools are tested (185 tests and a guard benchmark of 22 adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **69 untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute.
+> **Status: 0.7.0, experimental.** The tools are tested (185 tests and a guard benchmark of 22 adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **69 untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute: `facet hypotheses --next` says which to try first, the pinned [Trial board](docs/trial-board.md) issue says who is testing what, and `HYPOTHESES.md` shows every reported result.
 
 
 ## Try it in five minutes
@@ -262,7 +262,7 @@ facet flow close                              # refuses until the policy is met
 facet board                                   # open facet-board.html
 ```
 
-`facet init --minimal` gives a four-step flow (specify → build → probe → prove) with three agents; without `--minimal` the full route with the cartographer, the architect, acceptance scenarios and the release pilot. Configuration is optional and lives in `facet.json` (or under `"facetkit"` in `package.json`): `journal`, `memory`, `routing`, `flow`, `govern { policy, required, checks, forbidden, attestations }`, `router`, `extensions`, `skillint { ablate, requireCause }`, `eval { snapshot, checks }`, `schedule`, `prices`, `caps`, `dirs`. Everything is also importable (`facetkit/govern`, `facetkit/journal`, `facetkit/atlas`, …).
+`facet init --minimal` gives a four-step flow (specify → build → probe → prove) with three agents; without `--minimal` the full route with the cartographer, the architect, acceptance scenarios and the release pilot. Configuration is optional and lives in `facet.json` (or under `"facetkit"` in `package.json`): `journal`, `memory`, `routing`, `flow`, `govern { policy, required, checks, forbidden, attestations }`, `router`, `extensions`, `skillint { ablate, requireCause }`, `eval { snapshot, checks }`, `schedule`, `prices`, `caps`, `dirs`, `owners` (or `territories`: a file of agent → paths). With an ownership manifest, `facet flow end` asks a step to list only the changed files of its own agent; files another handoff of the item lists are never asked for twice. Everything is also importable (`facetkit/govern`, `facetkit/journal`, `facetkit/atlas`, …).
 
 ### Languages
 

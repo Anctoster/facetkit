@@ -60,7 +60,8 @@ export function setupCommands({ CWD, KIT, opt, flag, fail, skills }) {
             fs.writeFileSync(out, renderBoard(data));
             console.log(`demo board written to ${path.relative(CWD, out)} — open it in a browser. Every number on it is synthetic.`);
         },
-        /** The registry of hypotheses: every facet as a claim about agent behaviour, with the trials reported for it. */
+        /** The registry of hypotheses: every facet as a claim about agent behaviour, with the trials reported for it.
+         *  --check FILE fails when FILE is stale; --next [N] says which untested hypotheses to try first. */
         hypotheses() {
             const all = skills();
             const file = path.join(KIT, 'trials', 'results.json');
@@ -80,6 +81,12 @@ export function setupCommands({ CWD, KIT, opt, flag, fail, skills }) {
                 lines.push('');
             }
             const text = `${lines.join('\n')}\n`;
+            if (opt('check')) {
+                const have = fs.existsSync(path.resolve(CWD, opt('check'))) ? fs.readFileSync(path.resolve(CWD, opt('check')), 'utf-8') : '';
+                if (have !== text) fail(`hypotheses: ${opt('check')} is out of date with the skills or trials/results.json — run: facet hypotheses --write ${opt('check')}`);
+                return void console.log(`${opt('check')} is up to date (${facets.length} hypotheses, ${tested.size} tested)`);
+            }
+            if (opt('next') !== undefined || flag('next')) return void console.log(nextTrials(all, results, Number(opt('next')) || 5, { field: fieldPacks(KIT) }));
             if (opt('write')) {
                 fs.writeFileSync(path.resolve(CWD, opt('write')), text);
                 console.log(`${facets.length} hypotheses written to ${opt('write')} (${tested.size} tested)`);
@@ -88,3 +95,43 @@ export function setupCommands({ CWD, KIT, opt, flag, fail, skills }) {
         },
     };
 }
+
+/**
+ * Which untested hypotheses to try first. Field reports (knowledge packs from `facet learn export`, saved in
+ * trials/field/*.json) come first: a rule projects follow but whose effect is unknown needs a trial most, then one
+ * they ignore (does it matter at all?). Without field data, a rule whose observance leaves a footprint is
+ * cheaper to judge than one that does not.
+ */
+export function nextTrials(skills, results, n = 5, { field = [] } = {}) {
+    const tested = new Set(results.map((r) => r.facet));
+    const signal = new Map();
+    for (const p of field) for (const f of p.facets ?? []) {
+        const s = signal.get(f.facet) ?? { exposed: 0, verdicts: new Set(), projects: 0 };
+        s.exposed += f.exposed ?? 0;
+        s.verdicts.add(f.verdict);
+        s.projects++;
+        signal.set(f.facet, s);
+    }
+    const rank = (v) => (v.has('followed; effect unknown') ? 3 : v.has('ignored') ? 2 : v.size ? 1 : 0);
+    const rows = skills.flatMap((s) => s.facets.map((f) => ({ f, s, sig: signal.get(f.ref) })))
+        .filter(({ f }) => !tested.has(f.ref))
+        .sort((a, b) => rank(b.sig?.verdicts ?? new Set()) - rank(a.sig?.verdicts ?? new Set()) || (b.sig?.exposed ?? 0) - (a.sig?.exposed ?? 0) || (b.f.footprint.length ? 1 : 0) - (a.f.footprint.length ? 1 : 0))
+        .slice(0, n);
+    if (!rows.length) return 'every hypothesis has at least one reported trial';
+    return [
+        `${rows.length} hypotheses to try first${field.length ? ` (field reports: ${field.length})` : ' (no field reports in trials/field/ yet: ranked by whether the rule leaves a footprint)'}:`,
+        ...rows.map(({ f, s, sig }, i) => [
+            `${i + 1}. ${f.ref} — ${f.title}`,
+            `   guards ${f.guards.join(', ') || '—'} · footprint ${f.footprint.join(', ') || 'none'}${sig ? ` · in the field: ${[...sig.verdicts].join(', ')}, exposed ${sig.exposed}× in ${sig.projects} project(s)` : ''}`,
+            `   trials: skills/${s.name}/SKILL.md → "## Trials" · with the rule: facet compose --take ${f.ref}`,
+        ].join('\n')),
+        'How to run one and report it: CONTRIBUTING.md → "Running a trial". Claim it first on the Trial board issue, so nobody runs it twice.',
+    ].join('\n');
+}
+
+export function fieldPacks(kit) {
+    const dir = path.join(kit, 'trials', 'field');
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf-8')));
+}
+

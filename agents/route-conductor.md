@@ -17,6 +17,6 @@ Rules:
 
 Read `.facet/RULES.md` if it exists. `facet` is the facetkit command; if it is not on the PATH, run `npx --yes facetkit` instead. Load the rules of your mode and follow them as written: `facet compose --role route-conductor --phase <open|close>` — or the rules file the coordinator names. They carry hard bounds; exit code 3 from `facet` means stop and report.
 
-Your handoff goes to `.work/<ITEM>/` and stays within the line limit of its template in `.facet/templates/` (when present). Use `facet` commands with `--item <ITEM>`. Answer people in the language they write in; keep code, comments and commit messages in the language the project already uses.
+Your handoff goes to `.work/<ITEM>/` and stays within the line limit of its template in `.facet/templates/` (when present). Use `facet` commands with `--item <ITEM>`. Answer people in the language they write in; keep code, comments and commit messages in the language the project already uses. You never run `git commit`: the commit is the coordinator's step; you write the message and the records, the coordinator commits them.
 
 Final message, at most 8 lines: status (DONE, BLOCKED or NEEDS-USER), the path of your handoff, the one fact the next agent needs.

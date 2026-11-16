@@ -2,16 +2,16 @@
 
 **Where facetkit should be at 2.0:** a team of agents whose results come with proof that a third party can check, whose rules are kept or removed by measurement, and which learns from its own record and from other projects' — without a model judging the work and without a person having to trust anybody's word.
 
-Six capabilities carry that goal. Each section says where it stands at 0.7, what 2.0 means for it, the steps between, and the number that will show it worked. Dates assume one maintainer with agent help and the VIS Marina roadmap as the first field project; they move if the field data says so.
+Six capabilities carry that goal. Each section says where it stands at 0.7, what 2.0 means for it, the steps between, and the number that will show it worked. Dates assume one maintainer with agent help and the roadmap of one web application as the first field project; they move if the field data says so.
 
 ## Calendar
 
 | Version | Target | Theme | Field gate (what must be true before release) |
 |---|---|---|---|
 | 0.7.0 | 2026-11-16 | Trust foundations | 185 tests, 22/22 benchmark cases; signatures, witnesses, fencing, source state, environment |
-| 0.8.0 | 2026-12-21 | Measured | P09–P18 of VIS Marina closed through the flow; first counterfactual pairs; every guard calibrated at least once |
+| 0.8.0 | 2026-12-21 | Measured | ten more items of the first field project closed through the flow; first counterfactual pairs; every guard calibrated at least once |
 | 0.9.0 | 2027-02-15 | Adaptive | adaptive routing v2 in use on ≥ 20 items; cost per closed item down ≥ 30 % against P01–P08 at the same level |
-| 1.0.0 | 2027-04-26 | Stable | schemas frozen with migrations; three projects outside VIS Marina; external security review |
+| 1.0.0 | 2027-04-26 | Stable | schemas frozen with migrations; three projects besides the first field project; external security review |
 | 1.1.0 | 2027-06-28 | Networked learning | knowledge packs from ≥ 5 projects pooled; first rule removed because it helped nowhere |
 | 1.2.0 | 2027-08-30 | Architecture that keeps its shape | fitness rules proposed from history and accepted on ≥ 2 projects |
 | 1.3.0 | 2027-10-25 | Portable trust | a proof bundle from one organisation accepted by another's CI without contact |

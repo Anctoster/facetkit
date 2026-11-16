@@ -28,10 +28,10 @@ import { closeCharter, chartersDir, confirmByHand, loadBug, loadBugs, newBug, ne
 import { history as gitHistory } from '../lib/atlas.mjs';
 import { checkDecision, loadDecisions, newDecision, renderDecisionCheck, saveDecision } from '../lib/decisions.mjs';
 import { ADAPT, adapt, adaptationFor, adaptationsOf, renderAdaptations } from '../lib/adapt.mjs';
-import { blocking, checkHandoff, findTemplate, renderHandoff, TEMPLATE_OF, workingChanges } from '../lib/handoff.mjs';
+import { blocking, checkHandoff, filesForStep, findTemplate, listedFiles, renderHandoff, TEMPLATE_OF, workingChanges } from '../lib/handoff.mjs';
 import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, stepsOf } from '../lib/planner.mjs';
 import { buildGraph, isTest } from '../lib/seams.mjs';
-import { checkOwners, renderOwners } from '../lib/ownership.mjs';
+import { checkOwners, ownersFromTerritories, renderOwners, resolveOwners } from '../lib/ownership.mjs';
 import { witness, exportProof, renderBundle, verifyBundle, createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
 import { planMutants, probe } from '../lib/mutaprobe.mjs';
 import { route } from '../lib/router.mjs';
@@ -374,15 +374,19 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 const tpl = findTemplate([project.templates && path.resolve(CWD, project.templates), path.join(CWD, '.facet', 'templates'), KIT && path.join(KIT, 'templates')], tname);
                 if (tpl && fs.existsSync(hfile)) {
                     // files the step may not have listed: only for steps that change the product
-                    const changed = ['build', 'ops', 'red', 'spec', 'probe'].includes(stepId) ? workingChanges(CWD).filter((f) => !f.startsWith(path.relative(CWD, work)) && !f.startsWith(path.relative(CWD, journal))) : null;
+                    const all = ['build', 'ops', 'red', 'spec', 'probe'].includes(stepId) ? workingChanges(CWD).filter((f) => !f.startsWith(path.relative(CWD, work)) && !f.startsWith(path.relative(CWD, journal))) : null;
+                    // files another handoff of this item lists, or that the ownership manifest gives to another agent, are not this step's to list
+                    const others = fs.readdirSync(path.join(work, item)).filter((f) => f.endsWith('.md') && f !== `${tname}.md`).flatMap((f) => listedFiles(fs.readFileSync(path.join(work, item, f), 'utf-8')));
+                    const manifest = project.owners ?? (project.territories ? ownersFromTerritories(readJson(path.resolve(CWD, project.territories), {})) : readJson(path.resolve(CWD, 'owners.json'), null));
+                    const changed = all && filesForStep(all, { claimedElsewhere: others, owners: manifest ? resolveOwners(all, manifest) : null, agent: step.agent });
                     const problems = checkHandoff(fs.readFileSync(hfile, 'utf-8'), tpl, { root: CWD, changed });
                     say({ kind: 'evidence', item, name: 'handoff', ok: blocking(problems).length === 0, value: blocking(problems).length, step: stepId, detail: blocking(problems).slice(0, 4).map((p) => `${p.kind} ${p.what}`).join('; ') || undefined });
-                    if (blocking(problems).length && !flag('force')) fail(`${renderHandoff(path.relative(CWD, hfile), problems)}\n\nflow end: the step is not DONE until its handoff is whole. Give these lines to ${step.agent ?? 'the step'} and end the step again (or --force, which is recorded).`, 1);
+                    if (blocking(problems).length && !flag('force')) fail(`${renderHandoff(path.relative(CWD, hfile), problems)}\n\nflow end: the step is not DONE until its handoff is whole. Give these lines to ${step.agent ?? 'the step'} and end the step again (or --force --reason "…", which is recorded and shown by facet assure and facet trust).`, 1);
                     if (problems.length) console.log(renderHandoff(path.relative(CWD, hfile), problems));
                 } else if (tpl && !fs.existsSync(hfile) && step.agent) console.log(`note: ${path.relative(CWD, hfile)} does not exist — the next agent has no handoff from ${step.agent}`);
             }
             if (status === 'DONE' && step.agent && !opt('tokens')) console.log('note: no --tokens given — the cost of this step will be unknown (copy the total the agent call reported)');
-            say({ kind: 'step.end', item, step: stepId, agent: step.agent, status, tokens: opt('tokens') ? Number(opt('tokens')) : undefined, for: opt('for'), question: opt('question'), forced: status === 'DONE' && flag('force') ? true : undefined });
+            say({ kind: 'step.end', item, step: stepId, agent: step.agent, status, tokens: opt('tokens') ? Number(opt('tokens')) : undefined, for: opt('for'), question: opt('question'), forced: status === 'DONE' && flag('force') ? true : undefined, reason: status === 'DONE' && flag('force') ? opt('reason') : undefined });
             console.log(`${item} / ${stepId} → ${status}\n\n${describe(upcoming(item))}`);
         },
         verdict() {

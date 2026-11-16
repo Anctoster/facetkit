@@ -30,7 +30,7 @@ npm run audit     # the skill collection
 
 A trial tests one hypothesis from [HYPOTHESES.md](HYPOTHESES.md): does an agent behave differently when it has read the facet?
 
-1. Pick a facet and one of the trials listed under its skill. Write the task for the agent so that the tempting wrong path is really there (the deadline, the passing test, the authority who says "skip it").
+1. Pick a facet: `facet hypotheses --next` lists the untested ones worth trying first (field reports first, then rules whose observance leaves a trace). Say on the pinned **Trial board** issue which one you take, so nobody runs it twice. Then pick one of the trials listed under its skill. Write the task for the agent so that the tempting wrong path is really there (the deadline, the passing test, the authority who says "skip it").
 2. Run the task **without** the facet at least three times on one model, and **with** it (`facet compose --take <skill>:<facet>` prepended to the instructions) at least three times. Fresh context each run.
 3. Decide pass or fail by the trial's pass criterion — something an observer can see in the transcript or in the ledger, not an impression.
 4. Add one entry to `trials/results.json` and regenerate the registry:
@@ -53,6 +53,8 @@ Remove anything private from transcripts before linking them.
 - Comments and identifiers are in English.
 
 ## Reporting results from your project
+
+A field report is a knowledge pack: `facet learn export` writes what your journal says about each facet — exposure, adherence, effect, verdict — without file names, commands or text. Save it as `trials/field/<project-or-team>.json` in a pull request; `facet hypotheses --next` then ranks the hypotheses by what projects actually saw.
 
 Numbers from real use — agent × model matrices, escape rates, which facets changed behaviour — are welcome as issues with the label `field-report`. Remove anything private first; the journal can contain file names and command lines of your project.
 
