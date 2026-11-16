@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { attribute, costReport, fold, parseTranscript, renderCost, totalTokens } from '../lib/cost.mjs';
 import { compareModels, judge, matrix, observations, renderMatrix, replaySetup, snapshot } from '../lib/evalx.mjs';
-import { DEFAULT_FLOW, itemState, modelFor, next, planSteps, resumeCard, statusLines, verdictBlocker } from '../lib/flow.mjs';
+import { DEFAULT_FLOW, itemState, modelFor, next, resumeCard, statusLines, verdictBlocker } from '../lib/flow.mjs';
 import { buildAtlas, card, findSymbol, hiddenCoupling, hotspots, pathBetween, stats as atlasStats } from '../lib/atlas.mjs';
 import { boardData, renderBoard } from '../lib/board.mjs';
 import { attest, calibration, DEFAULT_POLICY, digestOf, evaluate, gate, renderEvaluation, renderTrust, trust } from '../lib/govern.mjs';
