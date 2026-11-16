@@ -9,6 +9,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - **Plugin `qa-flow`** (`domains/qa`): test-strategist, exploratory-tester, bug-verifier, release-judge and the `/qa-item` skill.
 - **Architecture decisions with measured predictions** (`facetkit/decisions`, `facet decide new|check|list`): a decision record carries fitness rules or commands that must keep holding; a failed measure sends it to review. Records in `docs/decisions/` as JSON and Markdown.
 - `facet explain --for client --lang en|pl|ru`.
+- **Agent efficiency for building architects** (`arch-flow`, `viz-flow`): `hand ITEM --hours H` — the architect's estimate of the hand work, taken before the agents start (a later one is shown, not used); `spent ITEM --minutes M --on brief|questions|preview|review|fix` — the architect's own time; `efficiency [--route] [--lang en|pl|ru] [--html] [--json]` — per task type: right the first time, accepted as delivered (80 % intervals), time saved against the hand work, agents' time, tokens and cost, questions and preview rounds, what the checks caught, which agent on which model is sent back and whether a cheaper model does as well, and a verdict that refuses to conclude from fewer than five items.
 - Docs: `docs/for-testers.md`, `docs/for-architects.md`; `how-it-works.md`, `governance.md` (signatures, witnesses, statuses), `skill-intelligence.md` (withholding modes, per-item units, counterfactual replay), `architecture.md` (fencing), `SECURITY.md` (keys) brought up to date.
 
 ### Changed

@@ -65,6 +65,20 @@ What they share with the code team: one journal, briefs with criteria the archit
 facet explain --for client --lang pl --html status.html
 ```
 
+### Are the agents worth it on your tasks?
+
+Building architects ask a plain question before they hand agents more work: *does this save the office time, on this kind of task, and how often is it right?* Both plugins answer it from their journal:
+
+```bash
+archflow.py hand N1-03 --hours 6 --by anna        # how long it takes by hand - said BEFORE the agents start
+archflow.py spent N1-03 --minutes 40 --on review  # the architect's own time: brief, questions, preview, review, fix
+archflow.py efficiency --lang pl --html eff.html  # per task type: model, sheets-pb, sheets-pw, variants, ...
+```
+
+Per task type it reports: right the first time and accepted as delivered (with 80 % intervals); the architect's time against the same work by hand, and the time saved; the agents' working time, tokens and cost (prices per million tokens in `project.json`); questions, preview rounds and briefs changed after approval; what the checks caught before the architect saw it; which agent on which model is sent back, and whether a cheaper model does as well. A verdict line says *worth it*, *not worth it yet* or *too few items to judge*.
+
+What keeps it honest: an estimate given after the agents started is shown but not used; nothing missing is guessed; nothing is concluded from fewer than five items; models are compared only when both have five items and their intervals do not overlap.
+
 ## What it does not do
 
 - It does not judge whether an architecture is good. It checks that the one you chose is kept, and tells you when its predictions stop holding.
