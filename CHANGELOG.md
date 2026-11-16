@@ -4,6 +4,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Fixed
+- `facet flow end` no longer asks a step to list changed files that another handoff of the item already lists or that belong to another agent's territory. With a team rule "never list another agent's files", every step that ran after another agent's changes could only end with `--force`. The manifest is `owners`, `owners.json`, or `territories` — a team file of agent → paths.
+
 ### Added
 - **Testers** (`facetkit/qa`, `facet qa`): `plan` — a risk map of what changed (class, dependents, whether a test reaches it, churn, escaped defects) with the tests each area calls for; `charter new|close|list` — time-boxed exploratory sessions; `bug new|verify|confirm|list|close` — bugs that carry their reproduction, run several times (reproduced, not reproduced, flaky), confirmed by a second person when they are steps, fixed only when the reproduction passes and `verified` only with a test that names the bug; `readiness` — GO/NO-GO with every reason. A bug reported with `--item` in closed work is recorded as that item's escape.
 - **Plugin `qa-flow`** (`domains/qa`): test-strategist, exploratory-tester, bug-verifier, release-judge and the `/qa-item` skill.

@@ -262,7 +262,7 @@ facet flow close                              # refuses until the policy is met
 facet board                                   # open facet-board.html
 ```
 
-`facet init --minimal` gives a four-step flow (specify → build → probe → prove) with three agents; without `--minimal` the full route with the cartographer, the architect, acceptance scenarios and the release pilot. Configuration is optional and lives in `facet.json` (or under `"facetkit"` in `package.json`): `journal`, `memory`, `routing`, `flow`, `govern { policy, required, checks, forbidden, attestations }`, `router`, `extensions`, `skillint { ablate, requireCause }`, `eval { snapshot, checks }`, `schedule`, `prices`, `caps`, `dirs`. Everything is also importable (`facetkit/govern`, `facetkit/journal`, `facetkit/atlas`, …).
+`facet init --minimal` gives a four-step flow (specify → build → probe → prove) with three agents; without `--minimal` the full route with the cartographer, the architect, acceptance scenarios and the release pilot. Configuration is optional and lives in `facet.json` (or under `"facetkit"` in `package.json`): `journal`, `memory`, `routing`, `flow`, `govern { policy, required, checks, forbidden, attestations }`, `router`, `extensions`, `skillint { ablate, requireCause }`, `eval { snapshot, checks }`, `schedule`, `prices`, `caps`, `dirs`, `owners` (or `territories`: a file of agent → paths). With an ownership manifest, `facet flow end` asks a step to list only the changed files of its own agent; files another handoff of the item lists are never asked for twice. Everything is also importable (`facetkit/govern`, `facetkit/journal`, `facetkit/atlas`, …).
 
 ### Languages
 
