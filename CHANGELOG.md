@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Testers** (`facetkit/qa`, `facet qa`): `plan` — a risk map of what changed (class, dependents, whether a test reaches it, churn, escaped defects) with the tests each area calls for; `charter new|close|list` — time-boxed exploratory sessions; `bug new|verify|confirm|list|close` — bugs that carry their reproduction, run several times (reproduced, not reproduced, flaky), confirmed by a second person when they are steps, fixed only when the reproduction passes and `verified` only with a test that names the bug; `readiness` — GO/NO-GO with every reason. A bug reported with `--item` in closed work is recorded as that item's escape.
+- **Plugin `qa-flow`** (`domains/qa`): test-strategist, exploratory-tester, bug-verifier, release-judge and the `/qa-item` skill.
+- **Architecture decisions with measured predictions** (`facetkit/decisions`, `facet decide new|check|list`): a decision record carries fitness rules or commands that must keep holding; a failed measure sends it to review. Records in `docs/decisions/` as JSON and Markdown.
+- `facet explain --for client --lang en|pl|ru`.
+- Docs: `docs/for-testers.md`, `docs/for-architects.md`; `how-it-works.md`, `governance.md` (signatures, witnesses, statuses), `skill-intelligence.md` (withholding modes, per-item units, counterfactual replay), `architecture.md` (fencing), `SECURITY.md` (keys) brought up to date.
+
+### Changed
+- Two-arm experiments (`facet experiment`) created from now on also use the item as the unit; manifests from before keep the step so that a running experiment does not change its assignment.
+
 ## [0.7.0] — 2026-11-16
 
 Answers to the review of 0.6.0, finding by finding: `docs/roadmap-0.7.0.md`. Plan to 2.0: `docs/roadmap-2.0.md`.

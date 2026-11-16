@@ -57,6 +57,31 @@ facet proof export --item P07 && facet proof verify --bundle P07.proof.json --ro
 
 A proof pack is signed by a key the project trusts, names the sources it is valid for (content, executable bits, links), the environment it was measured in, and the benchmark that says how much its guards catch. Anyone can recompute it from the journal.
 
+## If you test
+
+You want to know where to look, whether a bug is real, and whether the build may ship.
+
+```bash
+facet qa plan --since v1.4.0                    # what changed, ranked by risk, with the tests each area needs
+facet qa bug new BUG-7 … --repro "<cmd>"        # a bug that carries its reproduction
+facet qa bug verify BUG-7                       # reproduced? fixed? guarded by a test?
+facet qa readiness --html readiness.html        # GO or NO-GO, every reason listed
+```
+
+Example: BUG-7 is reported in work that P07 had closed. It is recorded as P07's escape, so `facet trust` and `facet skill coverage` learn from it. See [for testers](for-testers.md).
+
+## If you design the system
+
+You want the shape you chose to hold, and to know when a decision stops paying off.
+
+```bash
+facet fitness                   # architecture rules as a ratchet: no new violations
+facet decide check              # every recorded decision against the measures that must keep holding
+facet atlas hotspots            # where changes and dependents pile up
+```
+
+Building architects: the same method runs Archicad production and visualization (`arch-flow`, `viz-flow`). See [for architects](for-architects.md).
+
 ## The words, once
 
 | Word | Means |
@@ -69,3 +94,6 @@ A proof pack is signed by a key the project trusts, names the sources it is vali
 | waiver | a person's named decision to close despite a failed rule |
 | facet | one rule given to an agent, with a check and a stop |
 | witness | a second run of the checks, by someone else, on the same sources |
+| escape | a defect found in work an item had already closed |
+| charter | an exploratory test session: a mission and a time box |
+| fitness rule | an architecture rule a tool checks on every change |

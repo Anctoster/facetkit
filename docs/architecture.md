@@ -40,6 +40,10 @@ A journal is either one file (`journal.jsonl`) or a directory (`journal/<writer>
 
 The memory store follows the same scheme: adding, using, crediting and retiring a memory are each one appended line.
 
+### Locks and fencing
+
+Appends run under one lock per journal. A lock is taken over only when its owner is known to be gone (its process no longer exists on this machine, its pid now belongs to another process, or it was written on another machine longer ago than the limit); a live owner on this machine is never taken over — `facet journal unlock` is a person's decision. Every takeover raises the journal's **epoch**, and every event carries the epoch it was written under. A paused process that wakes after a takeover and still appends creates a fork in its segment; readers keep the line of the higher epoch and set the other aside as *fenced* (`facet journal repair` moves it to `<segment>.fenced`). A fork inside one epoch means the lock was not honoured at all and is reported as damage.
+
 ### Scaling notes
 
 Reading the journal is a scan. For thousands of items, archive the segments of closed versions to another directory and point `facet` at both when you need history. For many repositories that share one plan, keep the journal in its own repository (or a submodule) and set `"journal"` to its path. Storage is intentionally plain: if you need a database, `readJournal` and `record` in `lib/journal.mjs` are the only two functions to replace.

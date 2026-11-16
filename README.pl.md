@@ -108,6 +108,14 @@ Poziom mówi, jakie dowody istnieją. Nie mówi, że wystarczają przy twoim ryz
 
 Każda faseta jest hipotezą mierzoną na trzy sposoby: **ekspozycja** (czy reguła była w tym, co agent przeczytał, czy celowo ją wstrzymano), **przestrzeganie** (czy agent zostawił *ślad* reguły — użyte narzędzie, zapisany dowód, czerwony przebieg przed zielonym) oraz **efekt** (czy błąd, przed którym reguła chroni, zdarza się rzadziej). `facet skill report` stawia każdej diagnozę i przypisuje jedno działanie: zostawić, skrócić, zamienić w narzędzie, wycofać, przetestować. Zamierzony kierunek: kolekcja ma się z czasem *skracać*. Zob. [docs/skill-intelligence.md](docs/skill-intelligence.md).
 
+## Nie tylko dla programistów
+
+| Jesteś | Co dostajesz | Zacznij od |
+|---|---|---|
+| **testerem** | mapę ryzyka zmian z testami, których wymaga każdy obszar, i powodem; sesje eksploracyjne z limitem czasu; zgłoszenia błędów z odtworzeniem, które liczą się dopiero po potwierdzeniu przez drugi przebieg lub drugą osobę; poprawki, które muszą zostawić test nazywający błąd; GO/NO-GO z każdym powodem. Błąd w zamkniętej pracy jest „ucieczką” tego elementu, więc zaufanie do zespołu uczy się z tego, co znajdą testerzy. | [dla testerów](docs/for-testers.md), `facet qa`, wtyczka `qa-flow` |
+| **architektem oprogramowania** | reguły architektury na grafie importów jako zapadka; zapisy decyzji z mierzonymi przewidywaniami (`facet decide check`); punkty zapalne i ukryte sprzężenia; trasa, która woła architekta, gdy zmiana okazuje się większa niż planowano | [dla architektów](docs/for-architects.md), `facet fitness`, `facet decide` |
+| **architektem budynków** | produkcja w Archicadzie i wizualizacje prowadzone przez tanich agentów z briefem, mierzonymi kontrolami i niezależnym inspektorem; strona dla klienta po polsku | [dla architektów](docs/for-architects.md), wtyczki `arch-flow`, `viz-flow` |
+
 ## Kto co czyta
 
 Ten sam zapis, opowiedziany osobie, która ma na jego podstawie działać:
@@ -231,7 +239,7 @@ Zestaw powstał po przestudiowaniu poniższych projektów; nie zawiera ich tekst
 
 ## Dokumentacja
 
-Dokumentacja szczegółowa jest po angielsku: [hipotezy](HYPOTHESES.md) · [raport z użycia na sobie](docs/dogfood.md) · [architektura](docs/architecture.md) · [polityka i poziomy](docs/governance.md) · [analityka umiejętności](docs/skill-intelligence.md) · [rozszerzenia](docs/extensions.md) · [jak wydać](RELEASING.md) · [jak współtworzyć](CONTRIBUTING.md) · [bezpieczeństwo](SECURITY.md)
+Dokumentacja szczegółowa jest po angielsku: [jak to działa, według ról](docs/how-it-works.md) · [dla testerów](docs/for-testers.md) · [dla architektów](docs/for-architects.md) · [plan do 2.0](docs/roadmap-2.0.md) · [hipotezy](HYPOTHESES.md) · [raport z użycia na sobie](docs/dogfood.md) · [architektura](docs/architecture.md) · [polityka i poziomy](docs/governance.md) · [analityka umiejętności](docs/skill-intelligence.md) · [rozszerzenia](docs/extensions.md) · [jak wydać](RELEASING.md) · [jak współtworzyć](CONTRIBUTING.md) · [bezpieczeństwo](SECURITY.md)
 
 ## Licencja
 

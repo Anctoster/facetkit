@@ -54,6 +54,27 @@ Test fixtures that contain look-alike secrets are excluded with `"govern": { "sc
 
 Agents are instructed never to issue either on their own (`assured-work:waiver-is-a-record`).
 
+## Who stands behind a proof
+
+`facet proof create` writes a proof pack: the level, every rule with what was found, the evidence with the source state and the environment it was measured in, the guard benchmark of the tool, a SHA-256 digest — and an Ed25519 signature when this machine has a key.
+
+```bash
+facet key new                                   # once per person or CI runner; the private key stays in ~/.facet/keys
+facet key trust <public key> --name ann --role witness   # a reviewed change of .facet/trust.json
+facet proof create --item P07
+facet proof witness --item P07                  # somebody else runs the checks again on the same sources
+facet proof verify --item P07
+```
+
+| Status | Means |
+|---|---|
+| VALID | the pack is whole, signed by a trusted key (or signatures are not required), the sources are the ones proven, the journal still gives the same verdict, and no witness disagreed |
+| STALE / DECAYED | the sources moved on — entirely, or only where some checks reach (`rerun` names them) |
+| TAMPERED | the pack does not match its digest, or a signature does not match the pack — it was edited after signing, or the signature was copied |
+| UNSIGNED | `govern.requireSignature` is set and no trusted key signed the pack |
+| MISMATCH | the journal no longer supports the pack, or a witness got another answer on the same sources |
+| UNKNOWN | the journal could not be verified |
+
 ## Attestation
 
 `facet attest --item <id>` prints a JSON record: the level, each rule with what was found, evidence, waivers, approvals, commits, and a digest. `facet attest --verify <file>` recomputes it from the journal. With `"govern": { "attestations": "attest" }` one is written at every close. It is a digest, not a signature.
