@@ -10,6 +10,8 @@
 
 Bez zależności. Node 20+. Działa z każdym agentem, który potrafi uruchomić polecenie powłoki; dostępny jako wtyczka Claude Code. Analiza kodu rozumie JavaScript/TypeScript, Pythona, Go i Javę.
 
+![FacetKit na jednym obrazku: zlecenie, kierownik, brygada, niezależny inspektor i odbiór; dziennik budowy pod każdym krokiem; poziomy zaufania L0–L4; wnioski poprawiają zasady](docs/assets/facetkit-explained.pl.svg)
+
 ![Jeden element pracy: specyfikacja, budowa, próba, dowód, bramka polityki — dowody przybywają, a poziom pewności rośnie](docs/assets/flow.svg)
 
 > **Stan: 0.7.0, wersja eksperymentalna.** Narzędzia są przetestowane (185 testów i 22 przypadki testu odporności; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **69 niesprawdzonych hipotez** o zachowaniu agentów — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.

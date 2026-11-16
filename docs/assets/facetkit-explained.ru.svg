@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="1200" height="780" role="img" aria-labelledby="t d" xmlns:c2pa="http://c2pa.org/manifest">
+<title id="t">FacetKit: как ИИ-агенты делают работу, которой можно доверять</title><desc id="d">Схема: задание, прораб, бригада, независимый инспектор и приёмка; журнал работ под всеми шагами; уровни доверия от L0 до L4; выводы улучшают правила.</desc>
+<style>
+:root{--bg:#fffefb;--panel:#f6f5f1;--ink:#1d1c1a;--mute:#6f6c66;--line:#d9d5cc;--ok:#2f8a57;--bad:#c2413a;--accent:#3b5bdb;--chip:#eeece6}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--panel:#1f1f1d;--ink:#ecebe6;--mute:#9a978f;--line:#3a3934;--ok:#5fc48a;--bad:#f0766e;--accent:#8ea2ff;--chip:#272724}}
+text{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;fill:var(--ink)}
+.bg{fill:var(--bg)}.box{fill:var(--panel);stroke:var(--line);stroke-width:1.5}.ttl{font-size:26px;font-weight:700}.sub{font-size:15px;fill:var(--mute)}
+.h{font-size:16px;font-weight:650}.s{font-size:13px;fill:var(--mute)}.wire{stroke:var(--line);stroke-width:2;fill:none}.arrow{fill:var(--line)}
+.ic{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.icf{fill:var(--accent)}.icok{fill:var(--ok)}.icw{fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round}
+.halo{fill:var(--chip)}.re{stroke:var(--bad);stroke-width:2;stroke-dasharray:6 5;fill:none}.ret{fill:var(--bad);font-size:13px;font-weight:600}
+.hum{fill:var(--panel);stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 3}.dash{stroke:var(--line);stroke-width:1.5;stroke-dasharray:3 4}
+.lvchip{fill:var(--chip)}.lvbar{fill:var(--ok)}.lvt{font-size:13px}.lvk{font-size:12px;font-weight:700}.pr{fill:var(--chip)}.prt{font-size:13px;font-weight:600}
+</style>
+<rect class="bg" width="1200" height="780"/>
+<text class="ttl" x="40" y="52">FacetKit: как ИИ-агенты делают работу, которой можно доверять</text><text class="sub" x="40" y="80">Устроено как стройка: прораб, бригада, независимый инспектор и журнал работ</text>
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow" d="M0 0L10 5L0 10z"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path fill="#c2413a" d="M0 0L10 5L0 10z"/></marker></defs>
+<path class="dash" d="M136.0 288 V 404"/>
+<path class="dash" d="M368.0 288 V 404"/>
+<path class="dash" d="M600.0 288 V 404"/>
+<path class="dash" d="M832.0 288 V 404"/>
+<path class="dash" d="M1064.0 288 V 404"/>
+<rect class="box" x="40" y="112" width="192" height="176" rx="14"/>
+<circle class="halo" cx="136.0" cy="154" r="28"/><rect class="ic" x="122.0" y="136" width="28" height="36" rx="3"/><path class="ic" d="M128.0 146h16M128.0 154h16M128.0 162h10"/>
+<text class="h" x="136.0" y="208" text-anchor="middle">1 · Задание</text>
+<text class="s" x="136.0" y="232" text-anchor="middle">Человек описывает,</text>
+<text class="s" x="136.0" y="250" text-anchor="middle">что нужно и зачем</text>
+<path class="wire" d="M236 200.0 H 266" marker-end="url(#ar)"/>
+<rect class="box" x="272" y="112" width="192" height="176" rx="14"/>
+<circle class="halo" cx="368.0" cy="154" r="28"/><rect class="ic" x="354.0" y="138" width="28" height="34" rx="3"/><rect class="icf" x="361.0" y="134" width="14" height="7" rx="2"/><path class="ic" d="M360.0 151l3 3 5-6M360.0 163h16"/>
+<text class="h" x="368.0" y="208" text-anchor="middle">2 · Прораб</text>
+<text class="s" x="368.0" y="232" text-anchor="middle">Делит работу на шаги</text>
+<text class="s" x="368.0" y="250" text-anchor="middle">и зовёт нужных</text>
+<text class="s" x="368.0" y="268" text-anchor="middle">специалистов</text>
+<path class="wire" d="M468 200.0 H 498" marker-end="url(#ar)"/>
+<rect class="box" x="504" y="112" width="192" height="176" rx="14"/>
+<circle class="halo" cx="600.0" cy="154" r="28"/><circle class="ic" cx="584.0" cy="146" r="6"/><path class="ic" d="M574.0 170a10 10 0 0 1 20 0"/><circle class="ic" cx="600.0" cy="146" r="6"/><path class="ic" d="M590.0 170a10 10 0 0 1 20 0"/><circle class="ic" cx="616.0" cy="146" r="6"/><path class="ic" d="M606.0 170a10 10 0 0 1 20 0"/>
+<text class="h" x="600.0" y="208" text-anchor="middle">3 · Бригада</text>
+<text class="s" x="600.0" y="232" text-anchor="middle">Каждый делает только</text>
+<text class="s" x="600.0" y="250" text-anchor="middle">своё: план, тесты,</text>
+<text class="s" x="600.0" y="268" text-anchor="middle">работу, выпуск</text>
+<path class="wire" d="M700 200.0 H 730" marker-end="url(#ar)"/>
+<rect class="box" x="736" y="112" width="192" height="176" rx="14"/>
+<circle class="halo" cx="832.0" cy="154" r="28"/><circle class="ic" cx="828.0" cy="150" r="13"/><path class="ic" d="M837.0 159l11 11"/>
+<text class="h" x="832.0" y="208" text-anchor="middle">4 · Инспектор</text>
+<text class="s" x="832.0" y="232" text-anchor="middle">Сам не строил —</text>
+<text class="s" x="832.0" y="250" text-anchor="middle">поэтому перемеряет</text>
+<text class="s" x="832.0" y="268" text-anchor="middle">всё заново</text>
+<path class="wire" d="M932 200.0 H 962" marker-end="url(#ar)"/>
+<rect class="box" x="968" y="112" width="192" height="176" rx="14"/>
+<circle class="halo" cx="1064.0" cy="154" r="28"/><rect class="ic" x="1047.0" y="138" width="34" height="26" rx="3"/><circle class="icok" cx="1074.0" cy="164" r="8"/><path class="icw" d="M1070.0 164l3 3 5-6"/>
+<text class="h" x="1064.0" y="208" text-anchor="middle">5 · Приёмка</text>
+<text class="s" x="1064.0" y="232" text-anchor="middle">Работа закрыта, только</text>
+<text class="s" x="1064.0" y="250" text-anchor="middle">когда правила приёмки</text>
+<text class="s" x="1064.0" y="268" text-anchor="middle">выполнены</text>
+<path class="re" d="M802.0 292 C 792.0 340, 640.0 340, 630.0 296" marker-end="url(#arr)"/>
+<text class="ret" x="716.0" y="350" text-anchor="middle">Не прошло → назад, с названной причиной</text>
+<rect class="hum" x="968" y="308" width="192" height="70" rx="12"/><circle class="ic" cx="998" cy="337" r="7"/><path class="ic" d="M986 359a12 12 0 0 1 24 0"/>
+<text class="h" x="1020" y="335" style="font-size:14px">Решает человек</text>
+<text class="s" x="1020" y="354" style="font-size:12px">исключения, спорные</text>
+<text class="s" x="1020" y="370" style="font-size:12px">вопросы, выпуск</text>
+<path class="dash" d="M1064.0 308 V 290"/>
+<rect class="box" x="40" y="404" width="1120" height="62" rx="14"/><circle class="halo" cx="80" cy="435" r="22"/><path class="ic" d="M80 423c-6-4-14-4-20 0v26c6-4 14-4 20 0c6-4 14-4 20 0v-26c-6-4-14-4-20 0zM80 423v26"/>
+<text class="h" x="116" y="431">Журнал работ</text><text class="s" x="116" y="451">Каждый шаг и каждый замер записываются. Задним числом ничего не переписать.</text>
+<text class="h" x="40" y="500">Уровень доверия к результату</text>
+<rect class="lvchip" x="40" y="520" width="36" height="26" rx="6"/><text class="lvk" x="58" y="538" text-anchor="middle">L0</text>
+<rect class="lvbar" x="84" y="525" width="36" height="16" rx="4" opacity="0.25"/>
+<text class="lvt" x="132" y="538">Сказали «готово»</text>
+<rect class="lvchip" x="40" y="554" width="36" height="26" rx="6"/><text class="lvk" x="58" y="572" text-anchor="middle">L1</text>
+<rect class="lvbar" x="84" y="559" width="70" height="16" rx="4" opacity="0.43"/>
+<text class="lvt" x="166" y="572">Перепроверил другой</text>
+<rect class="lvchip" x="40" y="588" width="36" height="26" rx="6"/><text class="lvk" x="58" y="606" text-anchor="middle">L2</text>
+<rect class="lvbar" x="84" y="593" width="104" height="16" rx="4" opacity="0.61"/>
+<text class="lvt" x="200" y="606">Каждое требование проверено</text>
+<rect class="lvchip" x="40" y="622" width="36" height="26" rx="6"/><text class="lvk" x="58" y="640" text-anchor="middle">L3</text>
+<rect class="lvbar" x="84" y="627" width="138" height="16" rx="4" opacity="0.79"/>
+<text class="lvt" x="234" y="640">Тесты ловят нарочные поломки</text>
+<rect class="lvchip" x="40" y="656" width="36" height="26" rx="6"/><text class="lvk" x="58" y="674" text-anchor="middle">L4</text>
+<rect class="lvbar" x="84" y="661" width="172" height="16" rx="4" opacity="0.97"/>
+<text class="lvt" x="268" y="674">Проверены сами проверки</text>
+<path class="wire" d="M700 466 V 484" marker-end="url(#ar)"/>
+<rect class="box" x="640" y="488" width="520" height="112" rx="14"/><circle class="halo" cx="680" cy="538" r="24"/><path class="ic" d="M672 546c-8-5-10-12-8-18a12 12 0 0 1 24 0c2 6 0 13-8 18zM674 551h12M676 556h8"/>
+<text class="h" x="720" y="520">Выводы из журнала</text>
+<text class="s" x="720" y="544">Какие правила реально помогают,</text>
+<text class="s" x="720" y="563">сколько стоила работа, где ошибались.</text>
+<text class="s" x="720" y="582">→ правила для следующей работы улучшаются</text>
+<rect class="pr" x="40.0" y="708" width="268.0" height="44" rx="22"/><text class="prt" x="174.0" y="735" text-anchor="middle">Кто сделал — не принимает</text>
+<rect class="pr" x="324.0" y="708" width="268.0" height="44" rx="22"/><text class="prt" x="458.0" y="735" text-anchor="middle">«Готово» — только с замером</text>
+<rect class="pr" x="608.0" y="708" width="268.0" height="44" rx="22"/><text class="prt" x="742.0" y="735" text-anchor="middle">Всё записано</text>
+<rect class="pr" x="892.0" y="708" width="268.0" height="44" rx="22"/><text class="prt" x="1026.0" y="735" text-anchor="middle">Решения — за человеком</text>
+<metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTphYTc1Y2YzYi1lOTIwLTQ5ZjEtYTY5ZC02YmU3OGFhZjQ3NmUAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaPaV+QtzCQ7k67jTL1cgudgAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDphNzRlZTExMC00NTk1LTRlNTAtODAxMC05YmI2ODQ4ZmRjNDNscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoYas/BM3EXSwBAfwIm4OSBQAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggBSmM5wGhB7kP89jhvHvpP0TSyCGPT9/BU3fRhRuQLv2kZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaEyr1aB/QVSLiDEtcfHOvlEAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRMAAAAAAAAAAAAAAAAZGhhc2hYICmxiMRgMoPWt6gHMiyHLZJAZbhnQihjg4hlDmO8UmaaZG5hbWVuanVtYmYgbWFuaWZlc3RqZXhjbHVzaW9uc4GiZXN0YXJ0GSjkZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmFhNzVjZjNiLWU5MjAtNDlmMS1hNjlkLTZiZTc4YWFmNDc2ZS9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOmQ0ZGZkODYwLTI4NzYtNGU1ZS1iNGE4LTYzNjlkYzFiZTA2MnJjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCAFKYznAaEHuQ/z2OG8e+k/RNLIIY9P38FTd9GFG5Au/aJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFgge3ME+pqampnrIirDocrB7wbTkXkEGWeDey5IZNz2zUOiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFgg9fSHurD7wgGBr6SxxHXQNitiHu/7CrKho/lxfF/P0n50Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQExX/+6hYDSWmhg8q9GMIjV6mFrRKn9oO/ayVgJCedGpEtJAmTU7/2toLm7JLCjLHlqX5akvA+9viCX3/Jx+t1Y=</c2pa:manifest></metadata></svg>
