@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { filesForStep, listedFiles } from '../lib/handoff.mjs';
+import { filesForStep, listedFiles, workingChanges } from '../lib/handoff.mjs';
+import { gitInit, tmp, write } from './helpers.mjs';
 import { ownersFromTerritories, resolveOwners } from '../lib/ownership.mjs';
 
 const manifest = { owners: { 'src/**': 'slice-builder', 'tests/unit/**': 'spec-falsifier', '.claude/commands/**': 'release-pilot', 'acceptance/**': 'red-first-specifier' }, shared: ['package.json'] };
@@ -36,4 +37,12 @@ test('govern: a step ended DONE with --force is no failed rule, but assure and t
     assert.match(renderEvaluation(e), /1 step\(s\) ended DONE with --force .*build \(checks disagree on files of other agents\)/);
     assert.equal(trust(s.events).forcedEnds, 1);
     assert.match(renderTrust(trust(s.events)), /steps ended with --force: 1/);
+});
+
+test('handoff: files of a new untracked folder are reported one by one, so a handoff can list them', () => {
+    const root = tmp();
+    gitInit(root);
+    write(root, 'tests/integration/a.test.ts', '// a\n');
+    write(root, 'tests/integration/deep/b.test.ts', '// b\n');
+    assert.deepEqual(workingChanges(root).sort(), ['tests/integration/a.test.ts', 'tests/integration/deep/b.test.ts']);
 });
