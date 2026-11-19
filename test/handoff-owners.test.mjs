@@ -46,3 +46,7 @@ test('handoff: files of a new untracked folder are reported one by one, so a han
     write(root, 'tests/integration/deep/b.test.ts', '// b\n');
     assert.deepEqual(workingChanges(root).sort(), ['tests/integration/a.test.ts', 'tests/integration/deep/b.test.ts']);
 });
+
+test('handoff: a dotfile is a path — `.gitignore` and "- .gitignore" are listed', () => {
+    assert.deepEqual(listedFiles('# x\n## Files changed\n- .gitignore\n- `.env.example`\n- `src/a.ts:12`\n- see the notes\n'), ['.gitignore', '.env.example', 'src/a.ts']);
+});
