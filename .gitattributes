@@ -1,0 +1,9 @@
+# Text files keep LF on every platform. The journal, proof packs and registries are hashed byte for
+# byte; a checkout that turns LF into CRLF (git's default on Windows) would make an intact journal
+# read as tampered and a generated file read as stale.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
+*.zip binary
+*.ifc text eol=lf
