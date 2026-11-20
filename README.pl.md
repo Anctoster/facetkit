@@ -21,7 +21,7 @@ Bez zależności. Node 20+. Działa z każdym agentem, który potrafi uruchomić
 
 > **Stan: 0.7.0, wersja eksperymentalna.** Narzędzia są przetestowane (185 testów i 22 przypadki testu odporności; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **69 niesprawdzonych hipotez** o zachowaniu agentów — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
 
-```markdown
+
 ## 🔬 Badania Społeczności
 
 Pomóż nam odkryć, co naprawdę sprawia, że agenci AI  
@@ -29,8 +29,8 @@ stają się bardziej niezawodni, skuteczni i łatwiejsi do zweryfikowania.
 
 Dołącz do Programu Badawczego Społeczności FacetKit.
 
-[Poznaj Research Hub] (docs/research/README.pl.md)
-```
+[Program Badań Społeczności FacetKit](docs/research/README.pl.md)
+
 ## Jaki problem rozwiązuje
 
 Agent kończy pracę i mówi, że gotowe. Między tym zdaniem a wynikiem, na którym można polegać, jest kilka pytań, na które domyślnie nikt nie odpowiada:
