@@ -29,7 +29,7 @@ stają się bardziej niezawodni, skuteczni i łatwiejsi do zweryfikowania.
 
 Dołącz do Programu Badawczego Społeczności FacetKit.
 
-[Poznaj Research Hub](docs/research/README.pl.md)
+[Poznaj Research Hub] (docs/research/README.pl.md)
 ```
 ## Jaki problem rozwiązuje
 
