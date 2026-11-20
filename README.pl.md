@@ -1,7 +1,7 @@
 # facetkit
 
 <p align="center">
-  <img src="docs/assets/banner.png" alt="facetkit — evidence-first engineering for teams of AI agents" width="380" />
+  <img src="docs/assets/banner.png" alt="facetkit — evidence-first engineering for teams of AI agents" width="220" />
 </p>
 
 [🇬🇧 English](README.md) | [🇵🇱 Polski]
