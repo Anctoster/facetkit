@@ -19,7 +19,7 @@ test('journal: every event has an id of its own content; a doubled or doctored e
     for (let i = 0; i < 3; i++) record(dir, { kind: 'note', text: `n${i}` }, { writer: 'ann' });
     const ev = readJournal(dir);
     assert.equal(new Set(ev.map((e) => e.id)).size, 3);
-    assert.match(ev[0].id, /^[0-9a-f]{12}$/);
+    assert.match(ev[0].id, /^[0-9a-f]{64}$/, 'schema 2: the full SHA-256');
     assert.equal(verifyJournal(dir).status, 'intact');
     const seg = path.join(dir, 'ann.jsonl');
     const lines = fs.readFileSync(seg, 'utf-8').split('\n').filter(Boolean);

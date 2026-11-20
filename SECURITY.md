@@ -23,7 +23,7 @@ Also out of scope: the operating system, the model provider, and the dependencie
 
 | Guarantee | Against | Rests on | Does not hold if |
 |---|---|---|---|
-| The journal shows edits | A, B, D | each event's id is a hash of its content; each event names the one before it | the person editing can recompute the chain — an unsigned journal shows careless edits, not deliberate ones. Sign events (`govern.signEvents`) and commit the journal |
+| The journal shows edits | A, B, D | each event's id is the SHA-256 of its canonical content, and each event names the id of the one before it (schema 2; events written before keep their shorter SHA-1 links and are checked by those) | the person editing can recompute the chain — an unsigned journal shows careless edits, not deliberate ones. Sign events (`govern.signEvents`) and commit the journal |
 | A signed record is attributable | B | Ed25519 signatures by keys listed in `.facet/trust.json` with a role | the private key leaks, or `trust.json` itself is changed without review |
 | A proof pack matches the sources | A, B | the pack's digest covers the evidence and the hashes of the files it is about; any change to them makes it STALE | the files that matter are outside the pack's scope |
 | A witness reproduced the checks | A, B | a second run of the same checks on the same sources | the witness runs on the same machine, with the same environment and the same key as the author — then it shows repeatability, not independence. Treat a witness record as a claim until it is signed by a key in the `witness` role |
