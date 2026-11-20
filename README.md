@@ -4,7 +4,7 @@
   <img src="docs/assets/banner.png" alt="facetkit — evidence-first engineering for teams of AI agents" width="380" />
 </p>
 
-**English** · [Polski](README.pl.md)
+[🇬🇧 English]) | [🇵🇱 Polski](README.pl.md)
 
 **Evidence-first engineering for teams of AI agents.** Skills that are small enough to follow, tools that measure instead of asking, and a journal from which the state of the work, its cost, and how far its result can be trusted are computed — not asserted.
 
@@ -16,7 +16,7 @@ No dependencies. Node 20+. Works with any agent that can run a shell command; sh
 
 > **Status: 0.7.0, experimental.** The tools are tested (185 tests and a guard benchmark of 22 adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **69 untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute: `facet hypotheses --next` says which to try first, the pinned [Trial board](docs/trial-board.md) issue says who is testing what, and `HYPOTHESES.md` shows every reported result.
 
-## 🔬 Community Research
+## 🔬 FacetKit Community Research Program
 
 Help us discover what actually makes AI agents
 more reliable, effective and verifiable.
