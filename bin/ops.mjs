@@ -154,7 +154,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
     const baseOf = (item) => ofItem(events(), item).find((e) => e.kind === 'item.open')?.base ?? 'HEAD';
     const runScan = (item) => {
         const r = scan(CWD, { ref: baseOf(item), forbidden: govern.forbidden ?? ['.env', '**/.env', '**/*.pem', '**/id_rsa*'], ignore: govern.scanIgnore ?? [], runs: ledgerOf(item), stores: [path.relative(CWD, path.join(work, item)), ...(govern.stores ?? [])] });
-        say({ kind: 'evidence', item, name: 'scan', ok: r.blocking === 0, value: r.findings.length, ...bound(item, 'scan'), approvals: r.approvals, detail: r.findings.slice(0, 5).map((f) => `${f.kind} ${f.where}`).join('; ') || undefined });
+        say({ kind: 'evidence', item, name: 'scan', ok: r.blocking === 0, value: r.findings.length, ...bound(item, 'scan'), approvals: r.approvals, ...(r.partial ? { partial: true, notScanned: r.notScanned } : {}), detail: r.findings.slice(0, 5).map((f) => `${f.kind} ${f.where}`).join('; ') || undefined });
         return r;
     };
     const pickModel = (step, state) => {
@@ -642,9 +642,10 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
         scan() {
             const item = theItem(false);
             const r = item ? runScan(item) : scan(CWD, { ref: opt('ref', 'HEAD'), forbidden: govern.forbidden ?? ['.env', '**/.env', '**/*.pem', '**/id_rsa*'], ignore: govern.scanIgnore ?? [], stores: govern.stores ?? [] });
-            console.log(`scan: ${r.files} changed file(s) · ${r.findings.length} finding(s) · ${r.blocking} blocking${r.approvals.length ? ` · needs approval: ${r.approvals.join(', ')}` : ''}`);
+            console.log(`scan${r.partial ? ' PARTIAL' : ''}: ${r.files} changed file(s) · ${r.findings.length} finding(s) · ${r.blocking} blocking${r.notScanned ? ` · ${r.notScanned} not scanned` : ''}${r.approvals.length ? ` · needs approval: ${r.approvals.join(', ')}` : ''}`);
             for (const f of r.findings) console.log(`  ${f.severity.padEnd(7)} ${f.kind.padEnd(15)} ${f.where}  ${f.what}`);
-            process.exit(r.blocking ? 1 : 0);
+            // 1: something blocks; 2: nothing blocks, but part of the change was not read — absence of findings is not a pass
+            process.exit(r.blocking ? 1 : r.partial ? 2 : 0);
         },
         async check() {
             const item = theItem();

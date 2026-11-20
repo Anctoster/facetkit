@@ -28,7 +28,7 @@ Also out of scope: the operating system, the model provider, and the dependencie
 | A proof pack matches the sources | A, B | the pack's digest covers the evidence and the hashes of the files it is about; any change to them makes it STALE | the files that matter are outside the pack's scope |
 | A witness reproduced the checks | A, B | a second run of the same checks on the same sources, recorded with a signature over the record. It vouches only when signed by a key the project trusts in the `witness` role that did not sign the pack; a disagreement counts from any record, since a forged one can only raise an alarm. A record says on which machine it ran (a hash of the host name) and in which environment: on another machine it is `independent`, on the same one a `rerun`; L4 needs an independent one | the witness key is kept where the author can use it — the machine fields are signed by the witness, so independence rests on the key living elsewhere (for example in CI secrets) |
 | Steps of one item do not overwrite each other | D | locks with an owner and a fencing epoch | a process ignores the lock and writes the file directly |
-| `facet scan` finds secrets and injected text | B, C | patterns | the secret or the instruction does not match a pattern, or the file was not read. Absence of findings is not absence of risk |
+| `facet scan` finds secrets and injected text | B, C | patterns, over every changed file it can read; a changed file it cannot read (larger than the limit, or binary) is a `not-scanned` finding that needs a person's approval, and the scan is `partial` | the secret or the instruction does not match a pattern. Absence of findings is not absence of risk |
 
 Anything not in this table is not a guarantee, however it is worded elsewhere.
 
