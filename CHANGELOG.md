@@ -5,6 +5,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ## [Unreleased]
 
 ### Fixed (portability)
+- Journal lock on Windows: `EPERM` while another process deletes the lock file is contention, not a failure — the writer waits as it does on `EEXIST`; removing the lock retries while another process is reading it. A real permission error is still raised once the wait is over.
 - Checks, witness runs, decision measures and bug reproductions run through the platform's own shell (`lib/shell.mjs`: /bin/sh, or cmd.exe on Windows) instead of `sh -c`, which Windows does not have. A timeout stops the whole process tree, and facet stops the trees it started when it is interrupted.
 - `{item}` in a configured command is filled only with an id of letters, digits, `.`, `_` and `-`; any other id is refused, and `FACET_ITEM` is set only to such an id — a shell must not read an item id as more than a name.
 - Step snapshots give back the exact bytes they took on Windows (git's line-ending conversion is off for them).
