@@ -58,7 +58,7 @@
   "engines": { "node": ">=20" },
   "facetkit": { "govern": { "scanIgnore": ["test/**"] } },
   "scripts": {
-    "test": "node --test test/*.test.mjs",
+    "test": "node scripts/test.mjs",
     "build:plugin": "node scripts/build-plugin.mjs",
     "audit": "node bin/facet.mjs audit",
     "benchmark": "node bin/facet.mjs benchmark",

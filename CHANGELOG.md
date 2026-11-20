@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows [Kee
 - `SECURITY.md` states the threat model: four sources of harm (an agent that errs, an agent that games the record, foreign content, accidents) and what is out of scope (whoever controls the machine or the repository); a table says, for each guarantee, what it rests on and when it does not hold. A test keeps both sections present and complete.
 
 ### Fixed
+- Checks, witness runs, decision measures and bug reproductions run through the platform's own shell (`lib/shell.mjs`: /bin/sh, or cmd.exe on Windows) instead of `sh -c`, which Windows does not have. A timeout stops the whole process tree, and facet stops the trees it started when it is interrupted.
+- `{item}` in a configured command is filled only with an id of letters, digits, `.`, `_` and `-`; any other id is refused, and `FACET_ITEM` is set only to such an id — a shell must not read an item id as more than a name.
+- Step snapshots give back the exact bytes they took on Windows (git's line-ending conversion is off for them).
+- Extensions listed by an absolute path load on Windows.
+- `.gitattributes` keeps LF in text files: hashed files no longer change on a Windows checkout.
+- `npm test` works on Windows with Node 20: the test files are listed by `scripts/test.mjs` (cmd.exe and Node 20 expand no `*` pattern).
+- CI runs on Linux, macOS and Windows × Node 20 and 22, and every one of them must pass.
 - Journal lock on Windows: `EPERM` while another process deletes the lock file is contention, not a failure — the writer waits as it does on `EEXIST`; removing the lock retries while another process is reading it. A real permission error is still raised once the wait is over.
 - Benchmark `proof/source-state` on Windows: where a file system has no executable bit, or symbolic links need a privilege the process lacks, the case passes by the rule's own terms (nothing there can change unnoticed), as it already did for case-folding names. Where the property exists it is measured as before; `benchmark/expected.json` is unchanged.
 - Adaptive routes: a step the plan asks for before a step that has **already started** no longer goes in front of it (which reset the started work); it goes after it in `REVIEW` mode and reviews that work.
