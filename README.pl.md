@@ -6,6 +6,11 @@
 
 [🇬🇧 English](README.md) | [🇵🇱 Polski]
 
+[![npm](https://img.shields.io/npm/v/facetkit?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/facetkit)
+[![License](https://img.shields.io/github/license/Anctoster/facetkit?style=for-the-badge)](LICENSE)
+[![Node](https://img.shields.io/badge/Node.js-%3E%3D20-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![GitHub Stars](https://img.shields.io/github/stars/Anctoster/facetkit?style=for-the-badge&logo=github)](https://github.com/Anctoster/facetkit/stargazers)
+
 **Inżynieria oparta na dowodach dla zespołów agentów AI.** Umiejętności na tyle małe, że da się ich przestrzegać, narzędzia, które mierzą zamiast pytać, oraz dziennik, z którego wylicza się — a nie deklaruje — stan pracy, jej koszt i to, na ile można ufać wynikowi.
 
 Bez zależności. Node 20+. Działa z każdym agentem, który potrafi uruchomić polecenie powłoki; dostępny jako wtyczka Claude Code. Analiza kodu rozumie JavaScript/TypeScript, Pythona, Go i Javę.
