@@ -31,6 +31,13 @@ Dołącz do Programu Badawczego Społeczności FacetKit.
 
 [Program Badań Społeczności FacetKit](docs/research/README.pl.md)
 
+##  Wypróbuj w pięć minut
+```bash
+git clone https://github.com/Anctoster/facetkit && cd facetkit
+npm run demo:proof
+npx facetkit demo
+```
+
 ## Jaki problem rozwiązuje
 
 Agent kończy pracę i mówi, że gotowe. Między tym zdaniem a wynikiem, na którym można polegać, jest kilka pytań, na które domyślnie nikt nie odpowiada:
