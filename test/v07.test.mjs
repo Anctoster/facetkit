@@ -96,7 +96,18 @@ test('proof: signed by a trusted key; an edited and re-digested pack is TAMPERED
         cfg();
         fs.writeFileSync(file, JSON.stringify(m));
         assert.match(f('proof', 'witness').stdout, /witness: 1\/1 checks gave the recorded answer/);
-        assert.match(f('proof', 'verify').stdout, /reproduced by a second run on the same sources/);
+        // the author re-running its own checks with its own key is repeatability, not a second opinion
+        const self = f('proof', 'verify').stdout;
+        assert.match(self, /not reproduced by a trusted witness yet/);
+        assert.match(self, /does not count: signed by a key that also signed the pack/);
+        // another key, trusted in the witness role, vouches
+        const ciEnv = { ...env, FACET_KEYS: path.join(tmp(), 'ci-keys'), FACET_WRITER: 'ci' };
+        const ci = (...args) => spawnSync('node', [CLI, ...args], { cwd: root, encoding: 'utf-8', env: ciEnv });
+        assert.match(ci('key', 'new').stdout, /key \w+ written/);
+        assert.match(ci('key', 'trust', '--name', 'ci', '--role', 'witness').stdout, /as ci \(witness\)/);
+        const byCi = ci('proof', 'witness', '--item', 'A');
+        assert.match(byCi.stdout, /witness: 1\/1 checks gave the recorded answer/, byCi.stderr);
+        assert.match(f('proof', 'verify').stdout, /reproduced by a second run on the same sources, signed by a trusted witness/);
         write(root, 'flag', 'set\n');
         const w = f('proof', 'witness');
         assert.match(w.stdout, /differs: truth/);
