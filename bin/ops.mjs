@@ -43,7 +43,7 @@ import { anomalies, timeline } from '../lib/observe.mjs';
 import { beliefs, hindsight, proposals, renderBeliefs, reviewChanges, signals } from '../lib/retro.mjs';
 import { plan, renderPlan, sessionPlan } from '../lib/schedule.mjs';
 import { readLedger, run } from '../lib/thrift.mjs';
-import { itemEnv, withItem } from '../lib/shell.mjs';
+import { itemEnv, safeEnv, withItem } from '../lib/shell.mjs';
 import { environment } from '../lib/envinfo.mjs';
 import { eventSigner, eventVerifiers, loadKey, loadTrust, sign } from '../lib/sign.mjs';
 import { sha256 } from '../lib/text.mjs';
@@ -95,6 +95,8 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
 
     // ---- governance: policy, evidence, model routing --------------------------------------
     const govern = project.govern ?? {};
+    // what a configured command may see of this process's environment (lib/shell.mjs, safeEnv)
+    const commandEnv = () => safeEnv({ allow: govern.env ?? [] });
     const policy = () => [...(govern.policy ? readJson(path.resolve(CWD, govern.policy), DEFAULT_POLICY) : DEFAULT_POLICY), ...extensions.flatMap((x) => x.rules ?? [])];
     const checkNames = () => [...Object.keys(govern.checks ?? {}), ...extensions.flatMap((x) => Object.keys(x.checks ?? {}))];
     const projectFacts = () => {
@@ -553,7 +555,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             } else if (mode === 'judge') {
                 const checks = project.eval?.checks ?? {};
                 if (!Object.keys(checks).length) fail('eval judge: configure "facetkit": { "eval": { "checks": { "name": "command" } } } in package.json');
-                const r = judge(path.resolve(CWD, opt('dir', '.')), checks);
+                const r = judge(path.resolve(CWD, opt('dir', '.')), checks, { env: commandEnv() });
                 const s = itemState(events(), opt('item'))?.steps.find((x) => x.id === opt('step'));
                 say({ kind: 'eval.replay', item: opt('item'), step: opt('step'), agent: s?.agent, model: opt('model'), results: r.results, passed: r.passed, total: r.total, tokens: opt('tokens') ? Number(opt('tokens')) : undefined });
                 console.log(`${opt('item')}/${opt('step')} on ${opt('model')}: ${r.passed}/${r.total} checks passed\n${Object.entries(r.results).map(([k, v]) => `  ${v.exit === 0 ? '✓' : '✗'} ${k} (exit ${v.exit}, ${v.sec}s)`).join('\n')}`);
@@ -667,7 +669,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 let value;
                 let receipt;
                 if (cmd) {
-                    const r = await run(withItem(cmd, item), { cwd: CWD, env: itemEnv(item), timeoutSec: Number(opt('timeout', 600)), ledger: path.join(work, item, 'ledger.jsonl'), logDir: path.join(work, item, 'logs') });
+                    const r = await run(withItem(cmd, item), { cwd: CWD, env: itemEnv(item, commandEnv()), timeoutSec: Number(opt('timeout', 600)), ledger: path.join(work, item, 'ledger.jsonl'), logDir: path.join(work, item, 'logs') });
                     ok = r.exit === 0;
                     value = `exit ${r.exit}`;
                     // what exactly was run and what it printed, so that a second party can compare its own run with this one
@@ -746,7 +748,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 const dir = path.join(work, item, 'witness');
                 const w = await witness(m, names, async (name) => {
                     const cmd = typeof govern.checks[name] === 'object' ? govern.checks[name].run : govern.checks[name];
-                    const r = await run(withItem(cmd, item), { cwd: CWD, env: itemEnv(item), timeoutSec: Number(opt('timeout', 600)), ledger: path.join(dir, 'ledger.jsonl'), logDir: path.join(dir, 'logs') });
+                    const r = await run(withItem(cmd, item), { cwd: CWD, env: itemEnv(item, commandEnv()), timeoutSec: Number(opt('timeout', 600)), ledger: path.join(dir, 'ledger.jsonl'), logDir: path.join(dir, 'logs') });
                     return { ok: r.exit === 0 };
                 }, { by: opt('by') ?? process.env.FACET_ACTOR ?? process.env.FACET_SESSION ?? me ?? null, source: sourceState(CWD, { ignore: sourceIgnore(), include: inputs() }).state, environment: envNow(true) });
                 const key = myKey();
@@ -1083,7 +1085,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 fresh ??= checkFitness(rules, { graph: graphNow(), root: CWD, isTest, baseline: readJson(path.resolve(CWD, project.fitnessBaseline ?? '.facet/fitness-baseline.json'), { keys: [] }).keys ?? [] });
                 return fresh.fresh.filter((v) => v.rule === id).length;
             };
-            const results = all.filter((d) => !positional[1] || d.id === positional[1]).map((d) => checkDecision(CWD, d, { fitnessFresh }));
+            const results = all.filter((d) => !positional[1] || d.id === positional[1]).map((d) => checkDecision(CWD, d, { fitnessFresh, env: commandEnv() }));
             for (const c of results) {
                 console.log(renderDecisionCheck(c));
                 evidence(`decision:${c.id}`, c.state !== 'review', c.state);
@@ -1126,7 +1128,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 const bug = loadBug(CWD, id) ?? fail(`qa bug: no bug "${id ?? ''}" (facet qa bug list --all)`);
                 if (what === 'verify') {
                     if (!bug.repro) fail(`qa bug verify: ${id} has steps, not a command — a second person confirms it by hand: facet qa bug confirm ${id} --by NAME`);
-                    const r = runRepro(CWD, bug, { n: Number(opt('runs', 3)) });
+                    const r = runRepro(CWD, bug, { n: Number(opt('runs', 3)), env: commandEnv() });
                     const tests = testsNaming(CWD, id, graphNow().files.filter(isTest));
                     const status = nextStatus(bug, r, { regressionTests: tests });
                     saveBug(CWD, { ...bug, status, runs: [...bug.runs, { at: new Date().toISOString(), outcome: r.outcome, failed: r.failed, n: r.runs.length, src: sourceNow() }], tests });
@@ -1261,7 +1263,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             if (sub === 'judge') {
                 const checks = project.eval?.checks ?? Object.fromEntries(Object.entries(govern.checks ?? {}).map(([k, v]) => [k, typeof v === 'object' ? v.run : v]));
                 if (!Object.keys(checks).length) fail('cf judge: no checks configured (eval.checks or govern.checks)');
-                const r = judge(path.resolve(CWD, opt('dir') ?? fail('cf judge: --dir <replay worktree>')), checks);
+                const r = judge(path.resolve(CWD, opt('dir') ?? fail('cf judge: --dir <replay worktree>')), checks, { env: commandEnv() });
                 say({ kind: 'cf', item, step, facet, arm, model, agent: start?.agent, passed: r.passed, total: r.total, results: r.results });
                 return void console.log(`${item}/${step} ${arm} ${facet}: ${r.passed}/${r.total} checks passed${cfReport(events(), facet)[0] ? `\n${renderCf(cfReport(events(), facet))}` : ''}`);
             }
@@ -1295,7 +1297,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             if (mode === 'run') {
                 const files = list(opt('files'));
                 if (!files.length || !opt('test')) fail('canary run: facet canary run --files a,b --test "CMD" [--max 5] [--guard tests]');
-                const r = probe({ cwd: CWD, files, test: opt('test'), max: Number(opt('max', 5)), timeoutSec: Number(opt('timeout', 120)), maxMinutes: Number(opt('max-minutes', 10)) });
+                const r = probe({ cwd: CWD, files, test: opt('test'), max: Number(opt('max', 5)), timeoutSec: Number(opt('timeout', 120)), maxMinutes: Number(opt('max-minutes', 10)), env: commandEnv() });
                 if (r.baseline !== 'green') fail(`canary: ${r.message}`, 2);
                 for (let i = 0; i < r.killed; i++) say({ kind: 'canary', guard: opt('guard', 'tests'), caught: true });
                 for (const m of r.survived) say({ kind: 'canary', guard: opt('guard', 'tests'), caught: false, where: `${m.file}:${m.line}` });

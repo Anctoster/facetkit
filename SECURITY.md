@@ -34,7 +34,8 @@ Anything not in this table is not a guarantee, however it is worded elsewhere.
 
 ## What facetkit does and does not do
 
-- It runs **your** commands (`facet run`, `facet check`, `facet eval judge`, the test command of `facet mutate`). It adds no sandbox: anything those commands can do, they can do. Run agents and their commands with the permissions you would give a new colleague on their first day.
+- It runs **your** commands (`facet run`, `facet check`, `facet eval judge`, the test command of `facet mutate`, decision measures, bug reproductions). It adds no sandbox: anything those commands can do, they can do. Run agents and their commands with the permissions you would give a new colleague on their first day.
+- Those commands get only part of the environment: the variables a shell and the usual toolchains need (`lib/shell.mjs`, `BASE_ENV`) and the ones named in `govern.env` (names, or prefixes ending in `*`). Tokens and credentials that happen to be in the environment stay out of reach of the code under test. This is not isolation: a command can still read files such as `~/.aws/credentials`. `govern.env: "inherit"` passes everything, as before; the path of the private key (`FACET_KEY`) is never passed.
 - `facet mutate` and `facet canary` change source files temporarily and restore them. If the process is killed in between, restore with `git checkout -- <file>` (and `facet canary reveal` for a planted canary).
 - `facet scan` is a set of patterns. It finds common secrets, dangerous commands and injected instructions; it does not prove their absence. Keep your usual secret scanning.
 - The journal, the memory store and attestations are plain text meant to be committed. They contain file names, command lines and notes written by agents. **Review them before making a repository public.** `facet scan` checks the text stores agents read for injected instructions, but nothing stops a person from writing a secret into a note.
