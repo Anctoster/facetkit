@@ -34,6 +34,7 @@ Join the FacetKit Community Research Program.
 ```bash
 git clone https://github.com/Anctoster/facetkit && cd facetkit
 npm run demo:proof
+npx facetkit demo
 ```
 
 An agent changes code; another run checks it; a proof pack ties the verdict to those exact sources; a second party verifies it from one file; one edited line later the proof says STALE, and an edited bundle says TAMPERED. Nothing is installed and nothing outside a temp folder is touched. Where this is going: [ROADMAP.md](ROADMAP.md) · the map of the code: [ARCHITECTURE.md](ARCHITECTURE.md) · first contributions: [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md).
