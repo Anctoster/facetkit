@@ -10,9 +10,6 @@ jobs:
     # Windows and macOS too: architects run facetkit next to Archicad on Windows; a check that only
     # passes on Linux is not a check they can rely on
     runs-on: ${{ matrix.os }}
-    # Windows reports but does not block until the guard-file fixes it needs (journal lock contention,
-    # platform-aware benchmark cases) are merged on their own, as CONTRIBUTING asks; then this line goes
-    continue-on-error: ${{ matrix.os == 'windows-latest' }}
     strategy:
       fail-fast: false
       matrix:

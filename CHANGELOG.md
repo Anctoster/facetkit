@@ -10,7 +10,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - Step snapshots give back the exact bytes they took on Windows (git's line-ending conversion is off for them).
 - Extensions listed by an absolute path load on Windows.
 - `.gitattributes` keeps LF in text files: hashed files no longer change on a Windows checkout.
-- CI runs on Linux, macOS and Windows; Windows reports without blocking until two guard-file fixes land on their own.
+- CI runs on Linux, macOS and Windows × Node 20 and 22, and every one of them must pass.
+- `npm test` works on Windows with Node 20: the test files are listed by `scripts/test.mjs` (cmd.exe and Node 20 expand no `*` pattern).
 
 ### Security
 - `SECURITY.md` states the threat model: four sources of harm (an agent that errs, an agent that games the record, foreign content, accidents) and what is out of scope (whoever controls the machine or the repository); a table says, for each guarantee, what it rests on and when it does not hold. A test keeps both sections present and complete.
