@@ -9,6 +9,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - `SECURITY.md` states the threat model: four sources of harm (an agent that errs, an agent that games the record, foreign content, accidents) and what is out of scope (whoever controls the machine or the repository); a table says, for each guarantee, what it rests on and when it does not hold. A test keeps both sections present and complete.
 
 ### Fixed
+- Journal after a Windows checkout: git's `core.autocrlf` adds a CR before every LF, and an older-format link is a hash of the line's bytes, so an untouched journal read as tampered. The reader takes one CR off the end of each line before hashing — restoring the bytes facet wrote — and forgives nothing else: an edit is still found.
 - Checks, witness runs, decision measures and bug reproductions run through the platform's own shell (`lib/shell.mjs`: /bin/sh, or cmd.exe on Windows) instead of `sh -c`, which Windows does not have. A timeout stops the whole process tree, and facet stops the trees it started when it is interrupted.
 - `{item}` in a configured command is filled only with an id of letters, digits, `.`, `_` and `-`; any other id is refused, and `FACET_ITEM` is set only to such an id — a shell must not read an item id as more than a name.
 - Step snapshots give back the exact bytes they took on Windows (git's line-ending conversion is off for them).
