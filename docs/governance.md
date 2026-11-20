@@ -50,7 +50,7 @@ A level is the highest one whose rules — and those of every level below — al
 - `facet waive <rule> --reason "…" --by <person>` records a human decision to close despite a failed rule. The gate opens; the level does not rise; the waiver appears in the attestation and in `facet trust`.
 - `facet approve <what> --by <person>` records the approval a scan asked for (for example a new dependency).
 
-Test fixtures that contain look-alike secrets are excluded with `"govern": { "scanIgnore": ["test/fixtures/**"] }`, or line by line with the marker `facet:allow-secret`. Forbidden paths are checked regardless.
+Test fixtures that contain look-alike secrets are excluded with `"govern": { "scanIgnore": ["test/fixtures/**"] }`. A line marked `facet:allow-secret` is still searched: a secret on it does not block, but needs an approval for that exact line (`facet approve allow-secret:<file>:<hash>`, the name `facet scan` prints); change the line and it needs approving again. Forbidden paths are checked regardless.
 
 Agents are instructed never to issue either on their own (`assured-work:waiver-is-a-record`).
 
