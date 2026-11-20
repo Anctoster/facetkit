@@ -32,7 +32,7 @@ import { blocking, checkHandoff, filesForStep, findTemplate, listedFiles, render
 import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, stepsOf } from '../lib/planner.mjs';
 import { buildGraph, isTest } from '../lib/seams.mjs';
 import { checkOwners, ownersFromTerritories, renderOwners, resolveOwners } from '../lib/ownership.mjs';
-import { witness, exportProof, renderBundle, verifyBundle, createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
+import { witness, witnessDigest, exportProof, renderBundle, verifyBundle, createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
 import { planMutants, probe } from '../lib/mutaprobe.mjs';
 import { route } from '../lib/router.mjs';
 import { scan } from '../lib/secscan.mjs';
@@ -741,6 +741,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 // an independent second measurement: the checks are run again here, by this run, and compared with what the pack recorded
                 const names = checkNames().filter((n) => typeof (typeof govern.checks?.[n] === 'object' ? govern.checks[n].run : govern.checks?.[n]) === 'string');
                 if (!names.length) fail('proof witness: no check with a command is configured (govern.checks) — there is nothing to run again');
+                if (sub === 'witness' && !myKey()) fail('proof witness: no private key here (facet key new, then facet key trust --role witness on the project) — an unsigned witness record is anybody\'s claim and is not recorded');
                 const dir = path.join(work, item, 'witness');
                 const w = await witness(m, names, async (name) => {
                     const cmd = typeof govern.checks[name] === 'object' ? govern.checks[name].run : govern.checks[name];
@@ -748,7 +749,9 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                     return { ok: r.exit === 0 };
                 }, { by: opt('by') ?? process.env.FACET_ACTOR ?? process.env.FACET_SESSION ?? me ?? null, source: sourceState(CWD, { ignore: sourceIgnore(), include: inputs() }).state, environment: envNow(true) });
                 const key = myKey();
-                if (key) w.signature = sign(key, sha256(JSON.stringify(w)));
+                // the record is signed over its canonical form; without the witness role it can still raise an alarm, never vouch
+                if (key) w.signature = sign(key, witnessDigest(w));
+                if (!key || !trustNow().keys.some((k) => k.id === key.id && k.role === 'witness')) console.error(`proof witness: ${key ? `key ${key.id} is not trusted in the witness role here` : 'no key here, so the record is unsigned'} — this record can report a difference, but it does not count as an independent reproduction`);
                 m.witnesses = [...(m.witnesses ?? []), w];
                 say({ kind: 'proof.witness', item, checks: names.filter((n) => !w.notRun.includes(n)), differs: w.differs, sameSources: w.sameSources, by: w.by, env: w.env });
                 fs.writeFileSync(file, `${JSON.stringify(m, null, 2)}\n`);
