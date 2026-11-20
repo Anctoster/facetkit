@@ -56,6 +56,7 @@ import { renderTrace, trace } from '../lib/trace.mjs';
 import { opsCommands } from './ops.mjs';
 import { setupCommands } from './setup.mjs';
 import { EXIT_CAP, excerpt, ledgerStatus, readLedger, run } from '../lib/thrift.mjs';
+import { safeEnv } from '../lib/shell.mjs';
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CWD = process.cwd();
@@ -129,7 +130,7 @@ const commands = {
     },
     async run() {
         if (!rest.length) fail('run: facet run [--item ID] -- <command>');
-        const result = await run(rest, { cwd: CWD, timeoutSec: Number(opt('timeout', 300)), ledger: ledgerFile, logDir: path.join(itemDir, 'logs'), caps: caps(), maxRepeat: Number(opt('max-repeat', 3)) });
+        const result = await run(rest, { cwd: CWD, env: safeEnv({ allow: project.govern?.env ?? [] }), timeoutSec: Number(opt('timeout', 300)), ledger: ledgerFile, logDir: path.join(itemDir, 'logs'), caps: caps(), maxRepeat: Number(opt('max-repeat', 3)) });
         console.log(result.text);
         if (opt('evidence')) evidence(opt('evidence'), result.exit === 0, `exit ${result.exit}`);
         process.exit(result.exit);
@@ -167,7 +168,7 @@ const commands = {
         const files = list(opt('files'));
         const test = opt('test');
         if (!files.length || !test) fail('mutate: facet mutate --files a.ts,b.ts --test "npm test -- a" [--ref HEAD] [--max 12] [--allow 0]');
-        const r = probe({ cwd: CWD, files, test, ref: opt('ref'), max: Number(opt('max', 12)), timeoutSec: Number(opt('timeout', 120)), maxMinutes: Number(opt('max-minutes', 10)), log: flag('verbose') ? console.log : undefined, equivalents: opt('equivalents') ? readJson(path.resolve(CWD, opt('equivalents')), []) : [] });
+        const r = probe({ cwd: CWD, files, test, ref: opt('ref'), max: Number(opt('max', 12)), timeoutSec: Number(opt('timeout', 120)), maxMinutes: Number(opt('max-minutes', 10)), log: flag('verbose') ? console.log : undefined, equivalents: opt('equivalents') ? readJson(path.resolve(CWD, opt('equivalents')), []) : [], env: safeEnv({ allow: project.govern?.env ?? [] }) });
         if (r.baseline !== 'green') fail(`mutate: ${r.message}`, 2);
         console.log(`mutants: ${r.planned} of ${r.total} possible · detected ${r.killed} · survived ${r.survived.length} · equivalent (declared) ${r.equivalent.length} · invalid (did not load) ${r.invalid.length}${r.notRun ? ` · not executed ${r.notRun} (time limit)` : ''} · ${r.minutes} min`);
         for (const s of r.survived) console.log(`  SURVIVED ${s.file}:${s.line} [${s.op}]  ${s.before}  →  ${s.after}`);

@@ -45,6 +45,16 @@ The default policy is in `lib/govern.mjs`; `examples/policy.json` shows a strict
 
 A level is the highest one whose rules — and those of every level below — all hold. **A level states which evidence exists. It is not a statement that the evidence is sufficient for your risk**, and it says nothing about defects no check was looking for.
 
+## The environment of commands
+
+Checks, decision measures, bug reproductions, `facet run`, `facet eval judge` and the test command of `facet mutate` run with part of the environment only: the variables in `BASE_ENV` (`lib/shell.mjs` — paths, temporary folders, locale, the system folders of Windows, toolchain homes such as `JAVA_HOME` or `VIRTUAL_ENV`) and the ones the project names:
+
+```json
+"govern": { "env": ["HTTPS_PROXY", "NODE_OPTIONS", "npm_config_*"] }
+```
+
+A name ending in `*` is a prefix. On Windows names compare without case. `"env": "inherit"` passes everything, as before 0.7.1. `FACET_KEY` and `FACET_KEYS` are never passed.
+
 ## Waivers and approvals
 
 - `facet waive <rule> --reason "…" --by <person>` records a human decision to close despite a failed rule. The gate opens; the level does not rise; the waiver appears in the attestation and in `facet trust`.
