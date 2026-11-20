@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { witnessDigest, witnessed } from '../lib/proof.mjs';
+import { provenLevel, witnessDigest, witnessed } from '../lib/proof.mjs';
 import { newKey, sign } from '../lib/sign.mjs';
 
 // witnessed() reads only the digest, the pack's signatures and the witness records
@@ -15,7 +15,7 @@ const signedBy = (key, r = record()) => ({ ...r, signature: sign(key, witnessDig
 
 test('witness: an agreeing record counts only when signed by a trusted witness who did not sign the pack', () => {
     const ok = witnessed({ ...pack, witnesses: [signedBy(witnessKey)] }, trust);
-    assert.deepEqual([ok.independent, ok.rejected.length], [true, 0]);
+    assert.deepEqual([ok.level, ok.rejected.length], ['rerun', 0], 'it vouches; where it ran is not said, so it is a rerun');
     for (const [w, why] of [
         [record(), /not signed/], // written into the pack by hand
         [signedBy(author), /also signed the pack/], // the author re-running its own checks
@@ -24,15 +24,15 @@ test('witness: an agreeing record counts only when signed by a trusted witness w
         [{ ...signedBy(witnessKey), reproduced: 1, total: 1 }, /does not match the record/], // edited after signing
     ]) {
         const v = witnessed({ ...pack, witnesses: [w] }, trust);
-        assert.equal(v.independent, false, String(why));
+        assert.equal(v.level, null, String(why));
         assert.match(v.rejected[0].why, why);
     }
-    assert.equal(witnessed({ ...pack, witnesses: [signedBy(witnessKey)] }).independent, false, 'without the project\'s trust list nothing vouches');
+    assert.equal(witnessed({ ...pack, witnesses: [signedBy(witnessKey)] }).level, null, 'without the project\'s trust list nothing vouches');
 });
 
 test('witness: a disagreement counts from any record — a forged one can raise an alarm, never pass a pack', () => {
     const v = witnessed({ ...pack, witnesses: [signedBy(witnessKey), record({ reproduced: 1, differs: ['scan'] })] }, trust);
-    assert.deepEqual([v.independent, v.against], [false, ['scan']]);
+    assert.deepEqual([v.level, v.against], [null, ['scan']]);
 });
 
 test('witness: the signature covers the canonical record, whatever the order of its keys', () => {
@@ -40,5 +40,27 @@ test('witness: the signature covers the canonical record, whatever the order of 
     const reordered = Object.fromEntries(Object.entries(r).reverse());
     assert.equal(witnessDigest(r), witnessDigest(reordered));
     const w = { ...reordered, signature: sign(witnessKey, witnessDigest(r)) };
-    assert.equal(witnessed({ ...pack, witnesses: [w] }, trust).independent, true);
+    assert.equal(witnessed({ ...pack, witnesses: [w] }, trust).level, 'rerun');
+});
+
+test('witness levels: a trusted record from another machine and environment is independent; from the same machine it is a rerun', () => {
+    const made = { ...pack, environment: { host: 'h-author', digest: 'e-author' } };
+    const at = (host, env) => signedBy(witnessKey, record({ host, env }));
+    assert.equal(witnessed({ ...made, witnesses: [at('h-author', 'e-author')] }, trust).level, 'rerun', 'same machine');
+    assert.equal(witnessed({ ...made, witnesses: [at('h-author', 'e-other')] }, trust).level, 'rerun', 'same machine, another setup');
+    assert.equal(witnessed({ ...made, witnesses: [at('h-ci', 'e-ci')] }, trust).level, 'independent', 'another machine');
+    assert.equal(witnessed({ ...made, witnesses: [at(null, null)] }, trust).level, 'rerun', 'a record that does not say where it ran');
+    assert.equal(witnessed({ ...pack, witnesses: [at('h-ci', 'e-ci')] }, trust).level, 'rerun', 'a pack that does not say where it was made');
+    // the machine is part of what is signed: moving a local record to "another machine" breaks its signature
+    const moved = { ...at('h-author', 'e-author'), host: 'h-ci', env: 'e-ci' };
+    assert.equal(witnessed({ ...made, witnesses: [moved] }, trust).level, null);
+    // the best vouching record decides, unless anyone disagrees
+    assert.equal(witnessed({ ...made, witnesses: [at('h-author', 'e-author'), at('h-ci', 'e-ci')] }, trust).level, 'independent');
+    assert.equal(witnessed({ ...made, witnesses: [at('h-ci', 'e-ci'), record({ differs: ['scan'] })] }, trust).level, null);
+});
+
+test('witness levels: L4 stands only with an independent witness; every other level is what the journal gives', () => {
+    assert.equal(provenLevel('L4 calibrated', 'independent'), 'L4 calibrated');
+    for (const w of ['rerun', null]) assert.equal(provenLevel('L4 calibrated', w), 'L3 falsified');
+    for (const l of ['L0 claimed', 'L1 reproduced', 'L2 specified', 'L3 falsified']) assert.equal(provenLevel(l, null), l);
 });

@@ -107,7 +107,8 @@ test('proof: signed by a trusted key; an edited and re-digested pack is TAMPERED
         assert.match(ci('key', 'trust', '--name', 'ci', '--role', 'witness').stdout, /as ci \(witness\)/);
         const byCi = ci('proof', 'witness', '--item', 'A');
         assert.match(byCi.stdout, /witness: 1\/1 checks gave the recorded answer/, byCi.stderr);
-        assert.match(f('proof', 'verify').stdout, /reproduced by a second run on the same sources, signed by a trusted witness/);
+        // both keys ran on this machine: a trusted rerun, not an independent reproduction
+        assert.match(f('proof', 'verify').stdout, /reproduced by a trusted witness on the same machine: repeatability, not independence/);
         write(root, 'flag', 'set\n');
         const w = f('proof', 'witness');
         assert.match(w.stdout, /differs: truth/);
