@@ -43,7 +43,7 @@ import { anomalies, timeline } from '../lib/observe.mjs';
 import { beliefs, hindsight, proposals, renderBeliefs, reviewChanges, signals } from '../lib/retro.mjs';
 import { plan, renderPlan, sessionPlan } from '../lib/schedule.mjs';
 import { readLedger, run } from '../lib/thrift.mjs';
-import { withItem } from '../lib/shell.mjs';
+import { itemEnv, withItem } from '../lib/shell.mjs';
 import { environment } from '../lib/envinfo.mjs';
 import { eventSigner, eventVerifiers, loadKey, loadTrust, sign } from '../lib/sign.mjs';
 import { sha256 } from '../lib/text.mjs';
@@ -656,7 +656,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 let value;
                 let receipt;
                 if (cmd) {
-                    const r = await run(withItem(cmd, item), { cwd: CWD, env: { ...process.env, FACET_ITEM: item }, timeoutSec: Number(opt('timeout', 600)), ledger: path.join(work, item, 'ledger.jsonl'), logDir: path.join(work, item, 'logs') });
+                    const r = await run(withItem(cmd, item), { cwd: CWD, env: itemEnv(item), timeoutSec: Number(opt('timeout', 600)), ledger: path.join(work, item, 'ledger.jsonl'), logDir: path.join(work, item, 'logs') });
                     ok = r.exit === 0;
                     value = `exit ${r.exit}`;
                     // what exactly was run and what it printed, so that a second party can compare its own run with this one
@@ -734,7 +734,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 const dir = path.join(work, item, 'witness');
                 const w = await witness(m, names, async (name) => {
                     const cmd = typeof govern.checks[name] === 'object' ? govern.checks[name].run : govern.checks[name];
-                    const r = await run(withItem(cmd, item), { cwd: CWD, env: { ...process.env, FACET_ITEM: item }, timeoutSec: Number(opt('timeout', 600)), ledger: path.join(dir, 'ledger.jsonl'), logDir: path.join(dir, 'logs') });
+                    const r = await run(withItem(cmd, item), { cwd: CWD, env: itemEnv(item), timeoutSec: Number(opt('timeout', 600)), ledger: path.join(dir, 'ledger.jsonl'), logDir: path.join(dir, 'logs') });
                     return { ok: r.exit === 0 };
                 }, { by: opt('by') ?? process.env.FACET_ACTOR ?? process.env.FACET_SESSION ?? me ?? null, source: sourceState(CWD, { ignore: sourceIgnore(), include: inputs() }).state, environment: envNow(true) });
                 const key = myKey();

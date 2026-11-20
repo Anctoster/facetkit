@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
-import { SAFE_ITEM, runShellSync, withItem } from '../lib/shell.mjs';
+import { SAFE_ITEM, itemEnv, runShellSync, withItem } from '../lib/shell.mjs';
 import { run } from '../lib/thrift.mjs';
 import { checkDecision } from '../lib/decisions.mjs';
 import { tmp } from './helpers.mjs';
@@ -16,6 +16,9 @@ test('shell: an item id becomes part of a command only when no shell can read it
         assert.throws(() => withItem('check {item}', bad), /cannot be put into a command line/, String(bad));
     }
     assert.ok(SAFE_ITEM.test('V-014') && SAFE_ITEM.test('item_3.b'));
+    // cmd.exe expands %FACET_ITEM% before parsing: an unsafe id never reaches the environment either
+    assert.equal(itemEnv('A-1', {}).FACET_ITEM, 'A-1');
+    assert.equal('FACET_ITEM' in itemEnv('x&calc', { FACET_ITEM: 'x&calc' }), false);
 });
 
 test('shell: the same command line runs on every platform, with spaces in the path and its exit code kept', () => {
@@ -54,4 +57,20 @@ test('shell: a timeout stops the command and what it started, not only the shell
     assert.ok(Date.now() - started < 3000, 'returned at the timeout, not when the grandchild closed the pipe');
     await new Promise((resolve) => setTimeout(resolve, 3500));
     assert.equal(fs.existsSync(marker), false, 'the grandchild was stopped with the tree');
+});
+
+test('shell: when facet is interrupted, the command it started is stopped with it', { skip: process.platform === 'win32' && 'Windows has no process groups to escape Ctrl-C' }, async () => {
+    const dir = tmp();
+    const marker = path.join(dir, 'still-running');
+    const lib = JSON.stringify(new URL('../lib/thrift.mjs', import.meta.url).href);
+    // a facet-like process runs a long command, then is sent SIGINT; the command must not write its marker afterwards
+    const cmd = `${node} -e "setTimeout(() => require('fs').writeFileSync(${JSON.stringify(marker).replace(/"/g, '\\"')}, 'x'), 2500)"`;
+    const host = `import(${lib}).then((m) => m.run(${JSON.stringify(cmd)}, { cwd: ${JSON.stringify(dir)}, timeoutSec: 30 }))`;
+    const { spawn } = await import('node:child_process');
+    const p = spawn(process.execPath, ['--input-type=module', '-e', host], { stdio: 'ignore' });
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    p.kill('SIGINT');
+    await new Promise((resolve) => p.once('exit', resolve));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    assert.equal(fs.existsSync(marker), false, 'the command outlived facet');
 });
