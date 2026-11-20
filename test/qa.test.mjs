@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { readJournal } from '../lib/journal.mjs';
 import { closeCharter, confirmByHand, newBug, newCharter, nextStatus, readiness, riskMap, runRepro, testsNaming } from '../lib/qa.mjs';
 import { buildGraph, isTest } from '../lib/seams.mjs';
@@ -37,7 +37,7 @@ test('bug: a report needs a reproduction and an expectation; a command is run se
     assert.throws(() => newBug({ id: 'B1', title: 't', expected: 'x' }), /reproduce/);
     assert.throws(() => newBug({ id: 'B1', title: 't', repro: 'false' }), /expected/);
     assert.throws(() => newBug({ id: 'B1', title: 't', repro: 'false', expected: 'x', severity: 'urgent' }), /severity/);
-    let bug = newBug({ id: 'B1', title: 'total ignores quantity', repro: 'node -e "process.exit(require(\'fs\').existsSync(\'fixed\') ? 0 : 1)"', expected: 'total = price × qty', by: 'ann' });
+    let bug = newBug({ id: 'B1', title: 'total ignores quantity', repro: 'test -f fixed', expected: 'total = price × qty', by: 'ann' });
     let r = runRepro(root, bug, { n: 3 });
     assert.deepEqual([r.outcome, r.failed], ['fails', 3]);
     bug = { ...bug, status: nextStatus(bug, r) };
@@ -51,8 +51,7 @@ test('bug: a report needs a reproduction and an expectation; a command is run se
     assert.deepEqual(tests, ['test/total.test.js']);
     assert.equal(nextStatus(bug, r, { regressionTests: tests }), 'verified');
     assert.equal(nextStatus({ status: 'verified' }, { outcome: 'fails' }), 'reopened');
-    // fails the first time, then passes: it leaves a marker behind
-    const flaky = runRepro(root, { repro: `node -e "const f = require('fs'); const had = f.existsSync('seen'); f.writeFileSync('seen', ''); process.exit(had ? 0 : 1)"` }, { n: 3 });
+    const flaky = runRepro(root, { repro: `test -f ${path.join(root, 'seen')}; r=$?; touch ${path.join(root, 'seen')}; exit $r` }, { n: 3 });
     assert.equal(flaky.outcome, 'flaky', 'first run fails, later runs pass');
     assert.equal(nextStatus({ status: 'reported' }, flaky), 'flaky');
 });
@@ -93,7 +92,7 @@ test('cli: a bug found in closed work is an escape of its item — trust and the
     fs.writeFileSync(path.join(root, '.facet', 'journal', 'old.jsonl'), '');
     const f = (...args) => spawnSync('node', [CLI, ...args], { cwd: root, encoding: 'utf-8', env: { ...process.env, FACET_WRITER: 'ann' } });
     // close an item through the journal so the bug can name it
-    for (const e of s.events) spawnSync('node', ['-e', `import(${JSON.stringify(pathToFileURL(path.join(path.dirname(CLI), '..', 'lib', 'journal.mjs')).href)}).then(m=>m.record(${JSON.stringify(path.join(root, '.facet', 'journal'))}, ${JSON.stringify(e)}, { writer: 'ann' }))`], { encoding: 'utf-8' });
+    for (const e of s.events) spawnSync('node', ['-e', `import('${path.join(path.dirname(CLI), '..', 'lib', 'journal.mjs')}').then(m=>m.record(${JSON.stringify(path.join(root, '.facet', 'journal'))}, ${JSON.stringify(e)}, { writer: 'ann' }))`], { encoding: 'utf-8' });
     const out = f('qa', 'bug', 'new', 'BUG-1', '--title', 'total ignores quantity', '--repro', "node -e \"import('./src/price.js').then(m=>process.exit(m.total(2,3)===6?0:1))\"", '--expect', 'price times quantity', '--severity', 'critical', '--item', 'P1', '--area', 'src/price.js', '--mode', 'spec-gap');
     assert.equal(out.status, 0, out.stderr);
     assert.match(out.stdout, /BUG-1 reported \(critical\) as an escape of P1/);

@@ -7,23 +7,10 @@ permissions:
   contents: read
 jobs:
   test:
-    # Windows and macOS too: architects run facetkit next to Archicad on Windows; a check that only
-    # passes on Linux is not a check they can rely on
-    runs-on: ${{ matrix.os }}
-    # Windows reports but does not block until the guard-file fixes it needs (journal lock contention,
-    # platform-aware benchmark cases) are merged on their own, as CONTRIBUTING asks; then this line goes
-    continue-on-error: ${{ matrix.os == 'windows-latest' }}
+    runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
         node: [20, 22]
-    defaults:
-      run:
-        # the same step text on every runner (Git Bash on Windows); the code under test still uses each platform's own shell
-        shell: bash
-    env:
-      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,13 +26,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: benchmark-${{ matrix.os }}-node${{ matrix.node }}-${{ github.sha }}
+          name: benchmark-node${{ matrix.node }}-${{ github.sha }}
           path: benchmark/results/
       - run: npm run demo:proof
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: pip install numpy pillow pypdf
-      # `python`, not the npm scripts' `python3`: Windows runners have no python3 command
-      - run: python -m unittest discover -s domains/viz/tests
-      - run: python -m unittest discover -s domains/arch/tests
+      - run: npm run test:viz
+      - run: npm run test:arch

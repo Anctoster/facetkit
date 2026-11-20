@@ -271,8 +271,7 @@ const commands = {
 // extensions: modules that add checks, policy rules, a model router or commands
 const extensions = [];
 for (const spec of project.extensions ?? []) {
-    // a path (relative or absolute) as a file URL: on Windows import() refuses a bare D:\… path
-    const mod = await import(spec.startsWith('.') || path.isAbsolute(spec) ? pathToFileURL(path.resolve(CWD, spec)).href : spec);
+    const mod = await import(spec.startsWith('.') ? pathToFileURL(path.resolve(CWD, spec)).href : spec);
     extensions.push(mod.default ?? mod);
 }
 const ops = opsCommands({ CWD, KIT, project, opt, opts, flag, list, fail, positional, work, readJson, loadoutsFile, extensions, skills: () => loadSkills(skillDirs) });
