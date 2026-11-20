@@ -6,6 +6,11 @@
 
 [🇬🇧 English]) | [🇵🇱 Polski](README.pl.md)
 
+[![npm](https://img.shields.io/npm/v/facetkit?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/facetkit)
+[![License](https://img.shields.io/github/license/Anctoster/facetkit?style=for-the-badge)](LICENSE)
+[![Node](https://img.shields.io/badge/Node.js-%3E%3D20-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![GitHub Stars](https://img.shields.io/github/stars/Anctoster/facetkit?style=for-the-badge&logo=github)](https://github.com/Anctoster/facetkit/stargazers)
+
 **Evidence-first engineering for teams of AI agents.** Skills that are small enough to follow, tools that measure instead of asking, and a journal from which the state of the work, its cost, and how far its result can be trusted are computed — not asserted.
 
 No dependencies. Node 20+. Works with any agent that can run a shell command; ships as a Claude Code plugin. Code analysis understands JavaScript/TypeScript, Python, Go and Java.
