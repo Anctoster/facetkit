@@ -59,6 +59,7 @@
   "facetkit": { "govern": { "scanIgnore": ["test/**"] } },
   "scripts": {
     "test": "node scripts/test.mjs",
+    "counts": "node scripts/counts.mjs",
     "build:plugin": "node scripts/build-plugin.mjs",
     "audit": "node bin/facet.mjs audit",
     "benchmark": "node bin/facet.mjs benchmark",
