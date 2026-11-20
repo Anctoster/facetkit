@@ -4,6 +4,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Security
+- `SECURITY.md` states the threat model: four sources of harm (an agent that errs, an agent that games the record, foreign content, accidents) and what is out of scope (whoever controls the machine or the repository); a table says, for each guarantee, what it rests on and when it does not hold. A test keeps both sections present and complete.
+
 ### Fixed
 - Adaptive routes: a step the plan asks for before a step that has **already started** no longer goes in front of it (which reset the started work); it goes after it in `REVIEW` mode and reviews that work.
 - Adaptive routes escalate a step's model only when most of that agent's reworks had a capability cause (`false-green`, `seam-break`, `spec-gap`, `regression`, `weakened-test`, `lost-work`, `loop`, `repeated-mistake`). Reworks for handoffs and documents are answered by reinforced rules, not by a model five times the price.
