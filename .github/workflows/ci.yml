@@ -7,10 +7,20 @@ permissions:
   contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Windows and macOS too: architects run facetkit next to Archicad on Windows; a check that only
+    # passes on Linux is not a check they can rely on
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         node: [20, 22]
+    defaults:
+      run:
+        # the same step text on every runner (Git Bash on Windows); the code under test still uses each platform's own shell
+        shell: bash
+    env:
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,12 +36,13 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: benchmark-node${{ matrix.node }}-${{ github.sha }}
+          name: benchmark-${{ matrix.os }}-node${{ matrix.node }}-${{ github.sha }}
           path: benchmark/results/
       - run: npm run demo:proof
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: pip install numpy pillow pypdf
-      - run: npm run test:viz
-      - run: npm run test:arch
+      # `python`, not the npm scripts' `python3`: Windows runners have no python3 command
+      - run: python -m unittest discover -s domains/viz/tests
+      - run: python -m unittest discover -s domains/arch/tests
