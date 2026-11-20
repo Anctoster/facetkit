@@ -9,6 +9,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 - Journal lock on Windows: `EPERM` while another process deletes the lock file is contention, not a failure — the writer waits as it does on `EEXIST`; removing the lock retries while another process is reading it. A real permission error is still raised once the wait is over.
+- Benchmark `proof/source-state` on Windows: where a file system has no executable bit, or symbolic links need a privilege the process lacks, the case passes by the rule's own terms (nothing there can change unnoticed), as it already did for case-folding names. Where the property exists it is measured as before; `benchmark/expected.json` is unchanged.
 - Adaptive routes: a step the plan asks for before a step that has **already started** no longer goes in front of it (which reset the started work); it goes after it in `REVIEW` mode and reviews that work.
 - Adaptive routes escalate a step's model only when most of that agent's reworks had a capability cause (`false-green`, `seam-break`, `spec-gap`, `regression`, `weakened-test`, `lost-work`, `loop`, `repeated-mistake`). Reworks for handoffs and documents are answered by reinforced rules, not by a model five times the price.
 - A step ended `DONE` with `--force` over a failed handoff check is still no failed rule, but it is no longer invisible: `facet assure` lists each such step with its `--reason`, and `facet trust` counts them next to forced steps.
