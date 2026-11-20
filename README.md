@@ -4,7 +4,7 @@
   <img src="docs/assets/banner.png" alt="facetkit — evidence-first engineering for teams of AI agents" width="380" />
 </p>
 
-[🇬🇧 English]) | [🇵🇱 Polski](README.pl.md)
+[🇬🇧 English] | [🇵🇱 Polski](README.pl.md)
 
 [![npm](https://img.shields.io/npm/v/facetkit?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/facetkit)
 [![License](https://img.shields.io/github/license/Anctoster/facetkit?style=for-the-badge)](LICENSE)
