@@ -19,7 +19,7 @@ test('journal: every line is chained to the one before; an edit is found', () =>
     assert.equal(brokenAt(file), -1);
     assert.equal(readJournal(file).length, 3);
     fs.writeFileSync(file, fs.readFileSync(file, 'utf-8').replace('"one"', '"ONE"'));
-    assert.equal(brokenAt(file), 2);
+    assert.equal(brokenAt(file), 1, 'the edited line itself: its id no longer matches it (schema 2), not only the line after it');
 });
 
 test('plan: optional steps appear only for agents on the route, gates only when there are any', () => {

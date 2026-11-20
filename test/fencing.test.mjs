@@ -3,11 +3,16 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import { chain, epochOf, forceUnlock, lockFile, lockVerdict, readJournal, record, repairJournal, verifyJournal, withJournalLock } from '../lib/journal.mjs';
+import { chain, epochOf, eventId, forceUnlock, lockFile, lockVerdict, readJournal, record, repairJournal, verifyJournal, withJournalLock } from '../lib/journal.mjs';
 import { sha } from '../lib/text.mjs';
 import { tmp } from './helpers.mjs';
 
 const line = (prev, ep, extra = {}) => JSON.stringify({ at: '2026-01-01T00:00:00.000Z', kind: 'note', ...extra, ...(ep ? { ep } : {}), prev });
+/** A schema-2 event as a writer would append it: what a paused process writes after it wakes is in the current format too. */
+const line2 = (prev, ep, extra = {}) => {
+    const e = { at: '2026-01-01T00:00:00.000Z', kind: 'note', ...extra, ...(ep ? { ep } : {}), prev, v: 2 };
+    return JSON.stringify({ ...e, id: eventId(e) });
+};
 
 test('lock: an owner that is alive on this machine is never taken over, however old the lock is', () => {
     const mine = { pid: process.pid, host: os.hostname(), at: Date.now() - 10 * 60 * 1000 };
@@ -78,7 +83,7 @@ test('fencing: a real journal with a fenced line reads as one history, stays int
     const first = fs.readFileSync(file, 'utf-8').trim();
     fs.writeFileSync(`${lockFile(dir)}.epoch`, '1');
     record(dir, { kind: 'note', text: 'two, by the new owner' }, { writer: 'ann' });
-    fs.appendFileSync(file, `${JSON.stringify({ at: '2026-01-01T00:00:01.000Z', kind: 'note', text: 'late write of the paused process', w: 'ann', n: 2, lc: 2, prev: sha(first) })}\n`);
+    fs.appendFileSync(file, `${line2(JSON.parse(first).id, 0, { at: '2026-01-01T00:00:01.000Z', text: 'late write of the paused process', w: 'ann', n: 2, lc: 2 })}\n`);
     record(dir, { kind: 'note', text: 'three' }, { writer: 'ann' });
     assert.deepEqual(readJournal(dir).map((e) => [e.text, e.n]), [['one', 1], ['two, by the new owner', 2], ['three', 3]]);
     const v = verifyJournal(dir);
@@ -92,7 +97,7 @@ test('fencing: two writers in one epoch mean the lock was not honoured — that 
     record(file, { kind: 'note', text: 'one' });
     const first = fs.readFileSync(file, 'utf-8').trim();
     record(file, { kind: 'note', text: 'two' });
-    fs.appendFileSync(file, `${line(sha(first), 0, { text: 'unlocked twin' })}\n`);
+    fs.appendFileSync(file, `${line2(JSON.parse(first).id, 0, { text: 'unlocked twin' })}\n`);
     const v = verifyJournal(file);
     assert.deepEqual([v.intact, v.status], [false, 'malformed']);
     assert.match(v.structure[0].problem, /lock was not honoured/);

@@ -53,7 +53,7 @@ test('journal: clones that diverged merge by copying files; a double claim and a
     assert.deepEqual(openItems(readJournal(cloneA), 'ann'), ['P1']);
     const file = path.join(cloneA, 'bob.jsonl');
     fs.writeFileSync(file, fs.readFileSync(file, 'utf-8').replace('"P2"', '"P9"'));
-    assert.deepEqual(verifyJournal(cloneA).broken, [{ segment: 'bob.jsonl', line: 3 }]);
+    assert.deepEqual(verifyJournal(cloneA).broken, [{ segment: 'bob.jsonl', line: 2 }], 'the edited line itself');
     assert.deepEqual(conflicts([]), []);
 });
 

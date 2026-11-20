@@ -5,6 +5,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ## [Unreleased]
 
 ### Security
+- **Journal schema 2.** An event's id is the full SHA-256 of its canonical JSON (`lib/canon.mjs`) without id and signature, and `prev` is the id of the event before it — so a signature over the id covers the event, its place in the chain, its writer, number and epoch. Before, ids were 12 and links 8 characters of SHA-1 (48 and 32 bits). The chain recomputes each schema-2 id, so an edited event is found at its own line, also where only the chain is checked (proof bundles). Events written before are read and continued by their own rules and never rewritten; `verifyJournal` counts them as `legacy`. After a schema-2 event, an older-format event or an unknown schema breaks the chain, so a 32-bit link cannot be brought back by appending one line.
 - `SECURITY.md` states the threat model: four sources of harm (an agent that errs, an agent that games the record, foreign content, accidents) and what is out of scope (whoever controls the machine or the repository); a table says, for each guarantee, what it rests on and when it does not hold. A test keeps both sections present and complete.
 
 ### Fixed
