@@ -289,7 +289,8 @@ test('cli: an extension adds a check and a rule; the README quick start commands
     write(root, 'src/a.js', 'export const a = 1;\n');
     gitInit(root);
     const f = (...args) => spawnSync('node', [CLI, ...args], { cwd: root, encoding: 'utf-8' });
-    assert.equal(f('flow', 'open', 'A').status, 0);
+    const opened = f('flow', 'open', 'A');
+    assert.equal(opened.status, 0, opened.stderr);
     write(root, 'src/a.js', 'export const a = 2;\n');
     const failed = f('check', 'changelog');
     assert.equal(failed.status, 1);

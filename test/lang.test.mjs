@@ -48,7 +48,7 @@ test('python: mutation operators speak Python, and the probe finds what the test
     assert.deepEqual(mutateLine('def total(price, qty):', 'a.py'), []);
     assert.deepEqual(mutateLine('    flag = True', 'a.py')[0].after.trim(), 'flag = False');
     const root = pythonProject();
-    const r = probe({ cwd: root, files: ['shop/price.py'], test: 'PYTHONPATH=. python3 tests/test_cart.py', max: 8, timeoutSec: 30 });
+    const r = probe({ cwd: root, files: ['shop/price.py'], test: 'python3 -m tests.test_cart', max: 8, timeoutSec: 30 });
     assert.equal(r.baseline, 'green', r.message);
     assert.ok(r.killed >= 1, 'breaking the multiplication is noticed');
     assert.ok(r.survived.some((m) => /100|10\b|member/.test(m.before)), 'the member discount is not tested, so its mutants survive');
