@@ -66,7 +66,15 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
         }
     };
     const trustNow = () => loadTrust(CWD);
+    // "required": a process without a key must not write at all — an unsigned event would be damage
+    const signRequired = project.govern?.signEvents === 'required';
     if (project.govern?.signEvents && myKey()) setSigner(eventSigner(myKey()));
+    else if (signRequired) {
+        setSigner(() => {
+            throw new Error('govern.signEvents is "required" and this machine has no key: nothing was written. Create one with `facet key new` and have it trusted with `facet key trust`, or set FACET_KEY');
+        });
+    }
+    const journalChecks = () => ({ keys: eventVerifiers(trustNow()), require: signRequired, exempt: project.govern?.signEventsExempt ?? [] });
     const say = (e) => record(journal, e, { team: project.team });
     const theItem = (required = true) => {
         const open = openItems(events(), me);
@@ -90,7 +98,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
     const policy = () => [...(govern.policy ? readJson(path.resolve(CWD, govern.policy), DEFAULT_POLICY) : DEFAULT_POLICY), ...extensions.flatMap((x) => x.rules ?? [])];
     const checkNames = () => [...Object.keys(govern.checks ?? {}), ...extensions.flatMap((x) => Object.keys(x.checks ?? {}))];
     const projectFacts = () => {
-        const v = verifyJournal(journal, { keys: eventVerifiers(trustNow()) });
+        const v = verifyJournal(journal, journalChecks());
         return { journalIntact: v.intact };
     };
     // evidence belongs to the state of the sources it was measured on; "off" restores time-only staleness
@@ -617,14 +625,16 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 const owner = forceUnlock(journal);
                 return void console.log(owner ? `journal: lock of pid ${owner.pid ?? '?'} on ${owner.host ?? '?'} removed; the epoch is now ${epochOf(journal)} — anything that process still appends will be fenced` : 'journal: no lock to remove');
             }
-            const v = verifyJournal(journal, { keys: eventVerifiers(trustNow()) });
+            const v = verifyJournal(journal, journalChecks());
             const ev = events();
             for (const f of v.fenced.filter((x) => !x.unlocked)) console.log(`journal: ${f.segment} line ${f.line} is set aside (${f.why}) — facet journal repair moves it out of the segment`);
             if (v.signatures.bad) console.error(`journal: ${v.signatures.bad} event(s) carry a signature that does not verify`);
             for (const b of v.broken) console.error(`journal: ${b.segment} line ${b.line} does not follow the line before it — the history was edited`);
             for (const x of v.structure) console.error(`journal: ${x.segment} line ${x.line}: ${x.problem}`);
             for (const c of v.conflicts) console.error(`journal: ${c.item} was opened by ${c.loser} while ${c.winner} held it — ${c.loser} must run: facet flow yield --item ${c.item}`);
-            if (v.broken.length || v.structure.length || v.conflicts.length || v.signatures.bad) process.exit(1);
+            for (const u of v.unsigned) console.error(`journal: ${u.segment} line ${u.line}: ${u.problem} (id ${u.id})`);
+            if (v.unsigned.length) console.error('journal: if these events were written before signatures were required, and only then, list their ids in govern.signEventsExempt in a reviewed commit');
+            if (v.broken.length || v.structure.length || v.conflicts.length || v.signatures.bad || v.unsigned.length) process.exit(1);
             if (!v.segments) return void console.log('journal: nothing recorded yet');
             console.log(`journal ${v.status}: ${v.events} events${v.segments > 1 || me ? ` in ${v.segments} segment(s)` : ''}, ${openItems(ev).length} open, ${closedItems(ev).length} closed${v.epoch ? ` · epoch ${v.epoch}` : ''}${v.signatures.signed ? ` · ${v.signatures.signed} signed by trusted keys` : ''}${v.signatures.unknown ? ` · ${v.signatures.unknown} signed by keys this project does not trust` : ''}`);
         },
