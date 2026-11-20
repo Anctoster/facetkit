@@ -4,7 +4,7 @@
   <img src="docs/assets/banner.png" alt="facetkit — evidence-first engineering for teams of AI agents" width="380" />
 </p>
 
-[English](README.md) · **Polski**
+[🇬🇧 English](README.md) | [🇵🇱 Polski]
 
 **Inżynieria oparta na dowodach dla zespołów agentów AI.** Umiejętności na tyle małe, że da się ich przestrzegać, narzędzia, które mierzą zamiast pytać, oraz dziennik, z którego wylicza się — a nie deklaruje — stan pracy, jej koszt i to, na ile można ufać wynikowi.
 
@@ -16,6 +16,16 @@ Bez zależności. Node 20+. Działa z każdym agentem, który potrafi uruchomić
 
 > **Stan: 0.7.0, wersja eksperymentalna.** Narzędzia są przetestowane (185 testów i 22 przypadki testu odporności; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **69 niesprawdzonych hipotez** o zachowaniu agentów — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
 
+```markdown
+## 🔬 Badania Społeczności
+
+Pomóż nam odkryć, co naprawdę sprawia, że agenci AI  
+stają się bardziej niezawodni, skuteczni i łatwiejsi do zweryfikowania.
+
+Dołącz do Programu Badawczego Społeczności FacetKit.
+
+[Poznaj Research Hub](docs/research/README.pl.md)
+```
 ## Jaki problem rozwiązuje
 
 Agent kończy pracę i mówi, że gotowe. Między tym zdaniem a wynikiem, na którym można polegać, jest kilka pytań, na które domyślnie nikt nie odpowiada:
