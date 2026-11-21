@@ -157,7 +157,9 @@ class Journal:
                 os.write(fd, me.encode())
                 os.close(fd)
                 return path
-            except FileExistsError:
+            except (FileExistsError, PermissionError):
+                # Windows: a lock file that another session is deleting cannot be opened or created for a moment
+                # (PermissionError, not FileExistsError) - that is the same contention, so wait for it like any other
                 try:
                     with open(path, encoding="utf-8") as f:
                         owner = f.read().split(None, 1)
@@ -213,7 +215,23 @@ class Journal:
                 os.fsync(f.fileno())  # a line the journal reported as written survives a power cut
             return body
         finally:
+            release(lock)
+
+
+def release(lock):
+    """Remove our lock. On Windows another session reading it (to see whose it is) blocks the removal for a moment:
+    try again for up to two seconds. The event is already written, so a lock that still cannot be removed is left
+    for the next writer, which takes it over once this process has ended - it must not turn a written event into
+    a failed command."""
+    for _ in range(40):
+        try:
             os.remove(lock)
+            return
+        except FileNotFoundError:
+            return
+        except PermissionError:
+            time.sleep(0.05)
+    print("note: the journal lock %s could not be removed yet; the next session takes it over once this one has ended" % lock, file=sys.stderr)
 
 
 def alive(pid):

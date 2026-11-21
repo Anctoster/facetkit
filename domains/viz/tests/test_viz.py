@@ -590,5 +590,43 @@ class AfterAChange(unittest.TestCase):
         self.assertIn("this is not a local change", run(os.path.join(d, "shifted.png"), "--expect", "G5").stdout)
 
 
+class WindowsLock(unittest.TestCase):
+    """On Windows a lock file that another session is deleting, or reading, cannot be created or removed for a moment:
+    that is contention to wait out, not a failure of the command."""
+    SCRIPT = "vizflow.py"
+
+    def test_a_lock_being_deleted_or_read_by_another_session_is_waited_out(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("lock_under_test", os.path.join(SCRIPTS, self.SCRIPT))
+        m = importlib.util.module_from_spec(spec)
+        sys.path.insert(0, SCRIPTS)
+        spec.loader.exec_module(m)
+        root = os.path.join(tempfile.mkdtemp(), "j")
+        real_open, real_remove = os.open, os.remove
+        calls = {"open": 0, "remove": 0}
+
+        def flaky_open(path, *a, **kw):
+            if path.endswith(".lock") and calls["open"] < 2:
+                calls["open"] += 1
+                raise PermissionError(13, "delete pending")  # what Windows answers while another session removes its lock
+            return real_open(path, *a, **kw)
+
+        def flaky_remove(path):
+            if path.endswith(".lock") and calls["remove"] < 3:
+                calls["remove"] += 1
+                raise PermissionError(32, "being used by another process")  # another session is reading whose lock it is
+            return real_remove(path)
+        m.os.open, m.os.remove = flaky_open, flaky_remove
+        try:
+            j = m.Journal(root)
+            j.add("note", text="one")
+            j.add("note", text="two")
+        finally:
+            m.os.open, m.os.remove = real_open, real_remove
+        self.assertEqual([calls["open"], calls["remove"]], [2, 3])
+        self.assertEqual([e["n"] for e in j.events()], [1, 2])
+        self.assertFalse(os.path.exists(j.path + ".lock"))
+
+
 if __name__ == "__main__":
     unittest.main()

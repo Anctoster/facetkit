@@ -83,6 +83,9 @@ All notable changes to this project are documented here. The format follows [Kee
 - `safe.py` is shared by both plugins and kept one text by a test.
 - The domains' efficiency report (`hand`, `spent`, `efficiency`; see Added) is kept in 0.3.3 / 0.4.3: the third round was built beside it and both are merged here.
 
+### Fixed — domains (`arch-flow` 0.3.4, `viz-flow` 0.4.4)
+- **Journal lock on Windows.** With many sessions writing at once, Windows answers *permission denied* — not *file exists* — while another session is deleting its lock, and refuses to delete a lock that another session is reading to see whose it is. Either made a command fail although its event could be (or had been) written. Both are now waited out; a lock that still cannot be removed after two seconds is left for the next writer, which takes it over once its owner has ended. Found by the 16-writer test on the Windows CI runner.
+
 ### Not done, on purpose — domains
 - No clash detection (a snapshot holds no geometry; Archicad's own collision detection stays the source) and no insolation.
 - No regulation is shipped: `rules.example.json` is a format with placeholder numbers.
