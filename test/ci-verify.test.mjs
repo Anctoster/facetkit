@@ -156,3 +156,19 @@ test('ci-verify: the mutant count and the time limit must be whole numbers', () 
     assert.equal(r.status, 1);
     assert.match(r.stderr, /--max must be a whole number/);
 });
+
+test('ci-verify: a change without source code says the mutation probe is not needed, and passes at L2', () => {
+    const dir = tmp('facetkit-ci-');
+    write(dir, 'src/price.mjs', 'export const total = (a, b) => a + b;\n');
+    write(dir, 'test/price.test.mjs', "import assert from 'node:assert/strict';\nimport { test } from 'node:test';\nimport { total } from '../src/price.mjs';\ntest('total', () => assert.equal(total(2, 3), 5));\n");
+    git(dir, 'init', '-q');
+    git(dir, 'add', '-A');
+    git(dir, 'commit', '-q', '-m', 'base');
+    const base = git(dir, 'rev-parse', 'HEAD').stdout.trim();
+    write(dir, 'README.md', '# docs only\n');
+    const v = verify(dir, base);
+    assert.equal(v.status, 0, v.stdout + v.stderr);
+    assert.equal(v.report.level, 'L2');
+    assert.equal(v.report.checks.mutate.status, 'NOT-NEEDED');
+    assert.match(v.stdout, /Mutation probe \| ➖ not needed \| the change touches no source code/);
+});

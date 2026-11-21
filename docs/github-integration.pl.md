@@ -70,6 +70,8 @@ Wyjścia: `level` (`L0`–`L4`) i `passed` (`true`/`false`). Pełny wynik jest w
 | L2 | testy przechodzą |
 | L3 | testy zauważyły co najmniej 80 % celowych uszkodzeń zmienionych wierszy |
 
+Zmiana bez kodu źródłowego — dokumentacja, konfiguracja, workflow — nie ma czego mutować: sonda pokazuje **➖ not needed**, a poziom kończy się na L2.
+
 Ten poziom opisuje jeden przebieg CI. Nie jest podpisany i nie jest pakietem dowodowym.
 
 **Dziennik** — gdy zadanie PR jest w dzienniku projektu (używasz agentów i zatwierdzasz `.facet/`): poziom to ten, którego dowodzi dziennik (werdykt, niezależność, kontrole, mutacje, odstępstwa — zob. [Governance](governance.md)), po tym, jak `facet journal` zweryfikował dziennik, a `facet proof verify` pakiet dowodowy, jeśli zadanie go ma. Sam przebieg go nie podnosi.

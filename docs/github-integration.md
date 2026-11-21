@@ -70,6 +70,8 @@ Outputs: `level` (`L0`–`L4`) and `passed` (`true`/`false`). The full result is
 | L2 | the tests pass |
 | L3 | at least 80 % of deliberate breakages of the changed lines were noticed by the tests |
 
+A change with no source code — documentation, configuration, a workflow — has nothing to mutate: the probe shows **➖ not needed** and the level stops at L2.
+
 This level describes one CI run. It is not signed and it is not a proof pack.
 
 **Journal** — when the item of the PR is in the project journal (you use the agents and commit `.facet/`): the level is the one the journal proves (verdict, independence, checks, mutation, waivers — see [Governance](governance.md)), after `facet journal` has verified the journal and `facet proof verify` the proof pack, if the item has one. The run itself does not raise it.
