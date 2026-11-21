@@ -14,6 +14,8 @@ The ground plan is cut into square tiles (`tile`, 50 m by default). Every object
 
 Cost then follows the change: an edit in two zones sends back the checks of those two zones and the checks that have no place (render settings, the sun, materials library), not the whole scene. This is the same rule as trust decay in facetkit, applied to space instead of imports.
 
+The journal applies the same rule to everything it has ever proven: `vizflow.py stale --from <txn.json | swap.json>` reads the zones a committed change touched and prints the earlier proofs to run again - those recorded for these zones and those recorded for no zone - and how many stand untouched.
+
 ## 3. Transactions on checkpoints
 
 The project file is never edited in place and never in the open session.

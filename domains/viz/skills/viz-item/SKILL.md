@@ -20,7 +20,7 @@ Carry out one item with the agent team. You are the coordinator: you hold no pla
 ## Steps
 
 1. `vizflow.py verify`, then `vizflow.py status`. An open item → go to step 3; it does not matter which session started it.
-2. `vizflow.py open <ITEM> [--route <route>] --title "<the request in a few words>"` (an item of the plan knows its route). If no route fits or two fit equally, ask the user.
+2. `vizflow.py open <ITEM> [--route <route>] --title "<the request in a few words>"` (an item of the plan knows its route). If no route fits or two fit equally, ask the user. When the item answers a remark on a closed item, add `--origin <that ITEM>`: the cost report then shows what each revision after acceptance took.
 3. Loop until the journal says CLOSE or ASK THE USER:
    1. `vizflow.py next` prints one action: an agent with its step, mode and model - or RESUME with a card, or a brief action, or RECORD VERDICT, or a question.
    2. `vizflow.py start <step>`, then call exactly that agent (installed from this plugin its name is `viz-flow:<agent>`) with: the item id, the mode, the path of the viz folder and of the mirror, the user's request word for word, and **the printed model as the model of the call**. For RESUME pass the card as the whole briefing. For a rework pass the printed fix lines. If the named agent type is not available in this session, call a general agent on the printed model and give it the body of `../../agents/<agent>.md` as its instructions.
@@ -30,7 +30,11 @@ Carry out one item with the agent team. You are the coordinator: you hold no pla
    6. **Preview gate** (render): show the preview sheet; `vizflow.py answer` on yes, `vizflow.py answer --no "<their remarks, word for word>"` on no.
    7. After the inspector: read only the first line of `work/<ITEM>/proof.md`, then `vizflow.py verdict PASS` or `verdict REWORK --fix <agent:cause,…>` or `verdict NEEDS-USER --question "…"`. If PASS is refused for a missing check, that is the journal working: send the proof step again or the work back. `vizflow.py waive <check> --by <name> --reason "…"` only on the user's explicit decision about that exact check.
 4. ASK THE USER: show the question exactly as printed and stop. After the answer: `vizflow.py answer`, then continue.
-5. CLOSE: `vizflow.py close`. If the item taught something that cost a failed attempt, add one line to `_viz/lessons.md`; otherwise add nothing.
+5. CLOSE: `vizflow.py close`. It prints two things that go into your report to the user word for word: the list **DECIDED IN A PERSON'S NAME** (every approval, waiver, forced step and registered script of the item - the user must recognise each line as theirs) and the **ANCHOR** line. If the session can write to the project's notes, add the anchor line there too; `vizflow.py verify --anchor <n:hash>` later proves the record was not rewritten.
+   - **A new script.** When the item's work step was the builder's and the verdict was PASS: copy the script into the mirror and `vizflow.py script register <mode> --file <it> --by inspector:<ITEM>`. From then on the operator runs exactly that text; a transaction that ran an edited copy is refused as evidence until it is registered again.
+   - **After a swap or any committed transaction**: `vizflow.py stale --from work/<ITEM>/swap.json` (or a `txn*.json`). It prints which earlier proofs the change sends back - those of the touched zones and those with no place - and how many stand. Each RE-RUN is a new item, and until each is re-run with an OK in an item that passes, the route `pack` refuses to open: nothing goes to the website on proofs that no longer stand (`stale status` lists them; `stale waive <ITEM> <check> --by <name> --reason` is the user's decision, by name).
+   - **A lesson**, only if the item cost a failed attempt: `vizflow.py memory add --where <zone, object pattern or camera> --text "<the fact and what not to do>" --by <name>`. Otherwise add nothing. A lesson is only **proposed** until a person confirms it; `close` lists the item's proposed lessons - show them to the user and `vizflow.py memory confirm <id> --by <their name>` only for those they agree with in this conversation; `memory retire` the others.
+   - **Render and people's time** that the agents did not record: `vizflow.py cost add --kind render|farm|person --minutes <n> --item <ITEM>`. Never estimate it.
 6. **Acceptance.** Show the user the result and the "For the user" lines of the proof. Record what they say: `vizflow.py accept <ITEM> --by <name>`, or one `vizflow.py remark <ITEM> "<remark>" --cause …` per remark:
    - `agent` - a criterion of the brief was not met and the inspector passed it;
    - `brief` - nothing in the brief asked for it;
@@ -38,7 +42,7 @@ Carry out one item with the agent team. You are the coordinator: you hold no pla
    Decide the cause by reading the brief, and tell the user which it was. A remark never reopens a closed item: it becomes a new item (`fix` for a defect).
 7. Report in at most 12 lines, in the user's language: the item, the verdict, rework cycles, criteria met / total, checks passed / failed / skipped / waived, the ledger totals and the share of tokens on the smallest model, where the results are, anything not verified.
 
-When the user asks how the agents are doing: `vizflow.py quality`, relayed in their language with its own caveats - "not enough data" stays "not enough data".
+When the user asks how the agents are doing: `vizflow.py quality`, relayed in their language with its own caveats - "not enough data" stays "not enough data". When they ask what a revision cost: `vizflow.py cost report`; an amount marked INCOMPLETE is reported as incomplete.
 
 **Measuring whether the agents are worth it.** When the user approves the brief, ask once how long this work takes the office by hand and record it before any agent starts: `vizflow.py hand <ITEM> --hours <H> --by <name>` (no answer, no record - never estimate it yourself). At acceptance ask how much of their own time the item took and record it: `vizflow.py spent <ITEM> --minutes <M> --on brief|questions|preview|review|fix`. When they ask whether the agents pay off: `vizflow.py efficiency --lang <their language>` (or `--html <file>` for a page), relayed with its own caveats.
 
@@ -46,6 +50,7 @@ When the user asks how the agents are doing: `vizflow.py quality`, relayed in th
 
 - Call an agent that `vizflow.py next` did not print, or on a different model than it printed.
 - Use `--force` without telling the user why first.
+- Record an OK yourself, or pass on a results file that you or an agent wrote or edited: an OK exists only as the file a shipped tool wrote, with its receipt.
 - Do an agent's work yourself "because it is small", or paste handoff contents into your replies.
 - Let any step write to the working scene, the approved material library or the original Archicad project - items work on copies; promoting a copy to the working file is the user's decision.
 - Continue past ASK THE USER, close on anything but the inspector's PASS, or turn a user's remark into a silent extra task inside an open item.

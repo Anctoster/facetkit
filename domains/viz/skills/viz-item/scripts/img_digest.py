@@ -4,6 +4,7 @@ Prints a digest of at most ~15 lines, writes details to JSON, exits 1 when an ex
 Needs Pillow.  Usage: img_digest.py DIR [--glob "*.png"] [--count 72] [--size 1920x1080]
                       [--max-kb 400] [--loop] [--out digest.json]"""
 import argparse, fnmatch, hashlib, json, os, re, sys
+import receipt
 from PIL import Image, ImageChops, ImageStat
 
 
@@ -21,7 +22,7 @@ def main():
     ap.add_argument("dir"); ap.add_argument("--glob", default="*")
     ap.add_argument("--count", type=int); ap.add_argument("--size"); ap.add_argument("--max-kb", type=float)
     ap.add_argument("--loop", action="store_true", help="frames form a closed 360 orbit: check the seam last->first")
-    ap.add_argument("--out")
+    ap.add_argument("--out"); ap.add_argument("--results", help="write the 'images' result with a receipt, for: vizflow.py evidence --from")
     a = ap.parse_args()
     exts = (".png", ".jpg", ".jpeg", ".webp", ".avif", ".tif", ".tiff", ".exr")
     names = sorted(n for n in os.listdir(a.dir) if fnmatch.fnmatch(n, a.glob) and n.lower().endswith(exts))
@@ -87,6 +88,14 @@ def main():
         with open(a.out, "w", encoding="utf-8") as f:
             json.dump({"set_sha": set_sha, "fails": fails, "files": rows}, f, indent=1)
         print("details: " + a.out)
+    if a.results:
+        expected = a.count is not None or a.size or a.max_kb  # with no expectation given, nothing was proven about the set
+        res = {"images": {"status": "FAIL" if fails else ("OK" if names and expected else "SKIP"), "data": fails[:50],
+                          "text": "; ".join(fails[:4]) if fails else ("%d images, set %s" % (len(names), set_sha) if names and expected else "no images, or no --count / --size / --max-kb to hold them to")}}
+        res = receipt.stamp(res, __file__, [])
+        res["_receipt"]["inputs"] = {"set": set_sha}
+        with open(a.results, "w", encoding="utf-8") as f:
+            json.dump(res, f, indent=1, ensure_ascii=False)
     sys.exit(1 if fails else 0)
 
 

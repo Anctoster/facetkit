@@ -30,11 +30,19 @@ def index():
     return g["VIZ_INDEX"]
 
 
+def norm_sha(text):
+    import hashlib
+    return hashlib.sha256(text.encode("utf-8").replace(b"\r\n", b"\n")).hexdigest()
+
+
 t0 = time.time()
 before = index()
 error = None
+# The operation's text may come as "op_source" only from the self-test, which drives this script in-process;
+# from an args file it is always a file, and its hash goes into the report for the journal to hold against the registry.
+op_src = (T.get("op_source") if globals().get("VIZ_TXN") else None) or open(T["op"], encoding="utf-8").read()
+op_sha = norm_sha(op_src)
 try:
-    op_src = T.get("op_source") or open(T["op"], encoding="utf-8").read()
     exec(compile(op_src, os.path.basename(T.get("op", "op.py")), "exec"), {"VIZ_ARGS": dict(T.get("op_args") or {}), "__name__": "viz_op"})
     bpy.context.view_layer.update()
 except Exception as e:  # a failed operation commits nothing
@@ -58,11 +66,14 @@ if committed and T.get("save_as"):
         bpy.ops.wm.save_as_mainfile(filepath=T["save_as"], copy=True)
 report = {"committed": committed, "problems": problems, "added": diff["added"][:200], "removed": diff["removed"][:200],
           "changed": dict(list(diff["changed"].items())[:200]), "zones": diff["zones"], "seconds": round(time.time() - t0, 1),
-          "from": bpy.data.filepath, "to": T.get("save_as") if committed else None}
+          "from": bpy.data.filepath, "to": T.get("save_as") if committed else None, "op": os.path.basename(T.get("op", "(self-test)")), "op_sha": op_sha}
 if T.get("report"):
     os.makedirs(os.path.dirname(T["report"]), exist_ok=True)
     with open(T["report"], "w", encoding="utf-8") as f:
-        json.dump({"txn.contract": {"status": "OK" if committed else "FAIL", "text": "; ".join(problems) or "as declared"}, "report": report}, f, indent=1, ensure_ascii=False)
+        body = json.loads(json.dumps({"txn.contract": {"status": "OK" if committed else "FAIL", "text": "; ".join(problems) or "as declared", "zones": diff["zones"] or None}, "report": report}, ensure_ascii=False))
+        body["_receipt"] = {"tool": "txn.py", "tool_sha": norm_sha(read("txn.py")), "results_sha": norm_sha(json.dumps(body, sort_keys=True, ensure_ascii=False)),
+                            "inputs": {"op": op_sha, "blend": bpy.data.filepath}, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+        json.dump(body, f, indent=1, ensure_ascii=False)
 print("TXN %s  added %d  removed %d  changed %d  zones %s  %.1f s" % ("COMMITTED" if committed else "REFUSED - nothing saved", len(diff["added"]), len(diff["removed"]), len(diff["changed"]), diff["zones"][:8], report["seconds"]))
 for p in problems[:8]:
     print("  - " + p)

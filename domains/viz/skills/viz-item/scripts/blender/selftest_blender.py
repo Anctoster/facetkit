@@ -99,6 +99,11 @@ S.unit_settings.scale_length = 1.0
 bpy.context.view_layer.update()
 
 size_now = "%dx%d" % (S.render.resolution_x, S.render.resolution_y)
+OUT_DIR = os.path.join(TMP, "frames")
+os.makedirs(OUT_DIR)
+S.render.filepath = os.path.join(OUT_DIR, "orbit_")
+bpy.context.view_layer.use_pass_combined = True
+bpy.context.view_layer.use_pass_z = True
 env_file = os.path.join(TMP, "env.json")
 digest_res, digest_text = run("scene_digest.py", {"out": os.path.join(TMP, "scene.json"), "designed": "BLD_*"})
 with open(os.path.join(TMP, "scene.json"), encoding="utf-8") as f:
@@ -117,7 +122,7 @@ def stage_args(**over):
         "materials": {"pattern": "BLD_*", "etalon": dict(etalon), "tile": {"Brick": {"size": 2.0, "tol": 0.05}}},
         "cameras": {"required": ["ORB_00"], "target": "BLD_*", "min_in_frame": 0.9, "lens": [18, 85],
                     "orbit": {"pattern": "ORB_*", "count": 12, "max_step_error_deg": 0.5, "max_radius_spread_pct": 1.0, "max_height_spread": 0.1}},
-        "render": {"expected": {"engine": S.render.engine, "size": size_now},
+        "render": {"expected": {"engine": S.render.engine, "size": size_now, "passes": ["combined", "z"]}, "output": {"allow_existing": False},
                    "sun": {"lat": 50.0, "lon": 20.0, "utc": WHEN, "tol_deg": 2.0}},
     }
     args.update(over)
@@ -140,11 +145,11 @@ run("stage_checks.py", {"core_source": SRC["vizcore.py"], "environment": {"patte
 good, good_text = run("stage_checks.py", stage_args())
 expect("good", good, {k: "OK" for k in ("export.scale", "export.position", "export.ids", "export.surfaces", "export.counts", "export.duplicates", "export.budget",
                                          "junction.step", "junction.gap", "environment.unchanged", "materials.etalon", "materials.uv", "materials.tile_size",
-                                         "cameras.required", "cameras.lens", "cameras.frame", "cameras.clip", "cameras.orbit", "render.settings", "render.sun")})
-HYG = {"core_source": SRC["vizcore.py"], "closed": "BLD_*", "grounded": "BLD_*", "support": "SITE_*", "gap_tolerance": 0.02, "clash_a": "BLD_*", "clash_b": "REF_*", "max_orphans": 0}
+                                         "cameras.required", "cameras.lens", "cameras.frame", "cameras.clip", "cameras.orbit", "render.settings", "render.sun", "render.output")})
+HYG = {"core_source": SRC["vizcore.py"], "scale_applied": "BLD_*", "asset_root": TMP, "closed": "BLD_*", "grounded": "BLD_*", "support": "SITE_*", "gap_tolerance": 0.02, "clash_a": "BLD_*", "clash_b": "REF_*", "max_orphans": 0}
 sc, sc_text = run("scene_checks.py", dict(HYG, out=os.path.join(TMP, "checks.json"), terrain="ENV_*", expected_holes=1, height_limit=10.0, height_pattern="BLD_*", designed="BLD_*", etalon_materials=["Brick"]))
 expect("scene good", sc, {"terrain_holes": "OK", "height_limit": "OK", "missing_textures": "OK", "etalon_materials": "OK", "negative_scale": "OK",
-                          "inverted_normals": "OK", "floating": "OK", "intersections": "OK", "orphans": "OK"})
+                          "inverted_normals": "OK", "floating": "OK", "intersections": "OK", "orphans": "OK", "unapplied_scale": "OK", "asset_paths": "OK"})
 # ---- the index and a transaction: a declared change commits, a stray one does not ----------------
 ix, ix_text = run("scene_index.py", {"core_source": SRC["vizcore.py"], "tile": 20.0, "out": os.path.join(TMP, "index.json")})
 expect("index", ix, {"index": "OK"})
@@ -185,11 +190,12 @@ bad_args = stage_args()
 bad_args["export"]["max_polys"] = 10
 bad_args["materials"]["tile"] = {"Brick": {"size": 0.25, "tol": 0.05}}
 bad_args["render"]["expected"]["size"] = "1x1"
+open(os.path.join(OUT_DIR, "orbit_0001.png"), "wb").close()  # a frame of an earlier render in the output folder
 bad_args["cameras"]["required"] = ["ORB_00", "CAM_missing"]
 bad, bad_text = run("stage_checks.py", bad_args)
 expect("bad", bad, {k: "FAIL" for k in ("export.scale", "export.position", "export.ids", "export.surfaces", "export.counts", "export.duplicates", "export.budget",
                                         "junction.step", "environment.unchanged", "materials.etalon", "materials.tile_size",
-                                        "cameras.required", "cameras.lens", "cameras.frame", "cameras.orbit", "render.settings", "render.sun")})
+                                        "cameras.required", "cameras.lens", "cameras.frame", "cameras.orbit", "render.settings", "render.sun", "render.output")})
 zoned = stage_args()
 zoned["environment"]["zone"] = {"min": [-100, -100], "max": [100, 100]}
 expect("zone", run("stage_checks.py", {"core_source": SRC["vizcore.py"], "environment": zoned["environment"]})[0], {"environment.unchanged": "OK"})
@@ -197,9 +203,14 @@ c.location.z += 0.3                                      # BLD_C now hangs above
 a.data.flip_normals()                                   # BLD_A faces inward
 box("REF_clash", 5, 0, 2, 2, 2)                         # a box standing inside BLD_C
 bpy.data.meshes.new("leftover")                         # unused data
+c.scale = (2.0, 1.0, 1.0)                                # a scale nobody applied
+lost = bpy.data.images.new("lost_texture", 4, 4)        # a texture whose file is not there
+lost.source = "FILE"
+lost.filepath = os.path.join(TMP, "nowhere", "brick.png")
+lost.use_fake_user = True
 bpy.context.view_layer.update()
 sc2, _ = run("scene_checks.py", dict(HYG, terrain="ENV_*", expected_holes=0, height_limit=3.0, height_pattern="BLD_*", designed="BLD_*", etalon_materials=["Brick"]))
-expect("scene bad", sc2, {"terrain_holes": "FAIL", "height_limit": "FAIL", "etalon_materials": "FAIL", "inverted_normals": "FAIL", "floating": "FAIL", "intersections": "FAIL", "orphans": "FAIL"})
+expect("scene bad", sc2, {"terrain_holes": "FAIL", "height_limit": "FAIL", "etalon_materials": "FAIL", "inverted_normals": "FAIL", "floating": "FAIL", "intersections": "FAIL", "orphans": "FAIL", "unapplied_scale": "FAIL", "asset_paths": "FAIL"})
 expect("skip", run("stage_checks.py", {"core_source": SRC["vizcore.py"], "junction": {"model_terrain": "NOPE_*", "env_terrain": "ENV_*"}, "render": {}})[0],
        {"junction.step": "SKIP", "render.settings": "SKIP", "render.sun": "SKIP"})
 

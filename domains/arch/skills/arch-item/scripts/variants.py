@@ -10,6 +10,7 @@ weights and marks the ones no other variant beats on every criterion. It never c
 Usage: variants.py VARIANTS.json [--chosen ID] [--min 3] [--out results.json]
 See variants.example.json for the format. Weights: a negative weight means "lower is better"."""
 import argparse, json, math, sys
+import receipt
 
 RES, LINES = {}, []
 
@@ -165,5 +166,5 @@ if __name__ == "__main__":
     run(json.load(open(a.variants, encoding="utf-8")), a.chosen, a.min)
     print("\n".join(LINES))
     if a.out:
-        json.dump(RES, open(a.out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    sys.exit(1 if any(r["status"] == "FAIL" for r in RES.values()) else 0)
+        json.dump(receipt.stamp(RES, __file__), open(a.out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    sys.exit(1 if any(r["status"] == "FAIL" for r in RES.values()) else 2 if any(r["status"] == "SKIP" for r in RES.values()) else 0)

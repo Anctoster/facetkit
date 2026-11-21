@@ -32,10 +32,25 @@ The working scene, approved material library, and original Archicad project are 
 | `render-setup` — render settings | Settings against a checklist; sun position by location, date, and time |
 | `render`, `pack` | Frame count, dimensions and file size; black, overexposed, duplicate or missing frames; orbit seam |
 | Any scene edit | Only declared changes (`txn.contract`); flipped normals, objects, unsupported objects, intersections, unused data |
+| Before a render | Unapplied scale; missing files and files outside the project folder (`asset_paths`); passes and colour profile against the checklist; an output folder without old frames (`render.output`) |
+| After a model swap | Materials, modifiers, collection and parent of every object survived (`swap.kept`) |
+| Two frames of one view | Where exactly the frame differs from the reference, and only where it should (`images.changed`); grain in flat areas (`images.noise`) |
 
 After a model change: `swap` (new model, same materials, cameras and sun) → `env-adjust` (environment changes only within the defined area) → `render` → `pack`.
 
 Separate commands: `audit` (read-only inspection) and `fix` (address defects).
+
+### What survives a model swap
+
+A re-import silently loses what the exporter does not know about: a material slot comes back empty or as a numbered copy (`Brick.001`), a modifier disappears, an object drops out of its collection. `swap_check.py` compares the scene index before and after the swap by Archicad IDs and names every such loss, as well as what was added, removed or changed shape. If fewer than 95 % of the old model's objects are found again (outside `--allow`), the answer is "cannot conclude", never OK. The same file goes to the journal: `vizflow.py stale --from swap.json` sends back only the checks of the zones touched and those that have no place.
+
+### Numbers first, then a look
+
+"Checking the picture with the model's eyes" is the most expensive and least reliable step, so it is narrowed:
+
+1. What can be measured in the scene is measured in the scene, not in the picture: sun and shadow direction — `render.sun`, floating objects — `floating`, flipped surfaces — `inverted_normals`, framing — `cameras.frame`.
+2. `img_compare.py` compares a frame with a reference (an approved render, a clay preview, the same frame before the model swap) cell by cell and says **where** the frame changed and whether only where it should; if most of the frame changed, it is the camera, lens, sun or exposure, not a detail. It also says how fine its sieve was (the smallest contrasting detail it can miss) and catches an overall brightening or darkening outside the expected cells. Grain in flat areas is measured separately.
+3. The inspector looks only at the named cells and answers in a fixed form: what it looked for, in which cell it found it or "no", and one detail from the same frame that the brief did not ask about. Without it, the answer counts as "not seen", not "all fine".
 
 Stage criteria usable with any Archicad–Blender connection are in `skills/viz-item/scripts/STAGES.md`. The brief format and example are in `skills/viz-item/references/brief.md`.
 
@@ -72,6 +87,27 @@ The model is upgraded by one tier after two failed step attempts and downgraded 
 - **Inspector** — how many accepted work items later turned out to contain a defect.
 - **Briefs** — comments caused by missing criteria and briefs changed after approval.
 - **Process bypasses** — skipped checks, forced steps, preview rounds, and token use by model.
+- **Where remarks come from** — after which stages your remarks arrive.
+
+## What you can trust
+
+- **A check result is accepted only with a receipt** — the hash of the code of the tool that produced it. An "OK" typed by hand, or a file from an edited copy of a script, is not accepted.
+- **A script for the smaller model is pinned by its text.** Registration writes the script's hash to the journal; a transaction that ran a changed script is not evidence until the script passes the builder and the inspector again.
+- **A task ID is only a folder name.**
+- **An anchor outside the project folder.** When a task is closed, the journal prints an `ANCHOR number:hash` line for the report and the project notes; `verify --anchor` later shows whether the record was rewritten.
+- **The decisions taken in your name** are listed at closing: approvals, waived checks, forced steps, registered scripts.
+- **After a model swap nothing goes to the website until the checks sent back are repeated** — the `pack` route does not open.
+- **A journal entry is not lost when two sessions work at once**; the lock is released only if its owner has really finished.
+
+A receipt proves which code produced a result, not that the code is right; names in the journal are written by whoever runs the command — that is why they are shown to you; the journal is not protected from the owner of the computer.
+
+## What a revision costs
+
+`vizflow.py cost report` — for each work item: tokens, tool time and the recorded time of rendering, the render farm and people (`cost add --kind render|farm|person --minutes …`; rates in `project.json` → `rates`). A work item opened in answer to a remark (`open --origin <ITEM>`) goes into the "revisions after acceptance" line with its cause: not in the brief, a new client wish, a missed defect. This shows the cost of each revision, render hours included.
+
+## Scene memory
+
+`vizflow.py memory add --where 3_4 --text "…" --by <name>` ties a lesson to a scene zone, object or camera; the next task in that place gets it in its brief. A lesson with an anchor is marked STALE if the place has changed since. A lesson written by an agent is only a proposal: it goes into a brief after you confirm it (`memory confirm`).
 
 ## Are the agents worth it?
 

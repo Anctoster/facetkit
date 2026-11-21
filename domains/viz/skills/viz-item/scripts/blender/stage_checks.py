@@ -18,7 +18,8 @@ VIZ_ARGS = {
   "cameras":  {"required": ["CAM_main"], "target": "BLD_*", "min_in_frame": 0.9, "lens": [18, 85],
                "orbit": {"pattern": "ORB_*", "count": 72, "max_step_error_deg": 0.5,
                          "max_radius_spread_pct": 1.0, "max_height_spread": 0.1}},
-  "render":   {"expected": {"engine": "CYCLES", "size": "3840x2160", "samples": 256},
+  "render":   {"expected": {"engine": "CYCLES", "size": "3840x2160", "samples": 256, "view": "AgX", "depth": "16", "passes": ["combined", "z"]},
+               "output": {"allow_existing": False},        # the folder the frames go to holds no earlier frames of the same name
                "sun": {"lat": 50.0, "lon": 20.0, "utc": "2026-05-30T10:00:00", "tol_deg": 2.0, "north_offset_deg": 0.0}},
 }
 
@@ -370,14 +371,30 @@ def g_render(a):
            "view": S.view_settings.view_transform, "look": S.view_settings.look,
            "exposure": round(S.view_settings.exposure, 3), "gamma": round(S.view_settings.gamma, 3),
            "frames": [S.frame_start, S.frame_end, S.frame_step]}
+    vl = bpy.context.view_layer
+    now.update(display=S.display_settings.display_device, depth=str(r.image_settings.color_depth), color_mode=r.image_settings.color_mode,
+               passes=sorted(p[9:] for p in dir(vl) if p.startswith("use_pass_") and getattr(vl, p) is True),
+               aovs=sorted(x.name for x in getattr(vl, "aovs", [])), overwrite=r.use_overwrite)
     if r.engine == "CYCLES":
         now.update(samples=S.cycles.samples, denoise=S.cycles.use_denoising)
+        cyc = getattr(vl, "cycles", None)
+        now["passes"] = sorted(set(now["passes"]) | {p[9:] for p in dir(cyc) if p.startswith("use_pass_") and getattr(cyc, p) is True}) if cyc else now["passes"]
     exp = a.get("expected")
     if exp:
         diff = {k: (now.get(k), v) for k, v in exp.items() if now.get(k) != v}
         verdict("render.settings", not diff, "%d of %d settings as specified; different (found, expected): %s" % (len(exp) - len(diff), len(exp), diff or "none"), now)
     else:
         report("render.settings", "SKIP", "no 'expected' settings given")
+    out = a.get("output")
+    if out is None:
+        report("render.output", "SKIP", "no 'output' given")
+    else:
+        path = bpy.path.abspath(r.filepath)
+        folder, stem = (path, "") if path.endswith(("/", "\\")) else (os.path.dirname(path), os.path.basename(path))
+        old = sorted(n for n in os.listdir(folder) if n.startswith(stem) and n.lower().endswith((".png", ".jpg", ".jpeg", ".exr", ".tif", ".tiff", ".webp"))) if os.path.isdir(folder) else []
+        bad = bool(old) and not out.get("allow_existing", False)
+        verdict("render.output", bool(r.filepath) and not bad,
+                "frames go to %s; %d earlier frames with the same name are there%s" % (folder or "(no output path set)", len(old), " and would be overwritten or mixed with the new ones" if bad else ""), old[:20])
     sun = a.get("sun")
     if not sun:
         return report("render.sun", "SKIP", "no 'sun' place and time given")
@@ -402,11 +419,29 @@ for _name, _fn in GROUPS.items():
         _fn(A[_name] or {})
     except Exception as _e:  # a check that broke has not passed
         report(_name + ".error", "SKIP", "the check stopped with %s: %s" % (type(_e).__name__, str(_e)[:160]))
+def _receipt(name):
+    """Which code measured this: the hash of this script as it lies in the tools folder. No folder, no receipt - and the journal takes no result without one."""
+    import hashlib, time
+    src = (A.get("sources") or {}).get(name)
+    if src is None and A.get("tools") and os.path.exists(os.path.join(A["tools"], name)):
+        with open(os.path.join(A["tools"], name), "rb") as f:
+            src = f.read()
+    if src is None:
+        return None
+    raw = src if isinstance(src, bytes) else src.encode("utf-8")
+    return {"tool": name, "tool_sha": hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest(), "inputs": {"blend": bpy.data.filepath or "(unsaved)"}, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+
+
 _c = {s: sum(1 for r in RES.values() if r["status"] == s) for s in ("OK", "FAIL", "SKIP")}
 if A.get("out"):
     os.makedirs(os.path.dirname(A["out"]), exist_ok=True)
+    _r = _receipt("stage_checks.py")
+    if _r:
+        _body = json.loads(json.dumps({k: v for k, v in RES.items() if k != "_receipt"}, ensure_ascii=False))
+        _rs = __import__("hashlib").sha256(json.dumps(_body, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+        _r = dict(_r, results_sha=_rs)
     with open(A["out"], "w", encoding="utf-8") as _f:
-        json.dump(RES, _f, indent=1, ensure_ascii=False)
+        json.dump(dict(RES, _receipt=_r) if _r else RES, _f, indent=1, ensure_ascii=False)
 P("RESULT passed %d  failed %d  skipped %d   details: %s" % (_c["OK"], _c["FAIL"], _c["SKIP"], A.get("out") or "-"))
 VIZ_DIGEST = "\n".join(_OUT)
 VIZ_RESULTS = {k: v["status"] for k, v in RES.items()}

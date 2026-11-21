@@ -9,6 +9,7 @@ complete enough to build from; it never guesses a missing value.
 Usage: model_spec.py SPEC.json [--project project.json] [--out results.json] [--min-conf 0.8]
 Every check prints OK | FAIL | SKIP(reason). Exit 1 when any check fails."""
 import argparse, json, math, sys
+import receipt
 
 RES, LINES = {}, []
 
@@ -150,5 +151,5 @@ if __name__ == "__main__":
     c = {s: sum(1 for r in RES.values() if r["status"] == s) for s in ("OK", "FAIL", "SKIP")}
     print("RESULT passed %d  failed %d  skipped %d" % (c["OK"], c["FAIL"], c["SKIP"]))
     if a.out:
-        json.dump(RES, open(a.out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    sys.exit(1 if c["FAIL"] else 0)
+        json.dump(receipt.stamp(RES, __file__), open(a.out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    sys.exit(1 if c["FAIL"] else 2 if c["SKIP"] else 0)

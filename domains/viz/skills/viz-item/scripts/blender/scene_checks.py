@@ -6,8 +6,10 @@ Each check prints one line: OK / FAIL / SKIP(reason). A skipped check is not a p
 Checks: holes and non-manifold edges in terrain meshes, objects above a height limit, missing textures,
         designed objects using materials outside the etalon list, objects with no material, negative scale,
         closed solids that face inward ("closed"), objects not resting on their support ("grounded", "support",
-        "gap_tolerance"), bounding-box clashes between two groups ("clash_a", "clash_b"), unused data ("max_orphans").
-        The last four need "tools": the folder of vizcore.py."""
+        "gap_tolerance"), bounding-box clashes between two groups ("clash_a", "clash_b"), unused data ("max_orphans"),
+        objects whose scale was never applied ("scale_applied": a name pattern), files the scene needs that are
+        missing or lie outside the project folder ("asset_root": the folder a render machine receives).
+        inverted_normals and intersections need "tools": the folder of vizcore.py."""
 import bpy, fnmatch, json, os
 import numpy as np
 from mathutils import Vector
@@ -217,16 +219,68 @@ try:
             report("intersections", "FAIL" if names else "OK", "%d pairs of bounding boxes overlap by more than %.2f m %s" % (len(names), A.get("clash_margin", 0.05), names[:3]), names[:200])
 except Exception as e:  # a check that broke has not passed
     report("hygiene.error", "SKIP", "stopped with %s: %s" % (type(e).__name__, str(e)[:160]))
+# 7. before a render leaves this computer: scale never applied, files the scene cannot do without ------------------
+sp = A.get("scale_applied")
+if not sp:
+    report("unapplied_scale", "SKIP", "no 'scale_applied' name pattern given (objects whose textures and modifiers rely on scale 1)")
+else:
+    looked = [o for o in meshes if fnmatch.fnmatch(o.name, sp)]
+    off = [(tuple(round(v, 3) for v in o.scale), o.name) for o in looked if any(abs(abs(v) - 1.0) > 1e-4 for v in o.scale)]
+    report("unapplied_scale", "FAIL" if off else ("OK" if looked else "SKIP"),
+           "%d objects looked at, %d with a scale that was never applied (scale, name) %s" % (len(looked), len(off), off[:3]), [n for _, n in off][:200])
+try:
+    root = A.get("asset_root")
+    need = [("image", i.name, i.filepath) for i in bpy.data.images if i.source in ("FILE", "SEQUENCE", "MOVIE") and i.packed_file is None and i.filepath]
+    need += [("library", l.name, l.filepath) for l in bpy.data.libraries]
+    need += [("cache", c.name, c.filepath) for c in getattr(bpy.data, "cache_files", [])]
+    need += [("volume", v.name, v.filepath) for v in getattr(bpy.data, "volumes", []) if v.filepath]
+    gone, outside = [], []
+    for kind, name, fp in need:
+        p = os.path.normcase(os.path.realpath(bpy.path.abspath(fp)))  # links resolved: a link out of the folder is outside
+        if not os.path.exists(p):
+            gone.append("%s %s" % (kind, name))
+        elif root:
+            base = os.path.normcase(os.path.realpath(root))
+            try:
+                if os.path.commonpath([base, p]) != base:
+                    outside.append("%s %s" % (kind, name))
+            except ValueError:  # another drive
+                outside.append("%s %s" % (kind, name))
+    report("asset_paths", "FAIL" if gone or outside else "OK",
+           "%d files the scene needs: %d missing %s, %d outside the project folder %s%s" %
+           (len(need), len(gone), gone[:3], len(outside), outside[:3], "" if root else " (no 'asset_root' given: only missing files were looked for)"),
+           {"missing": gone[:200], "outside": outside[:200]})
+except Exception as e:
+    report("asset_paths", "SKIP", "stopped with %s: %s" % (type(e).__name__, str(e)[:160]))
 orph = {k: sum(1 for d in getattr(bpy.data, k) if d.users == 0) for k in ("meshes", "materials", "images", "node_groups")}
 report("orphans", "FAIL" if sum(orph.values()) > A.get("max_orphans", 0) else "OK", "unused data left in the file: %s" % orph, orph)
 
+def _receipt(name):
+    """Which code measured this: the hash of this script as it lies in the tools folder. No folder, no receipt - and the journal takes no result without one."""
+    import hashlib, time
+    src = (A.get("sources") or {}).get(name)
+    if src is None and A.get("tools") and os.path.exists(os.path.join(A["tools"], name)):
+        with open(os.path.join(A["tools"], name), "rb") as f:
+            src = f.read()
+    if src is None:
+        return None
+    raw = src if isinstance(src, bytes) else src.encode("utf-8")
+    return {"tool": name, "tool_sha": hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest(), "inputs": {"blend": bpy.data.filepath or "(unsaved)"}, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+
+
 path = A.get("out")
+_r = _receipt("scene_checks.py")
+if _r:
+    _body = json.loads(json.dumps({k: v for k, v in res.items() if k != "_receipt"}, ensure_ascii=False))
+    _rs = __import__("hashlib").sha256(json.dumps(_body, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+    res["_receipt"] = dict(_r, results_sha=_rs)
 if path:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(res, f, indent=1, ensure_ascii=False)
 for l in lines:
     P(l)
+res.pop("_receipt", None)
 c = {s: sum(1 for r in res.values() if r["status"] == s) for s in ("OK", "FAIL", "SKIP")}
 P("RESULT passed %d  failed %d  skipped %d  not run 0   details: %s" % (c["OK"], c["FAIL"], c["SKIP"], path or "-"))
 VIZ_DIGEST = "\n".join(_OUT)

@@ -47,6 +47,43 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Changed
 - Two-arm experiments (`facet experiment`) created from now on also use the item as the unit; manifests from before keep the step so that a running experiment does not change its assignment.
 
+### Added — domains (`arch-flow` 0.3.0, `viz-flow` 0.4.0)
+- **Journal engine of the domains** (`archflow.py` / `vizflow.py`, one file): `stale` — trust decay by scope: evidence records what it covers (zones, stories, sheets) and a change sends back only the proofs it touches, a re-saved file none; `memory add|recall|retire` — lessons tied to a place, recalled by place, marked stale when the place's anchor changed, vague wording refused; `cost add|report` — render, farm and person time next to tokens, with rates from `project.json`, and the share spent on revisions after acceptance by cause (`open --origin`); `quality` shows after which routes remarks arrive.
+- **arch**: `ifc_read.py` (IFC 2x3 / 4 text files into a model snapshot, standard library only), `model_audit.py` (`bim.ids`, `bim.layers`, `bim.props`, `bim.areas`), `model_diff.py` (two snapshots by GUID; consequences from the office's table `impact.example.json`; sheets by what they show; `change.listed`, `change.declared`), `rules_check.py` (the designer's own numeric requirements; an unconfirmed number never counts; `rules.*`), `trace.py` (a delivered set against the task clause by clause, and rows nobody asked for; `trace.*`), `outbox_check.py` (a folder before it is sent; `outbox.*`). Routes `change`, `rules`, `trace`, `issue`; `revise` now requires `change.declared`; plans `revision` and `review`; task cards 5–7.
+- **viz**: `swap_check.py` (`swap.kept`: material slots, modifiers, collection and parent of every object survive a model swap; required on the `swap` route), `img_compare.py` (`images.changed` by grid cells against a reference, `images.noise`), scene checks `unapplied_scale` and `asset_paths`, stage check `render.output`; `render.settings` can name passes, AOVs, colour depth and display device.
+- Both inspectors answer a `[look]` in a fixed form with a control detail, so that "nothing wrong" can be told from "not seen".
+
+### Security and trust — domains (`arch-flow` 0.3.1, `viz-flow` 0.4.1), after the audit of 16 November
+- **Receipts.** Every tool stamps its results file with the hash of its own code and inputs (`receipt.py`); `evidence --from` takes a file only when that hash is the tool shipped next to the journal or a registered script. An OK can no longer be recorded by hand; a finding by hand needs `--reason`. `img_digest.py --results` and `diff --out` write the evidence for `images` and `invariants`.
+- **Script registry.** `script register|drop|list|lock`: the operator role runs a mode only when its script is registered in the journal by hash; a path in `project.json` is not a registration. A transaction that ran an unregistered or edited script is refused as evidence outside the builder's own item. `txn.py` takes the operation's text as a parameter only from the self-test.
+- **Ids and paths.** Item ids are `[A-Za-z0-9_-]{1,64}`; `trace.py` evidence cannot point outside the delivered folder; `asset_paths` resolves links.
+- **`ifc_read.py`** gives every element its position, direction and a fingerprint of its representation, converts lengths to metres from the file's unit, keeps elements of classes it has no special reading for as `other`, counts records it could not read, and refuses schemas other than IFC2x3 / IFC4.
+- **`change.complete`, `bim.complete`** (required on `revise`, `change`, `audit`, `rules`): "identical" and "audited" are said only when positions, sizes and all records were there to compare.
+- CI runs the domain tests on Windows as well; a test keeps the two journal engines one text.
+
+### Trust, second round — domains (`arch-flow` 0.3.2, `viz-flow` 0.4.2)
+- **Journal.** Full SHA-256 in the chain (lines of earlier versions verify at their own length and are never rewritten); `anchor` and an ANCHOR line at every close, `verify --anchor n:hash` — the chain alone can be recomputed, an anchor kept outside the folder cannot. Lock by owner (pid and host): taken over only when the owner is gone, never by age; `fsync` on every line; project files written atomically.
+- **Release gate.** Proofs sent back by `stale` are remembered; routes named under `release` (`issue`, `pack`) refuse to open or pass until each is re-run in an item that passed, or waived by name (`stale status`, `stale waive`).
+- **Decisions in a person's name.** `sign <file> --by` pins a list by hash; results of `rules_check.py` and `trace.py` are taken only against a signed, unchanged list. `approvals` and every close list what was approved, signed, waived, forced and registered, for the requester to recognise.
+- **Foreign text** (`safe.py`): cleaned and cut wherever a tool prints it; text that addresses its reader (en, ru, pl) is counted in the IFC census, fails `bim.complete` / `trace.clauses`, and is shown as a question. Agents treat sources as data.
+- **`trace.py`**: search expressions must hold a word of four letters, are length-limited, and nested repeats are refused; the matched row is reported; one row answering several clauses is named.
+- **`outbox_check.py`**: `outbox.read` (scanned pages, oversized archives are "not read", required on `issue`), tracked changes, hidden text and sheets, headers and footers, `outbox.metadata`; archive size limits.
+- **Exit codes** of all tools: 0 passed, 1 failed, 2 nothing failed but something was not checked.
+
+### Trust, third round — domains (`arch-flow` 0.3.3, `viz-flow` 0.4.3)
+- **What a result covers** follows from what it claims: model-wide results (`bim.*`, `rules.*`, `spec_compare`) cover `model` and are sent back by any model change, a new story included; claims about one pair of snapshots (`change.*`) cover only that revision; a sheet without `shows`, and every sheet when an element on no story changes, count as touched; `stale` reads `story:` / `zone:` as a change of the model. `swap_check.py` touches the zones of every object that differs in anything, allowed or not, and the whole scene for an object without zones.
+- **`swap_check.py --min-match`** (default 95 %): below that share of the old model's objects found again (outside `--allow`), `swap.kept` is SKIP, never OK; matches by name only are reported.
+- **`img_compare.py`** reports how fine its sieve was (cell size, the smallest full-contrast detail that can stay below the threshold, the largest difference outside the expected cells) and fails on a change of brightness of the cells not expected to change (`--max-shift`); its OK says it narrows where to look and does not prove sameness.
+- **Lessons are proposed until a person confirms them** (`memory confirm`, `memory proposed`); recall shows confirmed ones only; text that addresses its reader or carries control characters is refused; `close` lists the item's proposed lessons. Lessons written before this version count as proposed.
+- `safe.py` is shared by both plugins and kept one text by a test.
+- The domains' efficiency report (`hand`, `spent`, `efficiency`; see Added) is kept in 0.3.3 / 0.4.3: the third round was built beside it and both are merged here.
+
+### Not done, on purpose — domains
+- No clash detection (a snapshot holds no geometry; Archicad's own collision detection stays the source) and no insolation.
+- No regulation is shipped: `rules.example.json` is a format with placeholder numbers.
+- No vision model is called by a tool: what the scene can answer is measured in the scene, pictures are compared by numbers, and the inspector looks only at the cells that differ.
+
+
 ## [0.7.0] — 2026-11-16
 
 Answers to the review of 0.6.0, finding by finding: `docs/roadmap-0.7.0.md`. Plan to 2.0: `docs/roadmap-2.0.md`.
