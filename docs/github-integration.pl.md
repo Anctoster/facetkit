@@ -53,6 +53,8 @@ Zatwierdź go i otwórz pull request. Aby był warunkiem scalenia: **Settings �
 | `min-level` | `L2` | najniższy poziom, który przechodzi |
 | `test-command` | zgadywane | z `package.json` (npm, pnpm, yarn, bun), `pyproject.toml` / `pytest.ini` / `setup.cfg` / `tox.ini` (pytest), `go.mod`, `pom.xml`, `gradlew` |
 | `item-id` | z gałęzi | identyfikator w rodzaju `ABC-12` lub `ITEM-3` w nazwie gałęzi, potem w tytule PR, w przeciwnym razie `PR-<numer>` |
+| `max-mutants` | `10` | najwyżej tyle mutantów zmienionych wierszy; każdy uruchamia testy raz |
+| `max-minutes` | `10` | limit czasu sondy mutacyjnej |
 | `comment` | `true` | zapisz raport jako komentarz do PR |
 | `node-version` | `22` | Node.js dla samego FacetKit |
 
@@ -83,7 +85,7 @@ Nieudana kontrola powoduje niepowodzenie przebiegu niezależnie od poziomu. Skan
 ## Warto wiedzieć
 
 - **Forki.** Używaj zdarzenia `pull_request`, nigdy `pull_request_target`: kod PR działa w tym zadaniu. Przy PR z forka token nie może pisać komentarzy — przebieg to zgłasza i nadal przechodzi lub nie na własnych zasadach.
-- **Czas.** Sonda mutacyjna uruchamia testy raz na każdy mutant (domyślnie 10, tylko na zmienionych wierszach). Dbaj o szybkie polecenie testów albo wskaż w `test-command` właściwe testy.
+- **Czas.** Sonda mutacyjna uruchamia testy raz na każdy mutant (domyślnie 10, tylko na zmienionych wierszach). Dbaj o szybkie polecenie testów, wskaż w `test-command` właściwe testy albo zmniejsz `max-mutants` / `max-minutes`.
 - **Sekrety.** Testy działają tylko z podstawowym zestawem zmiennych środowiskowych (ścieżki, ustawienia regionalne, narzędzia); token GitHuba nigdy do nich nie trafia. Test, który potrzebuje zmiennej, dostaje ją przez `govern.env` w `facet.json`.
 - **Monorepo.** Action sprawdza katalog główny repozytorium. Dla pakietu w podfolderze uruchom `npx facetkit ci-verify` w kroku `run:` z `working-directory:`.
 - **Lokalnie.** `facet ci-verify --base main` daje ten sam raport przed wypchnięciem zmian.

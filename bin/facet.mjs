@@ -273,9 +273,16 @@ const commands = {
     },
     /** ci-verify [--item ID] [--min-level L2] [--test-cmd CMD] [--base REF] [--out FILE] [--post-pr]: one CI run against a change. */
     async 'ci-verify'() {
+        const count = (name, fallback) => {
+            const n = Number(opt(name, fallback));
+            if (!Number.isInteger(n) || n < 1) fail(`ci-verify: --${name} must be a whole number of at least 1`);
+            return n;
+        };
+        const max = count('max', 10);
+        const maxMinutes = count('max-minutes', 10);
         let r;
         try {
-            r = ciVerify({ cwd: CWD, facetBin: fileURLToPath(import.meta.url), project, journal: path.resolve(CWD, opt('journal', project.journal ?? path.join(work, 'journal.jsonl'))), itemId: resolveItemId(item), minLevel: opt('min-level', 'L2'), testCmd: opt('test-cmd', ''), base: opt('base'), max: Number(opt('max', 10)), maxMinutes: Number(opt('max-minutes', 10)) });
+            r = ciVerify({ cwd: CWD, facetBin: fileURLToPath(import.meta.url), project, journal: path.resolve(CWD, opt('journal', project.journal ?? path.join(work, 'journal.jsonl'))), itemId: resolveItemId(item), minLevel: opt('min-level', 'L2'), testCmd: opt('test-cmd', ''), base: opt('base'), max, maxMinutes });
         } catch (error) {
             fail(`ci-verify: ${error.message}`);
         }

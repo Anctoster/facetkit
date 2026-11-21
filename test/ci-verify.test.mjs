@@ -150,3 +150,9 @@ test('ci-verify: with the item in the project journal the level comes from the j
     const strict = spawnSync(process.execPath, [CLI, 'ci-verify', '--base', base, '--item', 'ITEM-1'], { cwd: dir, encoding: 'utf-8', env: quiet() });
     assert.equal(strict.status, 1, 'L0 does not meet the default L2');
 });
+
+test('ci-verify: the mutant count and the time limit must be whole numbers', () => {
+    const r = spawnSync(process.execPath, [CLI, 'ci-verify', '--max', 'abc'], { cwd: tmp(), encoding: 'utf-8', env: quiet() });
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, /--max must be a whole number/);
+});

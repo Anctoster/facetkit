@@ -53,6 +53,8 @@ Commit it and open a pull request. To make it a merge condition: **Settings → 
 | `min-level` | `L2` | the lowest level that passes |
 | `test-command` | guessed | from `package.json` (npm, pnpm, yarn, bun), `pyproject.toml` / `pytest.ini` / `setup.cfg` / `tox.ini` (pytest), `go.mod`, `pom.xml`, `gradlew` |
 | `item-id` | from the branch | an id like `ABC-12` or `ITEM-3` in the branch name, then in the PR title, else `PR-<number>` |
+| `max-mutants` | `10` | at most this many mutants of the changed lines; each runs the tests once |
+| `max-minutes` | `10` | time limit of the mutation probe |
 | `comment` | `true` | write the report as a PR comment |
 | `node-version` | `22` | Node.js for FacetKit itself |
 
@@ -83,7 +85,7 @@ A check that fails makes the run fail whatever the level. A scan that could not 
 ## Good to know
 
 - **Forks.** Use the `pull_request` event, never `pull_request_target`: the PR's code runs in this job. On a PR from a fork the token cannot write comments — the run says so and still passes or fails on its own merits.
-- **Time.** The mutation probe runs the tests once per mutant (10 by default, on the changed lines only). Keep the test command fast, or point `test-command` at the relevant tests.
+- **Time.** The mutation probe runs the tests once per mutant (10 by default, on the changed lines only). Keep the test command fast, point `test-command` at the relevant tests, or lower `max-mutants` / `max-minutes`.
 - **Secrets.** The tests run with only a basic set of environment variables (paths, locale, toolchains); the GitHub token is never passed to them. A test that needs a variable gets it through `govern.env` in `facet.json`.
 - **Monorepos.** The Action checks the repository root. For a package in a subfolder, run `npx facetkit ci-verify` in a `run:` step with `working-directory:`.
 - **Locally.** `facet ci-verify --base main` gives the same report before you push.
