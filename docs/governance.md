@@ -47,13 +47,13 @@ A level is the highest one whose rules — and those of every level below — al
 
 ## The environment of commands
 
-Checks, decision measures, bug reproductions, `facet run`, `facet eval judge` and the test command of `facet mutate` run with part of the environment only: the variables in `BASE_ENV` (`lib/shell.mjs` — paths, temporary folders, locale, the system folders of Windows, toolchain homes such as `JAVA_HOME` or `VIRTUAL_ENV`) and the ones the project names:
+Checks, decision measures, bug reproductions, `facet run`, `facet eval judge` and the test command of `facet mutate` run with part of the environment only: the variables in `BASE_ENV` — `PATH`, `HOME`, `USERPROFILE`, `TEMP`, `TMP`, `LANG`, `SYSTEMROOT`, `COMSPEC`, `PATHEXT`, `TERM` — and the ones the project names (toolchain homes such as `JAVA_HOME` or `VIRTUAL_ENV`, proxies, `TMPDIR` on macOS):
 
 ```json
 "govern": { "env": ["HTTPS_PROXY", "NODE_OPTIONS", "npm_config_*"] }
 ```
 
-A name ending in `*` is a prefix. On Windows names compare without case. `"env": "inherit"` passes everything, as before 0.7.1. `FACET_KEY` and `FACET_KEYS` are never passed.
+A name ending in `*` is a prefix. On Windows names compare without case. There is no way to pass everything: `govern.env` must be a list. `FACET_KEY` and `FACET_KEYS` are never passed.
 
 ## Waivers and approvals
 

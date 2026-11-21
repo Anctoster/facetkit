@@ -58,6 +58,7 @@ import { opsCommands } from './ops.mjs';
 import { setupCommands } from './setup.mjs';
 import { EXIT_CAP, excerpt, ledgerStatus, readLedger, run } from '../lib/thrift.mjs';
 import { safeEnv } from '../lib/shell.mjs';
+import { docProblems } from '../lib/docaudit.mjs';
 import { ciVerify } from '../lib/ci-verify.mjs';
 import { resolveItemId } from '../lib/github-context.mjs';
 import { postPrComment, renderPrReport } from '../lib/explain-pr.mjs';
@@ -86,6 +87,7 @@ try {
     if (fs.existsSync(path.join(CWD, 'facet.json'))) fail(`facet.json: ${error.message}`, 2);
     // no package.json — defaults
 }
+if (project.govern?.env !== undefined && !(Array.isArray(project.govern.env) && project.govern.env.every((n) => typeof n === 'string'))) fail(`govern.env must be a list of variable names (or prefixes ending in *), not ${JSON.stringify(project.govern.env)} — there is no way to pass the whole environment`, 2);
 const skillDirs = [path.join(KIT, 'skills'), ...(project.skills ?? []).map((d) => path.resolve(CWD, d)), ...opts('skills-dir').map((d) => path.resolve(CWD, d))];
 const loadoutsFile = path.resolve(CWD, opt('loadouts', project.loadouts ?? path.join(KIT, 'loadouts.json')));
 const work = path.resolve(CWD, opt('work', project.work ?? '.work'));
@@ -124,13 +126,15 @@ const commands = {
         if (flag('json')) console.log(JSON.stringify({ ...result, used: result.used.map((f) => f.ref) }, null, 2));
         else process.stdout.write(renderLoadout(result, { role, phase }));
     },
-    audit() {
+    async audit() {
         const priorDirs = opts('prior').map((d) => path.resolve(CWD, d));
         const result = audit(loadSkills(skillDirs), readJson(loadoutsFile, {}), { prior: loadPrior(priorDirs) });
-        const text = renderAudit(result, { priorDirs });
+        // on the kit's own repository the audit also holds its documents to what they promise (plan 1.1, 1.10)
+        const docs = fs.realpathSync(CWD) === fs.realpathSync(KIT) ? await docProblems(KIT) : [];
+        const text = `${renderAudit(result, { priorDirs })}${docs.length ? `\n## Documents\n\n${docs.map((p) => `- ERROR ${p}`).join('\n')}\n` : ''}`;
         if (opt('report')) fs.writeFileSync(path.resolve(CWD, opt('report')), text);
         process.stdout.write(text);
-        process.exit(result.errors.length ? 1 : 0);
+        process.exit(result.errors.length || docs.length ? 1 : 0);
     },
     async run() {
         if (!rest.length) fail('run: facet run [--item ID] -- <command>');
