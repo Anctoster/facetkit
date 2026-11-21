@@ -53,7 +53,7 @@ Checks, decision measures, bug reproductions, `facet run`, `facet eval judge` an
 "govern": { "env": ["HTTPS_PROXY", "NODE_OPTIONS", "npm_config_*"] }
 ```
 
-A name ending in `*` is a prefix. On Windows names compare without case. There is no way to pass everything: `govern.env` must be a list. `FACET_KEY` and `FACET_KEYS` are never passed.
+Some toolchains need more on Windows: Go keeps its build cache under `LOCALAPPDATA` (name it, or `GOCACHE`), npm its cache under `APPDATA`. A name ending in `*` is a prefix. On Windows names compare without case. There is no way to pass everything: `govern.env` must be a list. `FACET_KEY` and `FACET_KEYS` are never passed.
 
 ## Waivers and approvals
 
