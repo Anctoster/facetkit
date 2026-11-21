@@ -64,3 +64,9 @@ test('witness levels: L4 stands only with an independent witness; every other le
     for (const w of ['rerun', null]) assert.equal(provenLevel('L4 calibrated', w), 'L3 falsified');
     for (const l of ['L0 claimed', 'L1 reproduced', 'L2 specified', 'L3 falsified']) assert.equal(provenLevel(l, null), l);
 });
+
+test('L4 needs trust read from a commit: with trust read outside git it stands at L3, even with an independent witness', () => {
+    assert.equal(provenLevel('L4 calibrated', 'independent', 'uncommitted'), 'L3 falsified');
+    for (const source of ['commit', 'none', undefined]) assert.equal(provenLevel('L4 calibrated', 'independent', source), 'L4 calibrated');
+    assert.equal(provenLevel('L3 falsified', 'independent', 'uncommitted'), 'L3 falsified', 'below L4 nothing changes');
+});
