@@ -19,7 +19,7 @@ No dependencies. Node 20+. Works with any agent that can run a shell command; sh
 
 ![One item of work: specification, build, probe, proof, policy gate — evidence accumulates and the assurance level rises](docs/assets/flow.svg)
 
-> **Status: 0.7.0, experimental.** The tools are tested (<!-- count:tests -->253<!-- /count --> tests and a guard benchmark of <!-- count:benchmark -->22<!-- /count --> adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **<!-- count:untested -->69<!-- /count --> untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute: `facet hypotheses --next` says which to try first, the pinned [Trial board](docs/trial-board.md) issue says who is testing what, and `HYPOTHESES.md` shows every reported result.
+> **Status: 0.7.0, experimental.** The tools are tested (<!-- count:tests -->257<!-- /count --> tests and a guard benchmark of <!-- count:benchmark -->22<!-- /count --> adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **<!-- count:untested -->69<!-- /count --> untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute: `facet hypotheses --next` says which to try first, the pinned [Trial board](docs/trial-board.md) issue says who is testing what, and `HYPOTHESES.md` shows every reported result.
 
 ## 🔬 FacetKit Community Research Program
 
@@ -29,6 +29,10 @@ more reliable, effective and verifiable.
 Join the FacetKit Community Research Program.
 
 [Explore Research Hub](docs/research/README.md)
+## Start here
+
+**New to FacetKit?** Three short guides, each usable on its own: **[Quick start](docs/quick-start.md)** — ten minutes on your own code, no agents → **[Project integration](docs/project-integration.md)** — one rule for your own agent, or only the agents you choose (`facet init --agents slice-builder,proof-inspector`) → **[GitHub integration](docs/github-integration.md)** — a check and a comment on every pull request (`facet init --github`).
+
 ## Try it in five minutes
 
 ```bash
@@ -248,6 +252,8 @@ The plugin carries no code. The `facet` command comes from npm — `npm i -g fac
 ```bash
 npx facetkit demo            # a board from synthetic data: what the system looks like after a few weeks
 npx facetkit init --minimal  # facet.json, an items file, rules and templates (add --claude to copy agents and commands)
+npx facetkit init --agents slice-builder,proof-inspector   # only the agents you choose — see docs/project-integration.md
+npx facetkit init --github   # a pull-request workflow for the GitHub Action — see docs/github-integration.md
 ```
 
 or clone the repository and call `node facetkit/bin/facet …`. `facet init` writes `facet.json`, so the project does not have to be a Node project.
@@ -360,7 +366,7 @@ Written after studying these projects; none of their text is included.
 
 ## Documentation
 
-[How it works, by role](docs/how-it-works.md) · [For testers](docs/for-testers.md) · [For architects](docs/for-architects.md) · [Roadmap to 2.0](docs/roadmap-2.0.md) · [Hypotheses](HYPOTHESES.md) · [Dogfood report](docs/dogfood.md) · [Architecture](docs/architecture.md) · [Governance](docs/governance.md) · [Skill intelligence](docs/skill-intelligence.md) · [Extensions](docs/extensions.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+[Quick start](docs/quick-start.md) · [Project integration](docs/project-integration.md) · [GitHub integration](docs/github-integration.md) · [How it works, by role](docs/how-it-works.md) · [For testers](docs/for-testers.md) · [For architects](docs/for-architects.md) · [Roadmap to 2.0](docs/roadmap-2.0.md) · [Hypotheses](HYPOTHESES.md) · [Dogfood report](docs/dogfood.md) · [Architecture](docs/architecture.md) · [Governance](docs/governance.md) · [Skill intelligence](docs/skill-intelligence.md) · [Extensions](docs/extensions.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ## Licence
 
