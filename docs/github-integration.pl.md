@@ -88,7 +88,7 @@ Nieudana kontrola powoduje niepowodzenie przebiegu niezależnie od poziomu. Skan
 
 - **Forki.** Używaj zdarzenia `pull_request`, nigdy `pull_request_target`: kod PR działa w tym zadaniu. Przy PR z forka token nie może pisać komentarzy — przebieg to zgłasza i nadal przechodzi lub nie na własnych zasadach.
 - **Czas.** Sonda mutacyjna uruchamia testy raz na każdy mutant (domyślnie 10, tylko na zmienionych wierszach). Dbaj o szybkie polecenie testów, wskaż w `test-command` właściwe testy albo zmniejsz `max-mutants` / `max-minutes`.
-- **Sekrety.** Testy działają tylko z podstawowym zestawem zmiennych środowiskowych (ścieżki, ustawienia regionalne, narzędzia); token GitHuba nigdy do nich nie trafia. Test, który potrzebuje zmiennej, dostaje ją przez `govern.env` w `facet.json`.
+- **Sekrety.** Testy działają tylko z podstawowym zestawem zmiennych środowiskowych — `PATH`, `HOME`, `USERPROFILE`, `TEMP`, `TMP`, `LANG`, `SYSTEMROOT`, `COMSPEC`, `PATHEXT`, `TERM`; token GitHuba nigdy do nich nie trafia. Test, który potrzebuje czegoś innego (`JAVA_HOME`, `VIRTUAL_ENV`, proxy), dostaje to przez `govern.env` w `facet.json`.
 - **Monorepo.** Action sprawdza katalog główny repozytorium. Dla pakietu w podfolderze uruchom `npx facetkit ci-verify` w kroku `run:` z `working-directory:`.
 - **Lokalnie.** `facet ci-verify --base main` daje ten sam raport przed wypchnięciem zmian.
 
