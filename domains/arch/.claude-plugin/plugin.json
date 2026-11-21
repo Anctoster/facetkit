@@ -1,6 +1,6 @@
 {
   "name": "arch-flow",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Evidence-first architectural production in Archicad by a small team of cheap agents: sources become a checked model description, the description a model on the right layers, the model complete drawing sets (projekt budowlany, projekt wykonawczy). Changes are followed element by element with their consequences; received sets are traced to the task; folders are checked before they are sent.",
   "author": {
     "name": "arch-flow"
