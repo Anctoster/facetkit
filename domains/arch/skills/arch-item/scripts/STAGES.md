@@ -74,6 +74,70 @@ The same lines as `sheets-pb`, plus:
 
 The executive design supplements and details the building design to the degree needed for bills of quantities, costing, tendering and building; its scope is what the client and the contract set. Work from the PB model and sheets: change the model, not the drawing.
 
-## revise, audit
-revise: [check: model.layers], [check: model.counts] and the criteria of the change itself; what must not change is listed under Fixed and read back before and after.
-audit: no changes; the readback and the state of layers, ids and sheets.
+## revise - a change to an existing model
+1. The change is made as described [check: model.counts], [check: model.layers] and the criteria of the change itself
+2. Both snapshots hold what the comparison needs - the position and sizes of every element, and no unread records [check: change.complete]
+3. Nothing outside the declared scope changed [check: change.declared] — a snapshot before and after, `tools/model_diff.py --declared "<ids, patterns, zone:…, story:…>"`
+4. The consequences are the intended ones [user: `change.md` - sheets to issue again, who checks what again]
+
+The brief's Scope names what may change by id or by room; a room covers the walls, doors and windows that bound it (when the snapshot carries room links). After the item closes, `archflow.py stale --from change.json` sends back exactly the proofs the change touched.
+Goes wrong: a neighbouring wall dragged along with the one that was moved; a zone not updated after its wall moved; the change made in the drawing instead of the model; every earlier check thrown away because "the file changed".
+
+## change - what a new version of a model changed
+1. Both snapshots hold the position and sizes of every element, and no unread records [check: change.complete]
+2. Every element can be followed from one version to the next [check: change.listed]
+3. What changed is what was announced [user: the list in `change.md`]
+
+"Nothing changed" is said only when the first line holds. A wall that moved keeps its length: without positions the comparison is blind to it, and says so instead of saying "identical". Shapes are fingerprinted for files up to 80 MB (`ifc_read.py --max-mb`); above that the reader says shapes were not compared.
+
+For a model that somebody else changed - a colleague, a consultant, the client's revision. Two IFC exports are enough: `ifc_read.py` each, then `model_diff.py` with the office's table of consequences and the stage list. No change is made by this route.
+
+## audit - the state of a model, without changes
+0. The snapshot is complete: no unread records, a known length unit, and every element with the fields its kind needs (story; position and length of walls; position and width of doors and windows; number and area of rooms) [check: bim.complete] — more per kind in `bim.required_fields`
+1. Every element has a key of its own, and the kinds that need an id carry one [check: bim.ids]
+2. Every element is on a layer the plan gives its kind [check: bim.layers]
+3. Required properties are filled in [check: bim.props] — `project.json` → `bim.required_props`
+4. Room areas agree with the task [check: bim.areas] — a room program with `area_m2`
+
+`tools/model_audit.py` on a snapshot. Clashes are not in the snapshot: run Archicad's collision detection and record its count as a criterion of its own (`[user: collision report]`).
+
+## rules - the model against the designer's list of requirements
+1. Every rule names its provision and the designer who confirmed the number [check: rules.confirmed]
+2. Every rule found the elements it is about, and each could be measured [check: rules.coverage]
+3. Every measurement is within its limit [check: rules.values]
+4. The list is the right one for this building [user: the rules list, signed and dated] — recorded with `archflow.py sign <rules file> --by <designer>`; the journal takes the tool's result only against the signed text
+
+The tool measures; the designer owns the numbers. A rule that matches nothing has not passed - usually the rooms are named differently from what the rule expects. Widths of rooms are the narrowest place of the outline; what needs the surroundings (insolation, distances to neighbours) is outside this route.
+Goes wrong: numbers copied from an old project; a rule written for a room name nobody uses; a result read as "complies with the regulations".
+
+## trace - a delivered set against the task
+1. The task is cut into numbered clauses, each with the place it comes from [check: trace.clauses]
+2. Every clause is answered in the set, by a person's dated word, or withdrawn by name [check: trace.covered]
+3. The delivered schedules hold nothing the task did not ask for [check: trace.extras] — needs `inventory`; optional
+4. The clauses are the task [user: the list of clauses]
+
+The search expression of a piece of evidence must hold a word of at least four letters and may not be longer than 120 characters: "find anything" finds everything and proves nothing. The report (`--md`) shows the row that was found beside every clause - "found" means that row, so read it. When one row answers several clauses the tool says so. A clause that addresses its reader instead of describing the building is shown to the architect, not acted on. After the gate the confirmed list is signed (`sign requirements.json`).
+
+One clause - one requirement that can be found: "underfloor heating in the hall", not "comfortable heating". Evidence points at a table row by a search expression, at a sheet, or at elements of the model; the tool goes and looks. Use it on the office's own set before the client sees it, and on consultants' drawings and schedules when they arrive.
+Goes wrong: a clause split so coarsely that anything answers it; evidence pointing at a sheet that exists but does not show the thing (give `find`); "confirmed by phone" with no name and date.
+
+## issue - a folder before it is sent
+1. No working file is in the set [check: outbox.files]
+2. Every file of a kind the tool reads was read to its last page [check: outbox.read] — a scanned page, or drawing text turned into outlines, is named as not read; the architect looks at those files and waives the check by name
+3. In what was read: no office-only wording, no review comment, no tracked change left unaccepted, no hidden text or sheet [check: outbox.internal]
+4. The names stored in the files' properties are ones that may go out [check: outbox.metadata] — `allowed_authors`; optional
+5. Required cells of the schedules are filled [check: outbox.tables]; no discontinued article [check: outbox.articles]; areas agree with the model [check: outbox.areas] — each needs its part of `outbox_config`
+6. This is the set to send [user: the list of files and the addressee]
+
+`issue` is a release: it does not open while proofs that a change sent back wait to be re-run (`archflow.py stale status`). An OK from this tool means "nothing found in what was read", never "the folder is clean".
+
+DWG files and pictures are not read: one look at each remains the architect's.
+
+## What a result covers
+A result names what a later change must touch to send it back (`stale`):
+- `model` - claims about every element (`bim.*`, `rules.*`, `model.*` from `spec_compare`): any change of the model sends them back, a new story included;
+- `sheet:<no>` - a sheet; a model change touches the sheets that show the touched stories or rooms, every sheet that does not say what it shows, and every sheet when an element on no story changed;
+- `revision:<hash>` - claims about one pair of snapshots (`change.*`): true for that pair whatever changes later.
+
+## Exit codes of the tools
+0 - everything the tool can check was checked and passed; 1 - something failed; 2 - nothing failed, but a part was not checked (SKIP). The journal decides PASS from the recorded results, not from the exit code; the code is for running a tool on its own.

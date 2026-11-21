@@ -50,16 +50,25 @@ Goes wrong: a camera inside geometry; an orbit that jumps at the seam; a horizon
 ## render-setup
 1. Render settings are the agreed ones `[check: render.settings]` — `expected` settings.
 2. One physical sun, where the real sun stands at that place and time `[check: render.sun]` — `site.lat`, `site.lon`, the date and hour in UTC, `site.north_offset_deg`.
-3. Preview and final differ only in resolution and samples `[look: the same view at preview and final settings]`
+3. Frames go to a folder that holds no earlier frames of the same name `[check: render.output]` — `output`.
+4. Everything the scene needs is on disk, and inside the project folder when the render runs elsewhere `[check: asset_paths]` — `asset_root`.
+5. No object carries a scale that was never applied `[check: unapplied_scale]` — `scale_applied`, a name pattern.
+6. Preview and final differ only in resolution and samples `[look: the same view at preview and final settings]`
 
-Goes wrong: the modelling program's sun left in; colour management changed between runs; output overwriting earlier frames.
+`expected` may name any of: engine, size, percent, fps, transparent, format, depth, color_mode, view (the view transform: AgX, Filmic, Standard), look, exposure, gamma, display, samples, denoise, passes and aovs (lists), overwrite, frames. Name the view transform and the passes: they are what differs silently between two machines.
+Goes wrong: the modelling program's sun left in; colour management changed between runs; output overwriting earlier frames; a pass the compositing needs switched off; a texture that exists only on the artist's disk.
 
 ## swap - a new Archicad model in place of the old
 The route runs export, then materials. Its criteria are the export ones plus:
 1. Designed surfaces look exactly as before `[check: materials.etalon]`
 2. Cameras, sun and render settings are untouched `[check: invariants]`
 3. The new model still meets the surroundings `[check: junction.step <= 0.05]`
-4. What was added, removed and changed is listed by identifier `[user: the list of changes is what was intended]`
+4. Everything set up by hand survived: material slots, modifiers, collection and parent of every object that was there before `[check: swap.kept]` — the scene index before and after, `tools/swap_check.py`; `--allow` for objects the brief says may change or go. At least 95 % of the old model's objects (`--min-match`) must be found again by their Archicad identifier; below that the check answers SKIP, never OK - an object the import renamed looks removed and added, and what it lost is invisible. Every object that differs in anything - allowed or not - touches its zones; one without zones touches the whole scene.
+5. What was added, removed and changed is listed by identifier `[user: swap-changes.md is what was intended]`
+6. Frames of views the change does not reach show no difference above the threshold `[check: images.changed]` — `tools/img_compare.py <frame before> <frame after> --expect <cells, or none>`. The tool prints how fine its sieve was (the smallest full-contrast detail it can miss at this frame size) and checks the brightness of the cells that were not to change. It narrows where to look; it does not prove the rest identical.
+
+Take the index before anything is imported; it cannot be made afterwards. `vizflow.py stale --from swap.json` then names the earlier proofs to run again.
+Goes wrong: a numbered copy of a material ("Brick.001") that looks right until the library changes; a modifier lost on re-import; a new element arriving with no material; a check of the whole scene repeated when two zones changed.
 
 ## env-adjust - surroundings corrected around a change
 1. Nothing outside the edit zone changed `[check: environment.unchanged]` — `zone`, the rectangle around the change.
@@ -67,4 +76,5 @@ The route runs export, then materials. Its criteria are the export ones plus:
 
 ## render, pack
 render: `[check: images]` (count, size, no black, blown-out, repeated or missing frames, orbit seam), `[check: invariants]`, and one `[look]` per thing that must be seen. A preview sheet is approved by the requester before the full render.
+With a reference picture of the same view (an approved render, a clay preview, the frame before a change): `[check: images.changed]` - the picture differs only in the cells named, and `[check: images.noise]` - grain in flat areas within `--max-noise`. Write a `[look]` so that it names the cell: "the new balcony in C3-D3 has a railing". What the scene can answer is not asked of the picture: shadow direction is `render.sun`, an object hanging in the air is `floating`, the view is `cameras.frame`.
 pack: `[check: images]` on the packed set: count, sizes, weight budget.

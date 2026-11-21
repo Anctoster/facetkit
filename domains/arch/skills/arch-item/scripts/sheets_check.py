@@ -10,15 +10,17 @@ LAYOUTS.json   {"layouts": [{"no": "PB-A-01", "title": "...", "format": "A2", "d
                              "titleblock": {"project_name": "...", "designer": "...", ...}, "based_on": "PB-A-01"}]}
                written by the layouts script from the Archicad API."""
 import argparse, json, os, re, sys
+import receipt
 
 RES, LINES = {}, []
+SCOPE = None  # the sheets a result covers: a change that touches none of them leaves it standing
 ISO = {"A0": (841, 1189), "A1": (594, 841), "A2": (420, 594), "A3": (297, 420), "A4": (210, 297)}
 
 
 def report(cid, problems, ok_text, skip=None):
     status = "SKIP" if skip else "FAIL" if problems else "OK"
     text = skip or (("%d problems: %s" % (len(problems), "; ".join(map(str, problems[:5])))) if problems else ok_text)
-    RES[cid] = {"status": status, "text": text, "data": (problems or [])[:200]}
+    RES[cid] = {"status": status, "text": text, "data": (problems or [])[:200], "scope": SCOPE}
     LINES.append("%-4s %s: %s" % (status, cid, text))
 
 
@@ -31,6 +33,8 @@ def pdf_size_mm(path):
 def check(required, layouts, out_dir, project=None, previous=None):
     cfg = (project or {}).get("sheets", {})
     want = {s["no"]: s for s in required.get("sheets", [])}
+    global SCOPE
+    SCOPE = sorted("sheet:%s" % n for n in want) or None
     have = {l.get("no"): l for l in layouts.get("layouts", [])}
     files = set(os.listdir(out_dir)) if out_dir and os.path.isdir(out_dir) else set()
     p = ["sheet %s '%s' has no layout" % (n, want[n].get("title")) for n in sorted(set(want) - set(have))]
@@ -95,5 +99,5 @@ if __name__ == "__main__":
     c = {s: sum(1 for r in RES.values() if r["status"] == s) for s in ("OK", "FAIL", "SKIP")}
     print("RESULT passed %d  failed %d  skipped %d" % (c["OK"], c["FAIL"], c["SKIP"]))
     if a.out:
-        json.dump(RES, open(a.out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    sys.exit(1 if c["FAIL"] else 0)
+        json.dump(receipt.stamp(RES, __file__), open(a.out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    sys.exit(1 if c["FAIL"] else 2 if c["SKIP"] else 0)

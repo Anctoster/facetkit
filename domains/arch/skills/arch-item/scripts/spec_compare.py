@@ -11,18 +11,22 @@ readback.json (written by the readback script from the Archicad API):
 Usage: spec_compare.py SPEC.json READBACK.json [--project project.json] [--program program.json] [--out results.json]
 program.json (optional): [{"name": "Salon", "min_area_m2": 20}, ...] - the brief's list of rooms."""
 import argparse, json, math, sys
+import receipt
 
 RES, LINES = {}, []
+SCOPE = None  # what a result covers; set to the whole model below
 
 
 def report(cid, problems, ok_text, skip=None):
     status = "SKIP" if skip else "FAIL" if problems else "OK"
     text = skip or (("%d problems: %s" % (len(problems), "; ".join(map(str, problems[:5])))) if problems else ok_text)
-    RES[cid] = {"status": status, "text": text, "data": (problems or [])[:200]}
+    RES[cid] = {"status": status, "text": text, "data": (problems or [])[:200], "scope": SCOPE}
     LINES.append("%-4s %s: %s" % (status, cid, text))
 
 
 def compare(spec, back, project=None, program=None):
+    global SCOPE
+    SCOPE = ["model"]  # the model against its whole description: any change of the model touches it
     tol = (project or {}).get("tolerances", {})
     tl, ta = tol.get("length_m", 0.01), tol.get("area_pct", 2.0)
     roles = spec.get("layers", {})
@@ -96,5 +100,5 @@ if __name__ == "__main__":
     c = {s: sum(1 for r in RES.values() if r["status"] == s) for s in ("OK", "FAIL", "SKIP")}
     print("RESULT passed %d  failed %d  skipped %d" % (c["OK"], c["FAIL"], c["SKIP"]))
     if a.out:
-        json.dump(RES, open(a.out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    sys.exit(1 if c["FAIL"] else 0)
+        json.dump(receipt.stamp(RES, __file__), open(a.out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    sys.exit(1 if c["FAIL"] else 2 if c["SKIP"] else 0)

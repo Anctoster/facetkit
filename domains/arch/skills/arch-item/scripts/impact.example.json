@@ -1,0 +1,30 @@
+{
+ "note": "The office's table of consequences: which kind of change sends which discipline, schedule or drawing back to be checked. A starting list - edit it for the project and its consultants. 'when' may name change (added, removed, changed), type, layer (pattern) and fields; 'recheck' names who looks again and at what.",
+ "rules": [
+  {"id": "L1", "when": {"type": ["wall"], "fields": ["pos", "length", "thickness", "story"]},
+   "recheck": [{"who": "KR (konstrukcja)", "what": "sciana nosna czy dzialowa; obciazenie stropu i nadproza"},
+               {"who": "EOM (elektryka)", "what": "polozenie gniazd, lacznikow i tras na tej scianie"},
+               {"who": "Wykonczenie", "what": "rozklad plytek i okladzin w przyleglych pomieszczeniach; powierzchnie w zestawieniu"},
+               {"who": "Zestawienia", "what": "powierzchnie pomieszczen i zestawienie scian"}]},
+  {"id": "L2", "when": {"type": ["wall"], "change": ["added", "removed"]},
+   "recheck": [{"who": "OW (wentylacja)", "what": "przejscia kanalow i kratki w zmienionych pomieszczeniach"},
+               {"who": "PPOZ", "what": "drogi ewakuacyjne i podzial na strefy"}]},
+  {"id": "L3", "when": {"type": ["door"]},
+   "recheck": [{"who": "Zestawienia", "what": "zestawienie stolarki drzwiowej"},
+               {"who": "EOM (elektryka)", "what": "laczniki przy osciezy po stronie klamki"},
+               {"who": "PPOZ", "what": "szerokosc przejscia w swietle i kierunek otwierania"}]},
+  {"id": "L4", "when": {"type": ["window"]},
+   "recheck": [{"who": "Zestawienia", "what": "zestawienie stolarki okiennej"},
+               {"who": "CO (ogrzewanie)", "what": "grzejnik pod oknem, bilans cieplny pomieszczenia"},
+               {"who": "Elewacje", "what": "rysunki elewacji i wizualizacje"}]},
+  {"id": "L5", "when": {"type": ["fixture"]},
+   "recheck": [{"who": "WK (wod-kan)", "what": "podejscia wody i kanalizacji, spadki"},
+               {"who": "Wykonczenie", "what": "rozklad plytek wzgledem osi urzadzen"}]},
+  {"id": "L6", "when": {"type": ["zone"], "fields": ["area", "name", "number"]},
+   "recheck": [{"who": "Zestawienia", "what": "zestawienie pomieszczen i powierzchni; PUM"},
+               {"who": "Sprzedaz", "what": "karty mieszkan i rzuty na stronie sprzedazy"}]},
+  {"id": "L7", "when": {"type": ["slab", "stair", "roof", "column", "beam"]},
+   "recheck": [{"who": "KR (konstrukcja)", "what": "zmieniony element konstrukcyjny"},
+               {"who": "Przekroje", "what": "przekroje i rzedne"}]}
+ ]
+}

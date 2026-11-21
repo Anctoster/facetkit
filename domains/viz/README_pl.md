@@ -32,10 +32,25 @@ Scena robocza, zatwierdzona biblioteka materiałów i oryginalny projekt Archica
 | `render-setup` — ustawienia renderowania | Ustawienia zgodne z listą kontrolną; położenie słońca według lokalizacji, daty i godziny |
 | `render`, `pack` | Liczba, wymiary i rozmiar klatek; czarne, prześwietlone, powtórzone lub brakujące klatki; szew oblotu |
 | Każda edycja sceny | Wyłącznie zadeklarowane zmiany (`txn.contract`); odwrócone normalne, obiekty, obiekty bez podparcia, przecięcia, nieużywane dane |
+| Przed renderem | Niezastosowana skala; brakujące pliki i pliki spoza folderu projektu (`asset_paths`); przebiegi i profil kolorów zgodne z listą; folder wyjściowy bez starych klatek (`render.output`) |
+| Po wymianie modelu | Materiały, modyfikatory, kolekcja i rodzic każdego obiektu zostały zachowane (`swap.kept`) |
+| Dwie klatki jednego widoku | Gdzie dokładnie klatka różni się od wzorca i czy tylko tam, gdzie powinna (`images.changed`); ziarno na gładkich obszarach (`images.noise`) |
 
 Po zmianie modelu: `swap` (nowy model, te same materiały, kamery i słońce) → `env-adjust` (otoczenie zmienia się tylko w określonym obszarze) → `render` → `pack`.
 
 Dodatkowe polecenia: `audit` — kontrola tylko do odczytu; `fix` — usuwanie wad.
+
+### Co przetrwa wymianę modelu
+
+Ponowny import po cichu gubi to, o czym eksporter nie wie: slot materiału wraca pusty albo jako numerowana kopia (`Brick.001`), znika modyfikator, obiekt wypada z kolekcji. `swap_check.py` porównuje indeks sceny przed wymianą i po niej według identyfikatorów Archicad i nazywa każdą taką stratę, a także to, co dodano, usunięto lub co zmieniło kształt. Jeśli odnaleziono mniej niż 95 % obiektów starego modelu (poza `--allow`), odpowiedź brzmi „nie mogę stwierdzić”, nigdy OK. Ten sam plik trafia do dziennika: `vizflow.py stale --from swap.json` cofa do ponownej kontroli tylko kontrole dotkniętych stref i te, które nie mają miejsca.
+
+### Najpierw liczby, potem spojrzenie
+
+„Sprawdzenie obrazu oczami modelu” to krok najdroższy i najmniej pewny, dlatego jest zawężony:
+
+1. Co da się zmierzyć w scenie, mierzy się w scenie, a nie na obrazie: słońce i kierunek cieni — `render.sun`, obiekty „w powietrzu” — `floating`, odwrócone powierzchnie — `inverted_normals`, kadr — `cameras.frame`.
+2. `img_compare.py` porównuje klatkę ze wzorcem (zatwierdzony render, podgląd clay, ta sama klatka przed wymianą modelu) według siatki komórek i mówi, **gdzie** klatka się zmieniła i czy tylko tam, gdzie powinna; jeśli zmieniła się większość klatki, to kamera, obiektyw, słońce lub ekspozycja, a nie szczegół. Podaje też, jak gęste było jej sito (najmniejszy kontrastowy szczegół, który może przeoczyć), i wychwytuje ogólne rozjaśnienie lub przyciemnienie poza oczekiwanymi komórkami. Osobno mierzy się ziarno na gładkich obszarach.
+3. Inspektor patrzy tylko na wskazane komórki i odpowiada według stałego wzoru: czego szukał, w której komórce to znalazł albo „nie”, oraz jeden szczegół z tej samej klatki, o który brief nie pytał. Bez niego odpowiedź liczy się jako „nie widziałem”, a nie „wszystko w porządku”.
 
 Kryteria etapów, które można stosować niezależnie od sposobu połączenia Archicad i Blender, opisano w `skills/viz-item/scripts/STAGES.md`. Format briefu i przykład znajdują się w `skills/viz-item/references/brief.md`.
 
@@ -72,6 +87,27 @@ Po dwóch nieudanych próbach wykonania kroku model jest podnoszony o jeden pozi
 - **Inspektora** — w ilu zaakceptowanych elementach pracy później wykryto wadę.
 - **Briefy** — ile uwag wynikało z brakującego kryterium i ile briefów zmieniono po zatwierdzeniu.
 - **Obejścia procesu** — pominięte kontrole, wymuszone kroki, liczba rund podglądu i zużycie tokenów według modeli.
+- **Skąd biorą się uwagi** — po których etapach przychodzą Twoje uwagi.
+
+## Czemu można ufać
+
+- **Wynik kontroli jest przyjmowany tylko z pokwitowaniem** — hashem kodu narzędzia, które go wydało. „OK” wpisane ręcznie ani plik z poprawionej kopii skryptu nie zostaną przyjęte.
+- **Skrypt dla mniejszego modelu jest przypięty po treści.** Rejestracja zapisuje w dzienniku hash skryptu; transakcja wykonana zmienionym skryptem nie jest dowodem, dopóki skrypt nie przejdzie ponownie przez buildera i inspektora.
+- **Identyfikator zadania to tylko nazwa folderu.**
+- **Kotwica poza folderem projektu.** Przy zamknięciu zadania dziennik drukuje wiersz `ANCHOR numer:hash` do raportu i notatek projektu; `verify --anchor` pokaże później, czy zapis nie został przepisany.
+- **Decyzje podjęte w Twoim imieniu** są wypisywane przy zamknięciu: zatwierdzenia, zdjęte kontrole, wymuszone kroki, zarejestrowane skrypty.
+- **Po wymianie modelu nic nie trafia na stronę, dopóki cofnięte kontrole nie zostaną powtórzone** — trasa `pack` się nie otwiera.
+- **Wpis w dzienniku nie ginie, gdy pracują dwie sesje naraz**; blokada jest zdejmowana tylko wtedy, gdy jej właściciel naprawdę zakończył pracę.
+
+Pokwitowanie dowodzi, jaki kod wydał wynik, a nie że kod jest poprawny; nazwiska w dzienniku wpisuje ten, kto uruchamia polecenie — dlatego są Ci pokazywane; dziennik nie chroni przed właścicielem komputera.
+
+## Ile kosztuje poprawka
+
+`vizflow.py cost report` — dla każdego elementu pracy: tokeny, czas narzędzi oraz zapisany czas renderowania, farmy i ludzi (`cost add --kind render|farm|person --minutes …`; stawki w `project.json` → `rates`). Element otwarty w odpowiedzi na uwagę (`open --origin <ITEM>`) trafia do wiersza „poprawki po odbiorze” z przyczyną: nie było tego w briefie, nowe życzenie klienta, przeoczona wada. Tak widać koszt każdej poprawki, łącznie z godzinami renderu.
+
+## Pamięć sceny
+
+`vizflow.py memory add --where 3_4 --text "…" --by <imię>` przypisuje lekcję do strefy sceny, obiektu lub kamery; następne zadanie w tym miejscu dostaje ją w briefie. Lekcja z kotwicą jest oznaczana jako STALE, jeśli miejsce się od tego czasu zmieniło. Lekcja zapisana przez agenta jest tylko propozycją: trafia do briefu po Twoim potwierdzeniu (`memory confirm`).
 
 ## Czy agenci się opłacają?
 

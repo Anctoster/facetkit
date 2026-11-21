@@ -15,6 +15,7 @@ PLAN.json {"start": "2026-12-01", "deadline": "2027-03-15", "hours_per_day": 6,
            "history": [{"estimated_hours": 120, "actual_hours": 150}]}
 "hours" are working hours of the office; "days" are working days of waiting on somebody else."""
 import argparse, datetime, json, random, statistics, sys
+import receipt
 
 RES, LINES = {}, []
 
@@ -167,5 +168,5 @@ if __name__ == "__main__":
     run(json.load(open(a.plan, encoding="utf-8")), a.runs, a.seed, a.max_miss)
     print("\n".join(LINES))
     if a.out:
-        json.dump(RES, open(a.out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    sys.exit(1 if any(r["status"] == "FAIL" for r in RES.values()) else 0)
+        json.dump(receipt.stamp(RES, __file__), open(a.out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    sys.exit(1 if any(r["status"] == "FAIL" for r in RES.values()) else 2 if any(r["status"] == "SKIP" for r in RES.values()) else 0)

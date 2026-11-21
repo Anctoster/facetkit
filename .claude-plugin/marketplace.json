@@ -15,12 +15,12 @@
     {
       "name": "viz-flow",
       "source": "./domains/viz",
-      "description": "The same method for architectural visualization (Archicad → Blender → renders → website images): briefs with checkable criteria, five cheap agents, measured stage checks. Self-contained: Python scripts, no npm."
+      "description": "The same method for architectural visualization (Archicad → Blender → renders → website images): briefs with checkable criteria, five cheap agents, measured stage checks, a survival check for model swaps, pictures compared by numbers, render time in the cost report. Self-contained: Python scripts, no npm."
     },
     {
       "name": "arch-flow",
       "source": "./domains/arch",
-      "description": "The same method for architectural production in Archicad: sources into a checked model description, the description into a model on the right layers, complete drawing sets, and a schedule with quantified risk. Self-contained: Python tools, no npm."
+      "description": "The same method for architectural production in Archicad: sources into a checked model description, the description into a model on the right layers, complete drawing sets, a schedule with quantified risk; changes followed element by element (IFC snapshots), received sets traced to the task, folders checked before they are sent. Self-contained: Python tools, no npm."
     },
     {
       "name": "qa-flow",

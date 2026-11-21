@@ -8,6 +8,15 @@ sys.path.insert(0, os.path.join(SCRIPTS, "blender"))
 sys.path.insert(0, SCRIPTS)
 import vizcore
 import vizflow
+import receipt
+
+
+def stamped(results, tool="img_digest.py"):
+    """A results file as a shipped tool would have written it: with that tool's receipt."""
+    f = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
+    json.dump(receipt.stamp(results, os.path.join(SCRIPTS, tool), []), f)
+    f.close()
+    return f.name
 
 BRIEF = """# Brief {item}
 route: {route}
@@ -93,7 +102,9 @@ class Flow(unittest.TestCase):
         self.step("render", tokens=5000)
         self.assertIn("must be reproduced in this run: images, invariants", self.v("next"))
         self.v("start", "proof", ok=True)
-        self.v("evidence", "images", "--status", "OK", ok=True)
+        self.assertIn("an OK is taken only from the file a tool wrote", self.v("evidence", "images", "--status", "OK", ok=False))
+        self.v("evidence", "images", "--status", "FAIL", ok=False)  # a finding recorded by hand says what was seen
+        self.v("evidence", "--from", stamped({"images": {"status": "OK"}}), ok=True)
         self.v("end", "proof", "--status", "DONE", "--tokens", "3000", ok=True)
         self.assertIn("invariants (not run)", self.v("verdict", "PASS", ok=False))
         self.v("verdict", "REWORK", "--fix", "nobody:x", ok=False)
@@ -101,14 +112,30 @@ class Flow(unittest.TestCase):
         self.assertIn("step=preview  mode=rework", self.v("next"))  # every operator step of the route is the owner's
         self.step("preview"); self.v("answer", ok=True); self.step("render")
         self.v("start", "proof", ok=True)
-        self.v("evidence", "invariants", "--status", "OK", ok=True)
+        same = os.path.join(self.root, "same.json")
+        with open(same, "w") as f:
+            json.dump({"render": {"size": "1920x1080"}}, f)
+        inv = os.path.join(self.root, "inv.json")
+        self.v("diff", same, same, "--out", inv, ok=True)  # the comparison itself writes the evidence for `invariants`
+        self.v("evidence", "--from", inv, ok=True)
         self.v("end", "proof", "--status", "DONE", ok=True)
         self.assertIn("images (not run)", self.v("verdict", "PASS", ok=False), "evidence from the earlier proof run does not carry over")
         self.v("start", "proof", "--force", "re-run the proof", ok=True)
         results = os.path.join(self.root, "r.json")
         with open(results, "w") as f:
             json.dump({"images": {"status": "OK"}, "invariants": {"status": "OK"}, "extra": {"status": "FAIL"}}, f)
-        self.v("evidence", "--from", results, ok=True)
+        self.assertIn("carries no receipt", self.v("evidence", "--from", results, ok=False))
+        forged = dict(receipt.stamp({"images": {"status": "OK"}}, os.path.join(SCRIPTS, "img_digest.py"), []))
+        forged["_receipt"] = dict(forged["_receipt"], tool_sha="0" * 64)
+        with open(results, "w") as f:
+            json.dump(forged, f)
+        self.assertIn("its code is not the tool shipped with this plugin", self.v("evidence", "--from", results, ok=False))
+        edited = dict(receipt.stamp({"images": {"status": "FAIL"}}, os.path.join(SCRIPTS, "img_digest.py"), []))
+        edited["images"] = {"status": "OK"}  # the tool said FAIL; somebody turned it into OK afterwards
+        with open(results, "w") as f:
+            json.dump(edited, f)
+        self.assertIn("the file was changed after the tool wrote it", self.v("evidence", "--from", results, ok=False))
+        self.v("evidence", "--from", stamped({"images": {"status": "OK"}, "invariants": {"status": "OK"}, "extra": {"status": "FAIL"}}), ok=True)
         self.v("end", "proof", "--status", "DONE", ok=True)
         self.v("verdict", "PASS", ok=True)
         self.v("remark", "R-2", "too dark", "--cause", "taste", ok=False)  # not closed yet
@@ -149,7 +176,22 @@ class Flow(unittest.TestCase):
         d["scripts"]["export"] = "tools/project/export.py"
         with open(p, "w") as f:
             json.dump(d, f)
+        self.assertIn("AGENT scene-builder", self.v("next"), "a path written into project.json is not a registration")
+        script = os.path.join(self.root, "export.py")
+        with open(script, "w") as f:
+            f.write("import bpy\n")
+        self.v("script", "register", "export", "--file", script, ok=False)  # nobody answers for it
+        self.assertIn("registered export.py for mode 'export'", self.v("script", "register", "export", "--file", script, "--by", "requester", ok=True))
         self.assertIn("AGENT scene-operator  step=work  mode=export  model=haiku", self.v("next"))
+        # a transaction that ran a text other than the registered one is not evidence in an operator's item
+        import hashlib
+        sha = lambda t: hashlib.sha256(t.encode()).hexdigest()
+        self.step("work"); self.step("map")
+        self.v("start", "proof", ok=True)
+        txn = lambda op: stamped({"txn.contract": {"status": "OK"}, "report": {"committed": True, "op": "export.py", "op_sha": sha(op)}}, os.path.join("blender", "txn.py"))
+        self.assertIn("not registered, or was changed after it was registered (export.py)", self.v("evidence", "--from", txn("import bpy\nimport os\n"), ok=False))
+        self.v("evidence", "--from", txn("import bpy\n"), ok=True)
+        self.v("end", "proof", "--status", "BLOCKED", ok=True)
         self.v("plan", "model-change", "--prefix", "N1", ok=False)
 
     def test_two_failures_move_one_model_up_and_a_success_moves_back(self):
@@ -425,6 +467,127 @@ class Efficiency(unittest.TestCase):
         self.assertIn("opłaca się", page)
         self.assertIn("prefers-color-scheme:dark", page)
         self.assertEqual(self.f("verify").returncode, 0, "the records sit in the same hash chain")
+
+
+class AfterAChange(unittest.TestCase):
+    def tool(self, name, *args):
+        return subprocess.run([sys.executable, os.path.join(SCRIPTS, name), *args], capture_output=True, text=True)
+
+    def dump(self, obj):
+        f = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
+        json.dump(obj, f)
+        f.close()
+        return f.name
+
+    def index(self):
+        rec = lambda i, mats, mods, zone, geo="g": {"id": i, "geometry": geo, "transform": "t", "materials": mats, "modifiers": mods, "collection": "Building", "parent": None, "zones": [zone]}
+        return {"complete": True, "objects": {"BLD_A": rec("A1", ["Brick", "Glass"], ["BEVEL"], "0_0"), "BLD_B": rec("B1", ["Brick"], [], "1_0")}}
+
+    def test_what_was_set_up_by_hand_must_survive_a_new_model(self):
+        before = self.index()
+        self.assertIn("OK   swap.kept: 2 objects carried over", self.tool("swap_check.py", self.dump(before), self.dump(before)).stdout)
+        after = self.index()
+        a = after["objects"].pop("BLD_A")  # the importer renamed the object, dropped a slot, a modifier and copied a material
+        a.update(materials=["Brick.001", None], modifiers=[], geometry="g2")
+        after["objects"]["BLD_A.001"] = a
+        after["objects"]["BLD_N"] = {"id": "N1", "geometry": "g", "transform": "t", "materials": [], "modifiers": [], "zones": ["2_0"]}
+        out = os.path.join(tempfile.mkdtemp(), "swap.json")
+        r = self.tool("swap_check.py", self.dump(before), self.dump(after), "--out", out)
+        self.assertEqual(r.returncode, 1)
+        for line in ("slot 1 was 'Brick', is now 'Brick.001' - a numbered copy made by the import", "slot 2 lost its material 'Glass'", "lost modifiers BEVEL",
+                     "1 new objects arrived with no material: BLD_N", "added 1  removed 0  reshaped 1", "zones touched 2: 0_0, 2_0"):
+            self.assertIn(line, r.stdout)
+        self.assertEqual(self.tool("swap_check.py", self.dump(before), self.dump(after), "--pattern", "BLD_A*", "--allow", "BLD_A*").returncode, 0, "what the brief allows to change is not a loss")
+        # an allowed change of materials alone still touches its zone: the material checks there must run again
+        paint = self.index()
+        paint["objects"]["BLD_B"]["materials"] = ["Brick_dark"]
+        out_p = os.path.join(tempfile.mkdtemp(), "p.json")
+        self.tool("swap_check.py", self.dump(self.index()), self.dump(paint), "--allow", "BLD_B", "--out", out_p)
+        with open(out_p, encoding="utf-8") as f:
+            self.assertEqual(json.load(f)["touched"], ["1_0"])
+        # an object that changed and carries no zones could be anywhere: every zone of the scene is touched
+        nowhere = self.index()
+        del nowhere["objects"]["BLD_B"]["zones"]
+        moved = json.loads(json.dumps(nowhere))
+        moved["objects"]["BLD_B"]["transform"] = "t2"
+        self.assertIn("zones touched 1: 0_0  (every zone: 1 changed objects carry no zones, e.g. BLD_B)", self.tool("swap_check.py", self.dump(nowhere), self.dump(moved)).stdout)
+        # S6: when most of the old model is not found again, the check cannot conclude - it never says OK
+        big = {"complete": True, "objects": {"BLD_%02d" % i: {"id": "X%d" % i, "geometry": "g", "transform": "t", "materials": ["Brick"], "modifiers": [], "zones": ["0_0"]} for i in range(20)}}
+        renamed = json.loads(json.dumps(big))
+        for i in range(3):  # the import gave three objects new identifiers: they look removed and added, losses on them are invisible
+            renamed["objects"]["BLD_%02d" % i]["id"] = "NEW%d" % i
+        r = self.tool("swap_check.py", self.dump(big), self.dump(renamed))
+        self.assertEqual(r.returncode, 2, r.stdout)
+        self.assertIn("SKIP swap.kept: only 85% of the old model's objects (17 of 20 outside --allow) were found again; at least 95% are needed", r.stdout)
+        self.assertEqual(self.tool("swap_check.py", self.dump(big), self.dump(renamed), "--allow", "BLD_00,BLD_01,BLD_02").returncode, 0, "removals the brief names do not count against the share")
+        after["complete"] = False
+        self.assertIn("SKIP swap.kept", self.tool("swap_check.py", self.dump(before), self.dump(after)).stdout)
+        for o in after["objects"].values():
+            o["id"] = None
+        after["complete"] = True
+        self.assertIn("SKIP swap.kept: no object of the old model was found", self.tool("swap_check.py", self.dump(before), self.dump(after), "--pattern", "BLD_N").stdout)
+        # the same file tells the journal which proofs the swap sends back
+        root = os.path.join(tempfile.mkdtemp(), "v")
+        v = lambda *args: subprocess.run([sys.executable, os.path.join(SCRIPTS, "vizflow.py"), "--root", root, *args], capture_output=True, text=True).stdout
+        v("init")
+        v("open", "P-1", "--route", "pack")
+        v("start", "order"); v("end", "order", "--status", "DONE")
+        with open(os.path.join(root, "work", "P-1", "brief.md"), "w", encoding="utf-8") as f:
+            f.write(BRIEF.format(item="P-1", route="pack", criteria="1. Seam is clean in the zones of building B [check: junction.step <= 0.05]\n2. Images within budget [check: images]"))
+        v("brief", "approve", "--by", "auto")
+        v("start", "pack"); v("end", "pack", "--status", "DONE")
+        v("start", "proof")
+        v("evidence", "--from", stamped({"junction.step": {"status": "OK", "zones": ["1_0"]}, "images": {"status": "OK"}}))
+        v("end", "proof", "--status", "DONE"); v("verdict", "PASS"); v("close")
+        back = v("stale", "--from", out)
+        self.assertIn("RE-RUN for P-1 (pack): images (covers everything)", back)
+        self.assertIn("still standing 1", back, "the seam in zone 1_0 was not touched by a change in 0_0 and 2_0")
+        v("cost", "add", "--kind", "render", "--minutes", "90", "--item", "P-1", "--note", "72 frames")
+        self.assertIn("render 90 min", v("cost", "report"))
+
+    @unittest.skipIf(Image is None, "Pillow is not installed: the image tools are not tested here")
+    def test_pictures_are_compared_by_numbers_before_anybody_looks(self):
+        import random
+        from PIL import Image, ImageDraw
+        d = tempfile.mkdtemp()
+        ref = Image.new("RGB", (800, 600), (120, 150, 200))
+        ImageDraw.Draw(ref).rectangle((300, 250, 500, 600), fill=(140, 60, 50))
+        ref.save(os.path.join(d, "ref.png"))
+        new = ref.copy()
+        ImageDraw.Draw(new).rectangle((620, 420, 700, 600), fill=(30, 90, 30))  # something appeared in G5-G6
+        new.save(os.path.join(d, "new.png"))
+        run = lambda *args: self.tool("img_compare.py", os.path.join(d, "ref.png"), *args)
+        r = run(os.path.join(d, "new.png"), "--expect", "none", "--max-noise", "2.5", "--crop", os.path.join(d, "crops"))
+        self.assertIn("FAIL images.changed: changed where nothing was to change: G5, G6", r.stdout)
+        self.assertIn("OK   images.noise", r.stdout)
+        self.assertEqual(sorted(os.listdir(os.path.join(d, "crops"))), ["cell_G5.jpg", "cell_G6.jpg"])
+        self.assertEqual(run(os.path.join(d, "new.png"), "--expect", "G5,G6").returncode, 2, "nothing failed; the noise limit was not given, and the exit code says so")
+        good = run(os.path.join(d, "new.png"), "--expect", "G5,G6", "--max-noise", "2.5")
+        self.assertEqual(good.returncode, 0)
+        self.assertIn("it does not show that the rest is the same", good.stdout)
+        self.assertIn("a full-contrast detail smaller than about 15x15 px of this 800x600 frame can stay below it", good.stdout)
+        self.assertIn("a cell is 100x100 px", good.stdout)
+        # the same view, a little brighter everywhere: no cell passes the threshold, the whole picture does
+        Image.eval(new, lambda v: min(255, v + 4)).save(os.path.join(d, "bright.png"))  # +4 everywhere: under the threshold in every cell
+        bright = run(os.path.join(d, "bright.png"), "--expect", "G5,G6")
+        self.assertIn("the whole picture is brighter by 4.0 of 255 (limit 3.0)", bright.stdout)
+        self.assertNotIn("changed where nothing was to change", bright.stdout, "no single cell shows it - only the whole picture does")
+        self.assertEqual(bright.returncode, 1)
+        self.assertIn("no visible change where one was expected: A1", run(os.path.join(d, "new.png"), "--expect", "A1,G5,G6").stdout)
+        self.assertIn("OK   images.changed", run(os.path.join(d, "ref.png"), "--expect", "none").stdout)
+        random.seed(1)
+        grain = new.copy()
+        px = grain.load()
+        for x in range(800):
+            for y in range(600):
+                k = random.randint(-25, 25)
+                px[x, y] = tuple(max(0, min(255, c + k)) for c in px[x, y])
+        grain.save(os.path.join(d, "grain.png"))
+        self.assertIn("FAIL images.noise", run(os.path.join(d, "grain.png"), "--max-noise", "2.5").stdout)
+        shifted = Image.new("RGB", (800, 600), (60, 60, 60))
+        shifted.paste(ref, (200, 80))
+        shifted.save(os.path.join(d, "shifted.png"))
+        self.assertIn("this is not a local change", run(os.path.join(d, "shifted.png"), "--expect", "G5").stdout)
 
 
 if __name__ == "__main__":

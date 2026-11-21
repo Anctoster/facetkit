@@ -1,0 +1,12 @@
+{
+ "note": "A FORMAT EXAMPLE, not a regulation. The numbers below are placeholders: the designer replaces each with the value of the provision in force for this building, names the provision in 'basis' and signs 'confirmed_by' / 'confirmed_on'. A rule without these is reported as unconfirmed and never counts as met.",
+ "rules": [
+  {"id": "R1", "title": "Szerokosc korytarza w swietle", "select": {"type": "zone", "where": [{"field": "name", "match": "korytarz*"}]}, "field": "min_width", "min": 1.2, "basis": "", "confirmed_by": "", "confirmed_on": ""},
+  {"id": "R2", "title": "Szerokosc drzwi wejsciowych do mieszkania", "select": {"type": "door", "where": [{"field": "name", "match": "DW*"}]}, "field": "width", "min": 0.9, "basis": "", "confirmed_by": "", "confirmed_on": ""},
+  {"id": "R3", "title": "Nachylenie pochylni", "select": {"type": "ramp"}, "field": "slope_pct", "max": 8.0, "basis": "", "confirmed_by": "", "confirmed_on": ""},
+  {"id": "R4", "title": "Wysokosc parapetu okna", "select": {"type": "window"}, "field": "sill", "min": 0.85, "basis": "", "confirmed_by": "", "confirmed_on": ""},
+  {"id": "R5", "title": "Wysokosc pomieszczenia mieszkalnego", "select": {"type": "zone", "where": [{"field": "name", "match": "pok*"}]}, "field": "height", "min": 2.5, "basis": "", "confirmed_by": "", "confirmed_on": ""},
+  {"id": "R6", "title": "Wysokosc stopnia schodow", "select": {"type": "stair"}, "field": "riser", "max": 0.175, "basis": "", "confirmed_by": "", "confirmed_on": ""},
+  {"id": "R7", "title": "Schody: 2h + s", "select": {"type": "stair"}, "field": "two_r_plus_t", "min": 0.6, "max": 0.65, "basis": "", "confirmed_by": "", "confirmed_on": ""}
+ ]
+}

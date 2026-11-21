@@ -268,7 +268,9 @@
     ],
     "checks": [
      "model.layers",
-     "model.counts"
+     "model.counts",
+     "change.complete",
+     "change.declared"
     ],
     "approve_brief": true
    },
@@ -298,7 +300,10 @@
       "model": "haiku"
      }
     ],
-    "checks": [],
+    "checks": [
+     "bim.complete",
+     "bim.ids"
+    ],
     "approve_brief": false
    },
    "variants": {
@@ -331,6 +336,122 @@
      "variants.chosen"
     ],
     "approve_brief": true
+   },
+   "change": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "readback",
+      "agent": "model-operator",
+      "mode": "readback",
+      "model": "haiku",
+      "script": "readback",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      }
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "numbers",
+      "model": "haiku"
+     }
+    ],
+    "checks": [
+     "change.complete",
+     "change.listed"
+    ],
+    "approve_brief": false
+   },
+   "rules": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "readback",
+      "agent": "model-operator",
+      "mode": "readback",
+      "model": "haiku",
+      "script": "readback",
+      "else": {
+       "agent": "arch-builder",
+       "model": "sonnet"
+      }
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "numbers",
+      "model": "haiku"
+     }
+    ],
+    "checks": [
+     "bim.complete",
+     "rules.confirmed",
+     "rules.coverage",
+     "rules.values"
+    ],
+    "approve_brief": true
+   },
+   "trace": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "read",
+      "agent": "source-reader",
+      "mode": "clauses",
+      "model": "sonnet",
+      "gate": "the numbered list of clauses of the task and the place that answers each"
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "numbers",
+      "model": "haiku"
+     }
+    ],
+    "checks": [
+     "trace.clauses",
+     "trace.covered"
+    ],
+    "approve_brief": true
+   },
+   "issue": {
+    "steps": [
+     {
+      "id": "order",
+      "agent": "arch-conductor",
+      "mode": "brief",
+      "model": "haiku"
+     },
+     {
+      "id": "proof",
+      "agent": "arch-inspector",
+      "mode": "numbers",
+      "model": "haiku"
+     }
+    ],
+    "checks": [
+     "outbox.files",
+     "outbox.read",
+     "outbox.internal"
+    ],
+    "approve_brief": false
    }
   },
   "plans": {
@@ -439,8 +560,37 @@
       7
      ]
     ]
+   ],
+   "revision": [
+    [
+     "revise",
+     "The change in the model, inside its declared scope",
+     []
+    ],
+    [
+     "issue",
+     "The reissued set checked before it is sent",
+     [
+      1
+     ]
+    ]
+   ],
+   "review": [
+    [
+     "trace",
+     "The received set against the task, clause by clause",
+     []
+    ],
+    [
+     "rules",
+     "The received model against the designer's list of requirements",
+     []
+    ]
    ]
-  }
+  },
+  "release": [
+   "issue"
+  ]
  },
  "checks": [
   "spec.schema",
@@ -471,7 +621,28 @@
   "variants.limits",
   "variants.distinct",
   "variants.compared",
-  "variants.chosen"
+  "variants.chosen",
+  "bim.ids",
+  "bim.layers",
+  "bim.props",
+  "bim.areas",
+  "change.listed",
+  "change.declared",
+  "rules.confirmed",
+  "rules.coverage",
+  "rules.values",
+  "trace.clauses",
+  "trace.covered",
+  "trace.extras",
+  "outbox.files",
+  "outbox.internal",
+  "outbox.tables",
+  "outbox.articles",
+  "outbox.areas",
+  "bim.complete",
+  "change.complete",
+  "outbox.read",
+  "outbox.metadata"
  ],
  "project": {
   "project": "",
@@ -532,7 +703,33 @@
    "pw": "tools/sheets.pw.json"
   },
   "scripts": {},
-  "regulations_checked_on": ""
+  "regulations_checked_on": "",
+  "bim": {
+   "ifc_export_dir": "",
+   "id_from": "name",
+   "id_required": [
+    "wall",
+    "door",
+    "window",
+    "zone"
+   ],
+   "layers_extra": [],
+   "required_props": {
+    "zone": [
+     "number",
+     "name",
+     "area"
+    ]
+   }
+  },
+  "rules_file": "",
+  "impact_file": "tools/impact.example.json",
+  "outbox_config": "",
+  "rates": {
+   "currency": "",
+   "person_hour": null,
+   "tokens_1k": {}
+  }
  },
  "builtin_modes": [
   "estimate"
