@@ -57,6 +57,9 @@ import { opsCommands } from './ops.mjs';
 import { setupCommands } from './setup.mjs';
 import { EXIT_CAP, excerpt, ledgerStatus, readLedger, run } from '../lib/thrift.mjs';
 import { safeEnv } from '../lib/shell.mjs';
+import { detectCiContext, detectTestCommand, resolveItemId } from '../lib/github-context.mjs';
+import { postPrComment, renderPrReport } from '../lib/explain-pr.mjs';
+
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CWD = process.cwd();
