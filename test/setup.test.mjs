@@ -76,3 +76,37 @@ test('hypotheses: every facet is listed as a claim with its trials; reported res
     const committed = fs.readFileSync(path.join(KIT, 'HYPOTHESES.md'), 'utf-8');
     assert.equal(committed, r.stdout.replace(/\n$/, ''), 'HYPOTHESES.md is up to date: facet hypotheses --write HYPOTHESES.md');
 });
+
+test('init --agents: the flow has only the chosen agents, in order; Claude Code gets only those; a flow without a judge closes at L0', () => {
+    const root = tmp();
+    const r = f(root, 'init', '--agents', 'proof-inspector,slice-builder', '--claude');
+    assert.equal(r.status, 0, r.stderr);
+    const flow = JSON.parse(fs.readFileSync(path.join(root, '.facet', 'flow.json'), 'utf-8'));
+    assert.deepEqual(flow.steps.map((s) => s.id), ['build', 'proof', 'commit'], 'the order of the default flow, not of the list');
+    assert.deepEqual(fs.readdirSync(path.join(root, '.claude', 'agents')).sort(), ['proof-inspector.md', 'slice-builder.md']);
+    assert.equal(JSON.parse(fs.readFileSync(path.join(root, 'facet.json'), 'utf-8')).govern.required, 1);
+    assert.match(f(root, 'flow', 'open', 'ITEM-1').stdout, /opened with 3 steps: build → proof → commit/);
+    assert.match(f(tmp(), 'init', '--agents', 'nobody').stderr, /unknown agent\(s\) nobody — choose from: .*slice-builder/);
+    assert.match(f(tmp(), 'init', '--minimal', '--agents', 'slice-builder').stderr, /use one of them/);
+    const lone = tmp();
+    const l = f(lone, 'init', '--agents', 'slice-builder');
+    assert.match(l.stdout, /items close at L0/);
+    assert.equal(JSON.parse(fs.readFileSync(path.join(lone, 'facet.json'), 'utf-8')).govern.required, 0);
+});
+
+test('init --github: alone it writes only a pull-request workflow with full history, the project toolchain and a pinned release', () => {
+    const root = tmp();
+    write(root, 'requirements.txt', 'pytest\n');
+    const r = f(root, 'init', '--github');
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(fs.readdirSync(root).sort(), ['.github', 'requirements.txt'], 'the Action needs no configuration, so none is written');
+    const wf = fs.readFileSync(path.join(root, '.github', 'workflows', 'facetkit.yml'), 'utf-8');
+    const version = JSON.parse(fs.readFileSync(path.join(KIT, 'package.json'), 'utf-8')).version;
+    assert.match(wf, /pull_request:/);
+    assert.doesNotMatch(wf, /pull_request_target/);
+    assert.match(wf, /fetch-depth: 0/);
+    assert.match(wf, /pull-requests: write/);
+    assert.match(wf, /setup-python@v5[\s\S]*pip install -r requirements\.txt/);
+    assert.ok(wf.includes(`uses: Anctoster/facetkit@v${version}`));
+    assert.match(f(root, 'init', '--github').stdout, /kept as they were/, 'a second run overwrites nothing');
+});

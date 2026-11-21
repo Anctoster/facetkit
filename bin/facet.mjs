@@ -68,7 +68,7 @@ const argv = process.argv.slice(2);
 const split = argv.indexOf('--');
 const own = split < 0 ? argv : argv.slice(0, split);
 const rest = split < 0 ? [] : argv.slice(split + 1);
-const [command, ...positional] = own.filter((a, i) => !a.startsWith('--') && !(own[i - 1]?.startsWith('--') && !['--json', '--verbose', '--plan', '--check', '--force', '--record', '--snapshot', '--no-atlas', '--no-history', '--neighbours', '--minimal', '--claude', '--rerun', '--no-sign', '--accept', '--provisional', '--all', '--post-pr'].includes(own[i - 1])));
+const [command, ...positional] = own.filter((a, i) => !a.startsWith('--') && !(own[i - 1]?.startsWith('--') && !['--json', '--verbose', '--plan', '--check', '--force', '--record', '--snapshot', '--no-atlas', '--no-history', '--neighbours', '--minimal', '--claude', '--rerun', '--no-sign', '--accept', '--provisional', '--all', '--post-pr', '--github'].includes(own[i - 1])));
 const flag = (name) => own.includes(`--${name}`);
 const opt = (name, fallback) => (own.includes(`--${name}`) ? own[own.indexOf(`--${name}`) + 1] : fallback);
 const opts = (name) => own.flatMap((a, i) => (a === `--${name}` ? [own[i + 1]] : []));

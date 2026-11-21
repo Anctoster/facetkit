@@ -4,6 +4,7 @@ import path from 'node:path';
 import { boardData, renderBoard } from '../lib/board.mjs';
 import { costReport } from '../lib/cost.mjs';
 import { demoEvents, demoItems } from '../lib/demo.mjs';
+import { DEFAULT_FLOW } from '../lib/flow.mjs';
 import { matrix, observations } from '../lib/evalx.mjs';
 import { beliefs, signals } from '../lib/retro.mjs';
 import { plan } from '../lib/schedule.mjs';
@@ -22,26 +23,87 @@ export function setupCommands({ CWD, KIT, opt, flag, fail, skills }) {
         fs.writeFileSync(to, text);
         done.written.push(path.relative(CWD, to));
     };
+    /** The default flow cut down to the chosen agents, in its order; steps without an agent (a manual commit) stay. */
+    const flowFor = (agents) => ({
+        ...DEFAULT_FLOW,
+        steps: DEFAULT_FLOW.steps.filter((s) => (s.agent ? agents.includes(s.agent) : !!s.manual)).map(({ optional, ...s }) => s),
+        rework: { ...DEFAULT_FLOW.rework, rerun: DEFAULT_FLOW.rework.rerun.filter((id) => DEFAULT_FLOW.steps.some((s) => s.id === id && (!s.agent || agents.includes(s.agent)) && !s.gates)) },
+        tiers: Object.fromEntries(Object.entries(DEFAULT_FLOW.tiers ?? {}).map(([t, roles]) => [t, Object.fromEntries(Object.entries(roles).filter(([a]) => agents.includes(a)))]).filter(([, roles]) => Object.keys(roles).length)),
+    });
+    const version = JSON.parse(fs.readFileSync(path.join(KIT, 'package.json'), 'utf-8')).version;
+    const has = (f) => fs.existsSync(path.join(CWD, f));
+    /** A pull-request workflow for the Action, with the toolchain of the project it is written into. */
+    const githubWorkflow = () => {
+        const toolchain = [];
+        if (has('package.json')) toolchain.push('      - uses: actions/setup-node@v4', '        with:', '          node-version: 22', `      - run: ${has('pnpm-lock.yaml') ? 'corepack enable && pnpm install --frozen-lockfile' : has('yarn.lock') ? 'corepack enable && yarn install --immutable' : has('package-lock.json') ? 'npm ci' : 'npm install'}`);
+        if (['pyproject.toml', 'requirements.txt', 'setup.cfg'].some(has)) toolchain.push('      - uses: actions/setup-python@v5', '        with:', "          python-version: '3.12'", `      - run: ${has('requirements.txt') ? 'pip install -r requirements.txt pytest' : 'pip install -e . pytest'}`);
+        if (has('go.mod')) toolchain.push('      - uses: actions/setup-go@v5', '        with:', '          go-version-file: go.mod');
+        if (has('pom.xml') || has('build.gradle') || has('build.gradle.kts')) toolchain.push('      - uses: actions/setup-java@v4', '        with:', '          distribution: temurin', "          java-version: '21'");
+        return [
+            '# FacetKit on every pull request: scan the change, run the tests, probe the changed lines with mutants,',
+            '# and keep one comment on the PR up to date. Guide: https://github.com/Anctoster/facetkit/blob/main/docs/github-integration.md',
+            'name: facetkit',
+            'on:',
+            '  pull_request:',
+            'permissions:',
+            '  contents: read',
+            '  pull-requests: write   # the PR comment; without it the report is still in the job summary',
+            'jobs:',
+            '  assurance:',
+            '    runs-on: ubuntu-latest',
+            '    steps:',
+            '      - uses: actions/checkout@v4',
+            '        with:',
+            '          fetch-depth: 0   # the change is measured from the merge base: a shallow clone has none',
+            ...(toolchain.length ? ['      # your toolchain, so that the tests can run (written from the files this project has; adjust it)', ...toolchain] : ['      # set up your toolchain and install dependencies here, so that the tests can run']),
+            `      - uses: Anctoster/facetkit@v${version}   # pin a release (or a commit SHA), not a branch`,
+            '        with:',
+            '          min-level: L2   # L1 clean scan · L2 tests pass · L3 mutants of the changed code are noticed',
+            '          # test-command: npm test   # when the guess from your project files is wrong',
+            '',
+        ].join('\n');
+    };
     return {
-        /** Scaffolds a project: configuration, an items file, team rules and handoff templates; with --claude also agents and commands. */
+        /** Scaffolds a project: configuration, an items file, team rules and handoff templates; with --claude also agents and commands.
+         *  --agents a,b builds the flow from those agents only; --github writes a workflow that runs the GitHub Action
+         *  (alone, it writes nothing else: the Action needs no configuration). */
         init() {
             const done = { written: [], kept: [] };
             const minimal = flag('minimal');
-            const dirs = ['src', 'lib', 'app', 'server', 'pkg', 'cmd', 'internal', 'tests', 'test'].filter((d) => fs.existsSync(path.join(CWD, d)));
-            const config = { journal: '.facet/journal', memory: '.facet/memory', routing: 'facet.items.json', ...(minimal ? { flow: '.facet/flow.json' } : {}), dirs: dirs.length ? dirs : ['src', 'tests'], govern: { required: 1, attestations: '.facet/attest', checks: {} }, skillint: { requireCause: true, ablate: { rate: 0 } } };
-            write(path.join(CWD, 'facet.json'), `${JSON.stringify(config, null, 2)}\n`, done);
-            const route = minimal ? ['spec-falsifier', 'slice-builder', 'proof-inspector'] : ['context-cartographer', 'spec-falsifier', 'red-first-specifier', 'slice-builder', 'proof-inspector'];
-            write(path.join(CWD, 'facet.items.json'), `${JSON.stringify({ items: { 'ITEM-1': { version: 'v1', deps: [], tier: 'normal', route, gates: [], title: 'Replace this with your first piece of work' } } }, null, 2)}\n`, done);
-            if (minimal) copy(path.join(KIT, 'presets', 'minimal.flow.json'), path.join(CWD, '.facet', 'flow.json'), done);
-            copy(path.join(KIT, 'templates', 'RULES.md'), path.join(CWD, '.facet', 'RULES.md'), done);
-            for (const f of fs.readdirSync(path.join(KIT, 'templates')).filter((x) => x !== 'RULES.md')) copy(path.join(KIT, 'templates', f), path.join(CWD, '.facet', 'templates', f), done);
-            if (flag('claude')) {
-                for (const f of fs.readdirSync(path.join(KIT, 'agents'))) copy(path.join(KIT, 'agents', f), path.join(CWD, '.claude', 'agents', f), done);
-                for (const f of fs.readdirSync(path.join(KIT, 'commands'))) copy(path.join(KIT, 'commands', f), path.join(CWD, '.claude', 'commands', f), done);
+            const picked = !flag('agents') ? null : String(opt('agents') ?? '').split(',').map((a) => a.trim()).filter(Boolean);
+            const githubOnly = flag('github') && !minimal && !picked && !flag('claude');
+            const known = fs.readdirSync(path.join(KIT, 'agents')).filter((f) => f.endsWith('.md')).map((f) => f.slice(0, -3)).sort();
+            let customFlow = null;
+            if (picked) {
+                if (minimal) fail('init: --minimal and --agents choose the team in two ways — use one of them');
+                const unknown = picked.filter((a) => !known.includes(a));
+                if (!picked.length || unknown.length) fail(`init --agents: ${unknown.length ? `unknown agent(s) ${unknown.join(', ')}` : 'no agent given'} — choose from: ${known.join(', ')}`);
+                customFlow = flowFor(picked);
+                if (!customFlow.steps.some((s) => s.agent)) fail(`init --agents: none of ${picked.join(', ')} has a step in the flow — choose from the agents that work on an item: ${[...new Set(DEFAULT_FLOW.steps.map((s) => s.agent).filter(Boolean))].join(', ')}`);
             }
+            if (!githubOnly) {
+                const dirs = ['src', 'lib', 'app', 'server', 'pkg', 'cmd', 'internal', 'tests', 'test'].filter((d) => fs.existsSync(path.join(CWD, d)));
+                const judged = !customFlow || customFlow.steps.some((s) => s.verdict);
+                const config = { journal: '.facet/journal', memory: '.facet/memory', routing: 'facet.items.json', ...(minimal || customFlow ? { flow: '.facet/flow.json' } : {}), dirs: dirs.length ? dirs : ['src', 'tests'], govern: { required: judged ? 1 : 0, attestations: '.facet/attest', checks: {} }, skillint: { requireCause: true, ablate: { rate: 0 } } };
+                write(path.join(CWD, 'facet.json'), `${JSON.stringify(config, null, 2)}\n`, done);
+                const route = picked ?? (minimal ? ['spec-falsifier', 'slice-builder', 'proof-inspector'] : ['context-cartographer', 'spec-falsifier', 'red-first-specifier', 'slice-builder', 'proof-inspector']);
+                write(path.join(CWD, 'facet.items.json'), `${JSON.stringify({ items: { 'ITEM-1': { version: 'v1', deps: [], tier: 'normal', route, gates: [], title: 'Replace this with your first piece of work' } } }, null, 2)}\n`, done);
+                if (minimal) copy(path.join(KIT, 'presets', 'minimal.flow.json'), path.join(CWD, '.facet', 'flow.json'), done);
+                if (customFlow) write(path.join(CWD, '.facet', 'flow.json'), `${JSON.stringify(customFlow, null, 2)}\n`, done);
+                copy(path.join(KIT, 'templates', 'RULES.md'), path.join(CWD, '.facet', 'RULES.md'), done);
+                for (const f of fs.readdirSync(path.join(KIT, 'templates')).filter((x) => x !== 'RULES.md')) copy(path.join(KIT, 'templates', f), path.join(CWD, '.facet', 'templates', f), done);
+                if (flag('claude')) {
+                    for (const f of fs.readdirSync(path.join(KIT, 'agents')).filter((x) => !picked || picked.includes(x.replace(/\.md$/, '')))) copy(path.join(KIT, 'agents', f), path.join(CWD, '.claude', 'agents', f), done);
+                    for (const f of fs.readdirSync(path.join(KIT, 'commands'))) copy(path.join(KIT, 'commands', f), path.join(CWD, '.claude', 'commands', f), done);
+                }
+                if (customFlow && !judged) console.log('note: without proof-inspector nothing judges the work — items close at L0 (govern.required is 0). Add proof-inspector to reach L1 and above.');
+            }
+            if (flag('github')) write(path.join(CWD, '.github', 'workflows', 'facetkit.yml'), githubWorkflow(), done);
             console.log(`${done.written.length} file(s) written${done.kept.length ? `, ${done.kept.length} kept as they were (${done.kept.slice(0, 4).join(', ')}${done.kept.length > 4 ? ', …' : ''})` : ''}`);
             for (const f of done.written) console.log(`  + ${f}`);
-            console.log(`\nNext:\n  1. put your project's rules at the top of .facet/RULES.md and your checks into facet.json → govern.checks\n  2. describe your first item in facet.items.json\n  3. add ".work/" to .gitignore; commit facet.json, facet.items.json and .facet/\n  4. ${flag('claude') ? 'restart Claude Code, then: /facet-item ITEM-1' : 'facet flow open ITEM-1 && facet flow next   (agents for Claude Code: facet init --claude, or install the plugin)'}`);
+            if (githubOnly) return void console.log('\nNext: read .github/workflows/facetkit.yml (set up your toolchain where it says so), commit it and open a pull request — the report appears as a comment. Guide: docs/github-integration.md');
+            const first = customFlow ? customFlow.steps.find((s) => s.agent) : null;
+            console.log(`\nNext:\n  1. put your project's rules at the top of .facet/RULES.md and your checks into facet.json → govern.checks\n  2. describe your first item in facet.items.json\n  3. add ".work/" to .gitignore; commit facet.json, facet.items.json and .facet/\n  4. ${flag('claude') ? 'restart Claude Code, then: /facet-item ITEM-1' : 'facet flow open ITEM-1 && facet flow next   (agents for Claude Code: facet init --claude, or install the plugin)'}${customFlow ? `\n\nThe flow of this project: ${customFlow.steps.map((s) => s.id).join(' → ')}${first ? ` (first agent: ${first.agent})` : ''}` : ''}`);
         },
         /** Writes a board from a synthetic journal: what the system looks like after a few weeks of work. */
         demo() {
