@@ -70,11 +70,13 @@ Agents are instructed never to issue either on their own (`assured-work:waiver-i
 
 ```bash
 facet key new                                   # once per person or CI runner; the private key stays in ~/.facet/keys
-facet key trust <public key> --name ann --role witness   # a reviewed change of .facet/trust.json
+facet key trust <public key> --name ann --role witness   # a reviewed change of .facet/trust.json — counts once committed
 facet proof create --item P07
 facet proof witness --item P07                  # somebody else runs the checks again on the same sources
 facet proof verify --item P07
 ```
+
+**Trust comes from a commit.** The keys a project trusts are read from `.facet/trust.json` as committed at `HEAD`, or at the ref `govern.trustRef` names (for example `origin/main`, the reviewed branch). A key added to the working copy and not committed is not trusted; a key removed and not committed still is. Every run that reads trust says so on stderr when the working copy differs. Outside git the file is read as it is and marked *uncommitted*.
 
 | Status | Means |
 |---|---|

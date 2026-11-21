@@ -65,7 +65,16 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             return null;
         }
     };
-    const trustNow = () => loadTrust(CWD);
+    let trustWarned = false;
+    // trust as committed (govern.trustRef, default HEAD); a working copy that differs is named once per run, never used
+    const trustNow = () => {
+        const t = loadTrust(CWD, { ref: project.govern?.trustRef ?? 'HEAD' });
+        if (t.warning && !trustWarned) {
+            trustWarned = true;
+            console.error(`trust: ${t.warning}`);
+        }
+        return t;
+    };
     // "required": a process without a key must not write at all — an unsigned event would be damage
     const signRequired = project.govern?.signEvents === 'required';
     if (project.govern?.signEvents && myKey()) setSigner(eventSigner(myKey()));
@@ -1281,7 +1290,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 const pub = positional[1] ?? myKey()?.pub ?? fail('key trust: facet key trust <public key> --name NAME --role writer|witness|releaser');
                 if (!['writer', 'witness', 'releaser'].includes(opt('role', 'writer'))) fail('key trust: --role writer|witness|releaser');
                 const e = addTrust(CWD, { pub, name: opt('name') ?? fail('key trust: --name — a key is trusted as somebody'), role: opt('role', 'writer') });
-                return void console.log(`trusted: ${e.id} as ${e.name} (${e.role}) in ${path.relative(CWD, trustFile(CWD))} — commit it; a change of this file is a change of who may vouch`);
+                return void console.log(`trusted: ${e.id} as ${e.name} (${e.role}) in ${path.relative(CWD, trustFile(CWD))} — not trusted until you commit it: trust is read from ${project.govern?.trustRef ?? 'HEAD'}, and a change of this file is a change of who may vouch`);
             }
             const t = trustNow();
             const mine = myKey();
