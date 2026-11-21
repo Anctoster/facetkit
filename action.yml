@@ -1,54 +1,74 @@
 name: 'FacetKit Assurance'
-description: 'Evidence-first verification, proof pack witness, and PR assurance report'
+description: 'Scans the change, runs the tests, probes the changed code with mutants and reports an assurance level on the pull request'
+branding:
+  icon: 'check-circle'
+  color: 'green'
 
 inputs:
-  item-id:
-    description: 'Item ID (auto-detected from branch/PR if omitted)'
-    required: false
-    default: ''
   min-level:
-    description: 'Minimum required assurance level (L0-L4)'
+    description: 'The lowest level that passes: L1 clean scan · L2 tests pass · L3 mutants of the changed code are noticed (≥ 80 %). With a journal: the level the journal proves.'
     required: false
     default: 'L2'
   test-command:
-    description: 'Custom test command for stateless CI mode'
+    description: 'The test command; guessed from package.json, pyproject.toml, go.mod, pom.xml or gradlew when empty'
     required: false
     default: ''
+  item-id:
+    description: 'The item; when empty it is taken from the branch name, then the PR title, else PR-<number>'
+    required: false
+    default: ''
+  comment:
+    description: 'Write the report as one PR comment, updated on every run (needs pull-requests: write)'
+    required: false
+    default: 'true'
+  node-version:
+    description: 'Node.js for FacetKit itself (20 or newer)'
+    required: false
+    default: '22'
   github-token:
-    description: 'GitHub token for posting PR comments'
+    description: 'Token for the PR comment'
     required: false
     default: ${{ github.token }}
 
 outputs:
   level:
-    description: 'Achieved assurance level (L0-L4)'
+    description: 'The level reached (L0–L4)'
     value: ${{ steps.verify.outputs.level }}
+  passed:
+    description: 'true when the level reached is at least min-level and no check failed'
+    value: ${{ steps.verify.outputs.passed }}
 
 runs:
   using: 'composite'
   steps:
-    - name: Setup Node.js
+    - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: ${{ inputs.node-version }}
 
-    - name: Run FacetKit Verification
+    # inputs reach the script only as environment variables: a branch name or a PR title in an input
+    # cannot become shell code
+    - name: Run FacetKit
       id: verify
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
+        FACET_IN_ITEM: ${{ inputs.item-id }}
+        FACET_IN_LEVEL: ${{ inputs.min-level }}
+        FACET_IN_TEST: ${{ inputs.test-command }}
+        FACET_IN_COMMENT: ${{ inputs.comment }}
+        FACET_ACTION_PATH: ${{ github.action_path }}
       run: |
-        node "${{ github.action_path }}/bin/facet.js" ci-verify \
-          ${{ inputs.item-id != '' && format('--item "{0}"', inputs.item-id) || '' }} \
-          ${{ inputs.test-command != '' && format('--test-cmd "{0}"', inputs.test-command) || '' }} \
-          --min-level "${{ inputs.min-level }}" \
-          --post-pr \
-          --out-proof "facetkit-proof-pack.json"
+        args=(ci-verify --min-level "$FACET_IN_LEVEL" --out facetkit-report.json)
+        if [ -n "$FACET_IN_ITEM" ]; then args+=(--item "$FACET_IN_ITEM"); fi
+        if [ -n "$FACET_IN_TEST" ]; then args+=(--test-cmd "$FACET_IN_TEST"); fi
+        if [ "$FACET_IN_COMMENT" = "true" ]; then args+=(--post-pr); fi
+        node "$FACET_ACTION_PATH/bin/facet.mjs" "${args[@]}"
 
-    - name: Upload Proof Pack
+    - name: Keep the report
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: facetkit-proof-pack
-        path: facetkit-proof-pack.json
+        name: facetkit-report
+        path: facetkit-report.json
         if-no-files-found: ignore
