@@ -86,3 +86,22 @@ test('trust outside git: the file is read as it is and marked uncommitted; an un
     write(root, '.facet/trust.json', '{ not json');
     assert.throws(() => loadTrust(root), /trust\.json is not readable/);
 });
+
+test('cli: outside git the proof report says trust is uncommitted', async () => {
+    const { spawnSync: run } = await import('node:child_process');
+    const { fileURLToPath } = await import('node:url');
+    const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'facet.mjs');
+    const root = tmp();
+    write(root, 'facet.json', JSON.stringify({ journal: '.facet/journal', govern: { checks: { truth: `${JSON.stringify(process.execPath)} -e "process.exit(0)"` } } }));
+    write(root, 'facet.items.json', JSON.stringify({ items: { A: { deps: [], route: [], gates: [] } } }));
+    write(root, 'src/a.txt', 'one\n');
+    const env = { ...process.env, FACET_KEYS: path.join(tmp(), 'keys'), FACET_WRITER: 'ann' };
+    const f = (...args) => run(process.execPath, [CLI, ...args], { cwd: root, encoding: 'utf-8', env });
+    f('key', 'new');
+    f('key', 'trust', '--name', 'ann', '--role', 'writer');
+    f('flow', 'open', 'A', '--route', '', '--force');
+    assert.equal(f('check', 'truth').status, 0);
+    assert.equal(f('proof', 'create').status, 0);
+    const v = f('proof', 'verify');
+    assert.match(v.stdout, /trust: uncommitted — \.facet\/trust\.json is read outside git/, v.stdout + v.stderr);
+});

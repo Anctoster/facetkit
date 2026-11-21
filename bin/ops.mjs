@@ -771,6 +771,8 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             }
             const v = verifyProof(CWD, events(), m, { ...options, environment: envNow(true) });
             console.log(renderProof(m, v));
+            // plan 2.5: outside git the report says that trust was read from an uncommitted file
+            if (trustNow().source === 'uncommitted') console.log('  · trust: uncommitted — .facet/trust.json is read outside git, so who added a key cannot be checked; no proof reaches L4');
             if (sub === 'verify' && v.status !== 'VALID') process.exit(1);
         },
         /** owners [files…] [--changed] [--agent A]: does every file of the plan have exactly one owner? */
