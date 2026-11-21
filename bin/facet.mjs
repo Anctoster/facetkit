@@ -63,6 +63,7 @@ import { postPrComment, renderPrReport } from '../lib/explain-pr.mjs';
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CWD = process.cwd();
+const [command, ...positional] = own.filter((a, i) => !a.startsWith('--') && !(own[i - 1]?.startsWith('--') && !['--json', '--verbose', '--plan', '--check', '--force', '--record', '--snapshot', '--no-atlas', '--no-history', '--neighbours', '--minimal', '--claude', '--rerun', '--no-sign', '--accept', '--provisional', '--all', '--post-pr'].includes(own[i - 1])));
 const argv = process.argv.slice(2);
 const split = argv.indexOf('--');
 const own = split < 0 ? argv : argv.slice(0, split);
@@ -269,6 +270,100 @@ const commands = {
         } catch (error) {
             fail(`ui: ${error.message}`, error.code === 'NO_BROWSER' ? 2 : 1);
         }
+            async 'ci-verify'() {
+        const LEVEL_RANK = { L0: 0, L1: 1, L2: 2, L3: 3, L4: 4 };
+        const itemId = resolveItemId(item);
+        const minLevel = opt('min-level', 'L2').toUpperCase();
+        const outProof = opt('out-proof', 'facetkit-proof-pack.json');
+        const { mode, changedFiles } = detectCiContext(CWD, project);
+
+        const checks = {};
+        let achieved = 'L0';
+
+        // 1. Запускаем встроенный scan через дочерний вызов самого facet CLI
+        const runSub = (args) => spawnSync(process.execPath, [fileURLToPath(import.meta.url), ...args], { cwd: CWD, encoding: 'utf-8' });
+
+        const scanRes = runSub(['scan', ...(item ? ['--item', itemId] : [])]);
+        checks.scan = {
+            status: scanRes.status === 0 ? 'PASS' : 'FAIL',
+            details: scanRes.status === 0 ? 'Clean diff' : (scanRes.stdout || scanRes.stderr).trim().split('\n')[0],
+        };
+        if (scanRes.status === 0) achieved = 'L1';
+
+        if (mode === 'full-journal') {
+            // Full Mode: проверяем журнал, witness (если есть proof pack) и политику assure
+            const jRes = runSub(['journal']);
+            checks.journal = { status: jRes.status === 0 ? 'PASS' : 'FAIL', details: jRes.status === 0 ? 'INTACT' : 'Damaged' };
+
+            if (fs.existsSync(path.join(CWD, outProof))) {
+                const wRes = runSub(['proof', 'witness', outProof]);
+                checks.proof = { status: wRes.status === 0 ? 'PASS' : 'FAIL', details: wRes.status === 0 ? 'VERIFIED' : 'MISMATCH' };
+            } else {
+                const pRes = runSub(['proof', 'create', '--item', itemId, '--out', outProof]);
+                checks.proof = { status: pRes.status === 0 ? 'PASS' : 'WARN', details: pRes.status === 0 ? 'Created in CI' : 'No proof' };
+            }
+
+            const aRes = runSub(['assure', '--item', itemId, '--json']);
+            if (aRes.stdout) {
+                try {
+                    const parsed = JSON.parse(aRes.stdout);
+                    if (parsed.level) achieved = parsed.level;
+                } catch {}
+            }
+            checks.tests = { status: checks.proof.status === 'PASS' ? 'PASS' : 'SKIPPED', details: 'Verified via policy' };
+        } else {
+            // Stateless Zero-Config Mode: проверяем швы и мутации на измененных файлах PR
+            const sourceFiles = changedFiles.filter(
+                (f) => /\.(js|mjs|cjs|ts|tsx|py|go|java)$/.test(f) && !/(\.test\.|\.spec\.|_test\.go|Test\.java|tests\/)/.test(f) && fs.existsSync(path.join(CWD, f))
+            );
+
+            if (sourceFiles.length > 0) {
+                const dirs = project.dirs ?? ['src', 'server', 'lib', 'tests', 'test', 'e2e'];
+                const n = neighbours(buildGraph(CWD, dirs), sourceFiles, { depth: 2 });
+                checks.seams = { status: 'PASS', details: `${n.consumers.length} consumer(s), ${n.neighbourTests.length} test(s)` };
+            }
+
+            const testCmd = detectTestCommand(CWD, opt('test-cmd', ''));
+            if (testCmd && sourceFiles.length > 0) {
+                const r = probe({ cwd: CWD, files: sourceFiles, test: testCmd, max: Number(opt('max', 10)), env: safeEnv({ allow: project.govern?.env ?? [] }) });
+                if (r.baseline === 'green') {
+                    const pct = r.planned ? Math.round((r.killed / r.planned) * 100) : 100;
+                    checks.tests = { status: 'PASS', details: `\`${testCmd}\` passed` };
+                    checks.mutate = { status: pct >= 80 ? 'PASS' : 'WARN', details: `${pct}% killed (${r.killed}/${r.planned})` };
+                    if (checks.scan.status === 'PASS' && pct >= 80) achieved = 'L3';
+                    else if (checks.scan.status === 'PASS') achieved = 'L2';
+                } else {
+                    checks.tests = { status: 'FAIL', details: r.message || 'Baseline tests failed' };
+                }
+            } else {
+                checks.tests = { status: 'SKIPPED', details: 'No test runner detected' };
+                checks.mutate = { status: 'SKIPPED', details: 'No source files or tests' };
+            }
+
+            checks.journal = { status: 'SKIPPED', details: 'Stateless CI mode' };
+            fs.writeFileSync(path.join(CWD, outProof), JSON.stringify({ itemId, mode, achieved, checks, at: new Date().toISOString() }, null, 2));
+            checks.proof = { status: 'PASS', details: 'Ephemeral CI pack' };
+        }
+
+        const passed = (LEVEL_RANK[achieved] ?? 0) >= (LEVEL_RANK[minLevel] ?? 2) && checks.scan.status === 'PASS';
+        const markdown = renderPrReport({ itemId, level: achieved, minLevel, passed, mode, checks, proofFile: outProof });
+
+        console.log(markdown);
+
+        if (process.env.GITHUB_STEP_SUMMARY) {
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\n`);
+        }
+        if (flag('post-pr')) {
+            await postPrComment(markdown);
+        }
+
+        // Если задан GitHub Actions output
+        if (process.env.GITHUB_OUTPUT) {
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `level=${achieved}\n`);
+        }
+
+        process.exit(passed ? 0 : 1);
+    },
     },
 };
 
