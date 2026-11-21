@@ -1,0 +1,22 @@
+name: assurance
+# FacetKit checks its own pull requests with its own Action (uses: ./ — the version in the PR).
+# The level it requires is L2: a clean scan and green tests. The mutation probe is reported, not required.
+on:
+  pull_request:
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git config --global user.name ci && git config --global user.email ci@example.invalid
+      - uses: ./
+        with:
+          min-level: L2
+          test-command: npm test
+          max-mutants: '6'
+          max-minutes: '12'
