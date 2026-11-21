@@ -1,45 +1,54 @@
-name: facetkit evidence
-description: Scan a pull request and, optionally, trace requirements and probe the tests with mutants. Writes the findings to the job summary.
+name: 'FacetKit Assurance'
+description: 'Evidence-first verification, proof pack witness, and PR assurance report'
+
 inputs:
-  base:
-    description: Ref to compare with (the pull request's base by default)
-    default: ${{ github.event.pull_request.base.sha || 'HEAD~1' }}
-  spec:
-    description: Specification file(s) for `facet trace`, comma-separated (optional)
+  item-id:
+    description: 'Item ID (auto-detected from branch/PR if omitted)'
+    required: false
     default: ''
-  tests:
-    description: Test directories for `facet trace` (comma-separated)
-    default: tests
-  mutate-files:
-    description: Files for `facet mutate`, comma-separated (optional)
+  min-level:
+    description: 'Minimum required assurance level (L0-L4)'
+    required: false
+    default: 'L2'
+  test-command:
+    description: 'Custom test command for stateless CI mode'
+    required: false
     default: ''
-  mutate-test:
-    description: Test command for `facet mutate`
-    default: ''
-  fail-on-findings:
-    description: Fail the job when the scan has blocking findings or the trace has uncovered clauses
-    default: 'true'
+  github-token:
+    description: 'GitHub token for posting PR comments'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  level:
+    description: 'Achieved assurance level (L0-L4)'
+    value: ${{ steps.verify.outputs.level }}
+
 runs:
-  using: composite
+  using: 'composite'
   steps:
-    - shell: bash
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Run FacetKit Verification
+      id: verify
+      shell: bash
       env:
-        FACET: node ${{ github.action_path }}/bin/facet.mjs
-        BASE: ${{ inputs.base }}
-        SPEC: ${{ inputs.spec }}
-        TESTS: ${{ inputs.tests }}
-        MUTATE_FILES: ${{ inputs.mutate-files }}
-        MUTATE_TEST: ${{ inputs.mutate-test }}
-        STRICT: ${{ inputs.fail-on-findings }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
       run: |
-        status=0
-        {
-          echo "## facetkit evidence"
-          echo
-          echo '```text'
-          $FACET scan --ref "$BASE" || status=1
-          if [ -n "$SPEC" ]; then echo; $FACET trace --spec "$SPEC" --tests "$TESTS" || status=1; fi
-          if [ -n "$MUTATE_FILES" ] && [ -n "$MUTATE_TEST" ]; then echo; $FACET mutate --files "$MUTATE_FILES" --test "$MUTATE_TEST" --ref "$BASE" --allow 99 || true; fi
-          echo '```'
-        } | tee -a "$GITHUB_STEP_SUMMARY"
-        if [ "$STRICT" = "true" ]; then exit $status; fi
+        node "${{ github.action_path }}/bin/facet.js" ci-verify \
+          ${{ inputs.item-id != '' && format('--item "{0}"', inputs.item-id) || '' }} \
+          ${{ inputs.test-command != '' && format('--test-cmd "{0}"', inputs.test-command) || '' }} \
+          --min-level "${{ inputs.min-level }}" \
+          --post-pr \
+          --out-proof "facetkit-proof-pack.json"
+
+    - name: Upload Proof Pack
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: facetkit-proof-pack
+        path: facetkit-proof-pack.json
+        if-no-files-found: ignore
