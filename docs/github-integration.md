@@ -88,7 +88,7 @@ A check that fails makes the run fail whatever the level. A scan that could not 
 
 - **Forks.** Use the `pull_request` event, never `pull_request_target`: the PR's code runs in this job. On a PR from a fork the token cannot write comments — the run says so and still passes or fails on its own merits.
 - **Time.** The mutation probe runs the tests once per mutant (10 by default, on the changed lines only). Keep the test command fast, point `test-command` at the relevant tests, or lower `max-mutants` / `max-minutes`.
-- **Secrets.** The tests run with only a basic set of environment variables (paths, locale, toolchains); the GitHub token is never passed to them. A test that needs a variable gets it through `govern.env` in `facet.json`.
+- **Secrets.** The tests run with only a basic set of environment variables — `PATH`, `HOME`, `USERPROFILE`, `TEMP`, `TMP`, `LANG`, `SYSTEMROOT`, `COMSPEC`, `PATHEXT`, `TERM`; the GitHub token is never passed to them. A test that needs anything else (`JAVA_HOME`, `VIRTUAL_ENV`, a proxy) gets it through `govern.env` in `facet.json`.
 - **Monorepos.** The Action checks the repository root. For a package in a subfolder, run `npx facetkit ci-verify` in a `run:` step with `working-directory:`.
 - **Locally.** `facet ci-verify --base main` gives the same report before you push.
 
