@@ -68,7 +68,7 @@ const argv = process.argv.slice(2);
 const split = argv.indexOf('--');
 const own = split < 0 ? argv : argv.slice(0, split);
 const rest = split < 0 ? [] : argv.slice(split + 1);
-const [command, ...positional] = own.filter((a, i) => !a.startsWith('--') && !(own[i - 1]?.startsWith('--') && !['--json', '--verbose', '--plan', '--check', '--force', '--record', '--snapshot', '--no-atlas', '--no-history', '--neighbours', '--minimal', '--claude', '--rerun', '--no-sign', '--accept', '--provisional', '--all', '--post-pr'].includes(own[i - 1])));
+const [command, ...positional] = own.filter((a, i) => !a.startsWith('--') && !(own[i - 1]?.startsWith('--') && !['--json', '--verbose', '--plan', '--check', '--force', '--record', '--snapshot', '--no-atlas', '--no-history', '--neighbours', '--minimal', '--claude', '--rerun', '--no-sign', '--accept', '--provisional', '--all', '--post-pr', '--github'].includes(own[i - 1])));
 const flag = (name) => own.includes(`--${name}`);
 const opt = (name, fallback) => (own.includes(`--${name}`) ? own[own.indexOf(`--${name}`) + 1] : fallback);
 const opts = (name) => own.flatMap((a, i) => (a === `--${name}` ? [own[i + 1]] : []));
@@ -273,9 +273,16 @@ const commands = {
     },
     /** ci-verify [--item ID] [--min-level L2] [--test-cmd CMD] [--base REF] [--out FILE] [--post-pr]: one CI run against a change. */
     async 'ci-verify'() {
+        const count = (name, fallback) => {
+            const n = Number(opt(name, fallback));
+            if (!Number.isInteger(n) || n < 1) fail(`ci-verify: --${name} must be a whole number of at least 1`);
+            return n;
+        };
+        const max = count('max', 10);
+        const maxMinutes = count('max-minutes', 10);
         let r;
         try {
-            r = ciVerify({ cwd: CWD, facetBin: fileURLToPath(import.meta.url), project, journal: path.resolve(CWD, opt('journal', project.journal ?? path.join(work, 'journal.jsonl'))), itemId: resolveItemId(item), minLevel: opt('min-level', 'L2'), testCmd: opt('test-cmd', ''), base: opt('base'), max: Number(opt('max', 10)), maxMinutes: Number(opt('max-minutes', 10)) });
+            r = ciVerify({ cwd: CWD, facetBin: fileURLToPath(import.meta.url), project, journal: path.resolve(CWD, opt('journal', project.journal ?? path.join(work, 'journal.jsonl'))), itemId: resolveItemId(item), minLevel: opt('min-level', 'L2'), testCmd: opt('test-cmd', ''), base: opt('base'), max, maxMinutes });
         } catch (error) {
             fail(`ci-verify: ${error.message}`);
         }

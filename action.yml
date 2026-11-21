@@ -17,6 +17,14 @@ inputs:
     description: 'The item; when empty it is taken from the branch name, then the PR title, else PR-<number>'
     required: false
     default: ''
+  max-mutants:
+    description: 'At most this many mutants of the changed lines (each one runs the tests once)'
+    required: false
+    default: '10'
+  max-minutes:
+    description: 'Time limit of the mutation probe, in minutes; mutants not run by then are reported as not executed'
+    required: false
+    default: '10'
   comment:
     description: 'Write the report as one PR comment, updated on every run (needs pull-requests: write)'
     required: false
@@ -57,9 +65,11 @@ runs:
         FACET_IN_LEVEL: ${{ inputs.min-level }}
         FACET_IN_TEST: ${{ inputs.test-command }}
         FACET_IN_COMMENT: ${{ inputs.comment }}
+        FACET_IN_MAX: ${{ inputs.max-mutants }}
+        FACET_IN_MINUTES: ${{ inputs.max-minutes }}
         FACET_ACTION_PATH: ${{ github.action_path }}
       run: |
-        args=(ci-verify --min-level "$FACET_IN_LEVEL" --out facetkit-report.json)
+        args=(ci-verify --min-level "$FACET_IN_LEVEL" --max "$FACET_IN_MAX" --max-minutes "$FACET_IN_MINUTES" --out facetkit-report.json)
         if [ -n "$FACET_IN_ITEM" ]; then args+=(--item "$FACET_IN_ITEM"); fi
         if [ -n "$FACET_IN_TEST" ]; then args+=(--test-cmd "$FACET_IN_TEST"); fi
         if [ "$FACET_IN_COMMENT" = "true" ]; then args+=(--post-pr); fi

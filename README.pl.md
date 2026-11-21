@@ -19,7 +19,7 @@ Bez zależności. Node 20+. Działa z każdym agentem, który potrafi uruchomić
 
 ![Jeden element pracy: specyfikacja, budowa, próba, dowód, bramka polityki — dowody przybywają, a poziom pewności rośnie](docs/assets/flow.svg)
 
-> **Stan: 0.7.0, wersja eksperymentalna.** Narzędzia są przetestowane (liczba testów: <!-- count:tests -->253<!-- /count -->, liczba przypadków testu odporności: <!-- count:benchmark -->22<!-- /count -->; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **niesprawdzone hipotezy o zachowaniu agentów (liczba: <!-- count:untested -->69<!-- /count -->)** — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
+> **Stan: 0.7.0, wersja eksperymentalna.** Narzędzia są przetestowane (liczba testów: <!-- count:tests -->257<!-- /count -->, liczba przypadków testu odporności: <!-- count:benchmark -->22<!-- /count -->; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **niesprawdzone hipotezy o zachowaniu agentów (liczba: <!-- count:untested -->69<!-- /count -->)** — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
 
 
 ## 🔬 Badania Społeczności
@@ -31,7 +31,11 @@ Dołącz do Programu Badawczego Społeczności FacetKit.
 
 [Program Badań Społeczności FacetKit](docs/research/README.pl.md)
 
-##  Wypróbuj w pięć minut
+## Od czego zacząć
+
+**Nowy w FacetKit?** Trzy krótkie przewodniki, każdy do użycia osobno: **[Szybki start](docs/quick-start.pl.md)** — dziesięć minut na własnym kodzie, bez agentów → **[Włączenie do projektu](docs/project-integration.pl.md)** — jedna reguła dla własnego agenta albo tylko wybrani agenci (`facet init --agents slice-builder,proof-inspector`) → **[Integracja z GitHubem](docs/github-integration.pl.md)** — kontrola i komentarz na każdym pull requeście (`facet init --github`).
+
+## Wypróbuj w pięć minut
 ```bash
 git clone https://github.com/Anctoster/facetkit && cd facetkit
 npm run demo:proof
@@ -183,6 +187,8 @@ Wtyczka nie zawiera kodu (to folder [`plugin/`](plugin/)). Polecenie `facet` poc
 ```bash
 npx facetkit demo            # tablica z danych syntetycznych: jak wygląda system po kilku tygodniach
 npx facetkit init --minimal  # facet.json, plik elementów, reguły i szablony (--claude kopiuje agentów i polecenia)
+npx facetkit init --agents slice-builder,proof-inspector   # tylko wybrani agenci — zob. docs/project-integration.pl.md
+npx facetkit init --github   # przebieg pull requestów dla GitHub Action — zob. docs/github-integration.pl.md
 ```
 
 Najpierw wypróbuj narzędzia na własnym kodzie — bez przepływu i bez agentów:
@@ -263,7 +269,7 @@ Zestaw powstał po przestudiowaniu poniższych projektów; nie zawiera ich tekst
 
 ## Dokumentacja
 
-Dokumentacja szczegółowa jest po angielsku: [jak to działa, według ról](docs/how-it-works.md) · [dla testerów](docs/for-testers.md) · [dla architektów](docs/for-architects.md) · [plan do 2.0](docs/roadmap-2.0.md) · [hipotezy](HYPOTHESES.md) · [raport z użycia na sobie](docs/dogfood.md) · [architektura](docs/architecture.md) · [polityka i poziomy](docs/governance.md) · [analityka umiejętności](docs/skill-intelligence.md) · [rozszerzenia](docs/extensions.md) · [jak wydać](RELEASING.md) · [jak współtworzyć](CONTRIBUTING.md) · [bezpieczeństwo](SECURITY.md)
+Po polsku: [szybki start](docs/quick-start.pl.md) · [włączenie do projektu](docs/project-integration.pl.md) · [integracja z GitHubem](docs/github-integration.pl.md). Pozostała dokumentacja szczegółowa jest po angielsku: [jak to działa, według ról](docs/how-it-works.md) · [dla testerów](docs/for-testers.md) · [dla architektów](docs/for-architects.md) · [plan do 2.0](docs/roadmap-2.0.md) · [hipotezy](HYPOTHESES.md) · [raport z użycia na sobie](docs/dogfood.md) · [architektura](docs/architecture.md) · [polityka i poziomy](docs/governance.md) · [analityka umiejętności](docs/skill-intelligence.md) · [rozszerzenia](docs/extensions.md) · [jak wydać](RELEASING.md) · [jak współtworzyć](CONTRIBUTING.md) · [bezpieczeństwo](SECURITY.md)
 
 ## Licencja
 
