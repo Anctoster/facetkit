@@ -48,21 +48,16 @@ test('signatures required: an event signed by a key the project does not trust i
     assert.match(v.unsigned[0].problem, /does not trust/);
 });
 
-test('signatures required: unsigned events written before are accepted only by id, and older-format events are not asked', () => {
+test('signatures required: a schema-2 event written unsigned before the requirement is damage too; older-format events are not asked', () => {
     const key = newKey();
     const file = path.join(tmp(), 'journal.jsonl');
     fs.writeFileSync(file, `${JSON.stringify({ at: '2026-01-01T00:00:00.000Z', kind: 'note', text: 'older format', prev: '00000000' })}\n`);
     record(file, { kind: 'note', text: 'before the requirement' });
     writeSigned(file, key, ['after']);
-    const keys = trustOf(key);
-    const early = readJournal(file)[1].id;
-    assert.equal(verifyJournal(file, { keys, require: true }).unsigned.length, 1);
-    assert.equal(verifyJournal(file, { keys, require: true, exempt: [early] }).status, 'intact');
-    // an exempt id covers exactly that event: edit it and recompute its id, and the chain breaks at the next line
-    const lines = fs.readFileSync(file, 'utf-8').split('\n').filter(Boolean);
-    lines[1] = lines[1].replace('before the requirement', 'rewritten');
-    fs.writeFileSync(file, `${lines.join('\n')}\n`);
-    assert.notEqual(verifyJournal(file, { keys, require: true, exempt: [early] }).status, 'intact');
+    const v = verifyJournal(file, { keys: trustOf(key), require: true });
+    assert.equal(v.status, 'tampered');
+    assert.deepEqual(v.unsigned.map((u) => u.line), [2], 'only the unsigned schema-2 event, not the older-format one');
+    assert.equal(verifyJournal(file, { keys: trustOf(key) }).status, 'intact', 'without the requirement nothing is asked');
 });
 
 test('signatures required: a writer that would throw while signing appends nothing', () => {
@@ -103,4 +98,24 @@ test('cli: with signatures required, a machine without a key writes nothing; wit
     const checked = f('journal');
     assert.equal(checked.status, 1);
     assert.match(checked.stderr, /not signed, and govern.signEvents is "required"/);
+});
+
+test('cli: govern.signEvents is "off", "on" or "required" — "off" signs nothing even with a key at hand; another value is an error', () => {
+    const run = (signEvents) => {
+        const root = tmp();
+        write(root, 'facet.json', JSON.stringify({ journal: '.facet/journal', govern: { signEvents } }));
+        write(root, 'facet.items.json', JSON.stringify({ items: { A: { deps: [], route: [], gates: [] } } }));
+        const env = { ...process.env, FACET_KEYS: path.join(tmp(), 'keys'), FACET_WRITER: 'ann' };
+        const f = (...args) => spawnSync(process.execPath, [CLI, ...args], { cwd: root, encoding: 'utf-8', env });
+        f('key', 'new');
+        return { r: f('flow', 'open', 'A'), events: () => readJournal(path.join(root, '.facet', 'journal')) };
+    };
+    const off = run('off');
+    assert.equal(off.r.status, 0, off.r.stderr);
+    assert.ok(off.events().length && off.events().every((e) => !e.sg), '"off" is off, although the string is not empty');
+    const on = run('on');
+    assert.ok(on.events().every((e) => e.sg));
+    const typo = run('requried');
+    assert.notEqual(typo.r.status, 0);
+    assert.match(typo.r.stderr, /govern\.signEvents is "requried": use "off", "on" or "required"/);
 });

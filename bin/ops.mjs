@@ -76,14 +76,17 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
         return t;
     };
     // "required": a process without a key must not write at all — an unsigned event would be damage
-    const signRequired = project.govern?.signEvents === 'required';
-    if (project.govern?.signEvents && myKey()) setSigner(eventSigner(myKey()));
+    // govern.signEvents: "off" (the default) · "on" — sign when this machine has a key · "required" — see below
+    const signEvents = project.govern?.signEvents ?? 'off';
+    if (!['off', 'on', 'required'].includes(signEvents)) fail(`govern.signEvents is ${JSON.stringify(signEvents)}: use "off", "on" or "required"`);
+    const signRequired = signEvents === 'required';
+    if (signEvents !== 'off' && myKey()) setSigner(eventSigner(myKey()));
     else if (signRequired) {
         setSigner(() => {
             throw new Error('govern.signEvents is "required" and this machine has no key: nothing was written. Create one with `facet key new` and have it trusted with `facet key trust`, or set FACET_KEY');
         });
     }
-    const journalChecks = () => ({ keys: eventVerifiers(trustNow()), require: signRequired, exempt: project.govern?.signEventsExempt ?? [] });
+    const journalChecks = () => ({ keys: eventVerifiers(trustNow()), require: signRequired });
     const say = (e) => record(journal, e, { team: project.team });
     const theItem = (required = true) => {
         const open = openItems(events(), me);
@@ -435,6 +438,13 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             const n = upcoming(item);
             if (n.action !== 'close' && !flag('force')) fail(`flow close: ${item} is not finished — next is ${n.action} ${n.step ?? ''}`);
             runScan(item);
+            // whatever level is required: a change part of which the scan could not read is not released
+            // until each such file is taken off by a person's record with a reason (plan 1.7)
+            const mine = ofItem(events(), item);
+            const lastScan = mine.filter((e) => e.kind === 'evidence' && e.name === 'scan').at(-1);
+            const granted = new Set(mine.filter((e) => e.kind === 'approval' && e.note).map((e) => e.what));
+            const unread = lastScan?.partial ? (lastScan.approvals ?? []).filter((a) => a.startsWith('not-scanned:') && !granted.has(a)) : [];
+            if (unread.length) fail(`flow close: the scan could not read ${unread.length} changed file(s): ${unread.map((a) => a.slice('not-scanned:'.length)).join(', ')}\nLook at each yourself, then: facet approve <name> --by <person> --note "<why it holds no secret>"\n  ${unread.join('\n  ')}`);
             const verdictOnItem = judged(item);
             const g = gate(verdictOnItem, { required: Number(opt('level', govern.required ?? 1)) });
             if (!g.allow) fail(`${renderEvaluation(verdictOnItem, g)}\n\nflow close: the policy is not met. Fix what is listed, or let a person take the decision on record:\n  facet waive <rule> --item ${item} --reason "…" --by <name>`);
@@ -644,7 +654,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             for (const x of v.structure) console.error(`journal: ${x.segment} line ${x.line}: ${x.problem}`);
             for (const c of v.conflicts) console.error(`journal: ${c.item} was opened by ${c.loser} while ${c.winner} held it — ${c.loser} must run: facet flow yield --item ${c.item}`);
             for (const u of v.unsigned) console.error(`journal: ${u.segment} line ${u.line}: ${u.problem} (id ${u.id})`);
-            if (v.unsigned.length) console.error('journal: if these events were written before signatures were required, and only then, list their ids in govern.signEventsExempt in a reviewed commit');
+            if (v.unsigned.length) console.error(`journal: ${v.unsigned.length} event(s) not signed by a trusted key while govern.signEvents is "required"`);
             if (v.broken.length || v.structure.length || v.conflicts.length || v.signatures.bad || v.unsigned.length) process.exit(1);
             if (!v.segments) return void console.log('journal: nothing recorded yet');
             console.log(`journal ${v.status}: ${v.events} events${v.segments > 1 || me ? ` in ${v.segments} segment(s)` : ''}, ${openItems(ev).length} open, ${closedItems(ev).length} closed${v.epoch ? ` · epoch ${v.epoch}` : ''}${v.signatures.signed ? ` · ${v.signatures.signed} signed by trusted keys` : ''}${v.signatures.unknown ? ` · ${v.signatures.unknown} signed by keys this project does not trust` : ''}`);
@@ -709,6 +719,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
         approve() {
             const item = theItem();
             if (!positional[0] || !opt('by')) fail('approve: facet approve <what, e.g. dependency:zod> --by <person>');
+            if (positional[0].startsWith('not-scanned:') && !String(opt('note') ?? '').trim()) fail('approve: a file the scan could not read is taken off with a reason — add --note "<why it holds no secret>"');
             say({ kind: 'approval', item, what: positional[0], by: opt('by'), note: opt('note') });
             console.log(`approval recorded: ${positional[0]} for ${item} by ${opt('by')}`);
         },
@@ -754,6 +765,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 const names = checkNames().filter((n) => typeof (typeof govern.checks?.[n] === 'object' ? govern.checks[n].run : govern.checks?.[n]) === 'string');
                 if (!names.length) fail('proof witness: no check with a command is configured (govern.checks) — there is nothing to run again');
                 if (sub === 'witness' && !myKey()) fail('proof witness: no private key here (facet key new, then facet key trust --role witness on the project) — an unsigned witness record is anybody\'s claim and is not recorded');
+                if (sub === 'witness' && !trustNow().keys.some((k) => k.id === myKey().id && k.role === 'witness')) fail(`proof witness: key ${myKey().id} is not trusted in the witness role here (facet key trust <public key> --role witness, committed) — its record could not count, so none is written`);
                 const dir = path.join(work, item, 'witness');
                 const w = await witness(m, names, async (name) => {
                     const cmd = typeof govern.checks[name] === 'object' ? govern.checks[name].run : govern.checks[name];
@@ -761,9 +773,9 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                     return { ok: r.exit === 0 };
                 }, { by: opt('by') ?? process.env.FACET_ACTOR ?? process.env.FACET_SESSION ?? me ?? null, source: sourceState(CWD, { ignore: sourceIgnore(), include: inputs() }).state, environment: envNow(true) });
                 const key = myKey();
-                // the record is signed over its canonical form; without the witness role it can still raise an alarm, never vouch
+                // the record is signed over its canonical form; an unsigned one (verify --rerun) is shown, never counted
                 if (key) w.signature = sign(key, witnessDigest(w));
-                if (!key || !trustNow().keys.some((k) => k.id === key.id && k.role === 'witness')) console.error(`proof witness: ${key ? `key ${key.id} is not trusted in the witness role here` : 'no key here, so the record is unsigned'} — this record can report a difference, but it does not count as an independent reproduction`);
+                if (!w.signature) console.error('proof verify --rerun: this run is not signed, so its record is shown but does not count — neither for the pack nor against it; a witness signs with facet proof witness');
                 m.witnesses = [...(m.witnesses ?? []), w];
                 say({ kind: 'proof.witness', item, checks: names.filter((n) => !w.notRun.includes(n)), differs: w.differs, sameSources: w.sameSources, by: w.by, env: w.env });
                 fs.writeFileSync(file, `${JSON.stringify(m, null, 2)}\n`);

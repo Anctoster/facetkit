@@ -30,9 +30,11 @@ test('witness: an agreeing record counts only when signed by a trusted witness w
     assert.equal(witnessed({ ...pack, witnesses: [signedBy(witnessKey)] }).level, null, 'without the project\'s trust list nothing vouches');
 });
 
-test('witness: a disagreement counts from any record — a forged one can raise an alarm, never pass a pack', () => {
-    const v = witnessed({ ...pack, witnesses: [signedBy(witnessKey), record({ reproduced: 1, differs: ['scan'] })] }, trust);
-    assert.deepEqual([v.level, v.against], [null, ['scan']]);
+test('witness: only a vouching record counts, for or against — a hand-written disagreement is rejected and changes nothing', () => {
+    const forged = witnessed({ ...pack, witnesses: [signedBy(witnessKey), record({ reproduced: 1, differs: ['scan'] })] }, trust);
+    assert.deepEqual([forged.level, forged.against, forged.rejected.map((r) => r.why)], ['rerun', [], ['not signed']]);
+    const real = witnessed({ ...pack, witnesses: [signedBy(witnessKey), signedBy(witnessKey, record({ reproduced: 1, differs: ['scan'] }))] }, trust);
+    assert.deepEqual([real.level, real.against], [null, ['scan']]);
 });
 
 test('witness: the signature covers the canonical record, whatever the order of its keys', () => {
@@ -56,7 +58,8 @@ test('witness levels: a trusted record from another machine and environment is i
     assert.equal(witnessed({ ...made, witnesses: [moved] }, trust).level, null);
     // the best vouching record decides, unless anyone disagrees
     assert.equal(witnessed({ ...made, witnesses: [at('h-author', 'e-author'), at('h-ci', 'e-ci')] }, trust).level, 'independent');
-    assert.equal(witnessed({ ...made, witnesses: [at('h-ci', 'e-ci'), record({ differs: ['scan'] })] }, trust).level, null);
+    assert.equal(witnessed({ ...made, witnesses: [at('h-ci', 'e-ci'), signedBy(witnessKey, record({ differs: ['scan'] }))] }, trust).level, null);
+    assert.equal(witnessed({ ...made, witnesses: [at('h-ci', 'e-ci'), record({ differs: ['scan'] })] }, trust).level, 'independent', 'an unsigned disagreement does not count');
 });
 
 test('witness levels: L4 stands only with an independent witness; every other level is what the journal gives', () => {

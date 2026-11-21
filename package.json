@@ -56,7 +56,7 @@
   },
   "files": ["bin", "lib", "skills", "agents", "commands", "templates", "presets", "trials", "benchmark", "domains", "docs", "examples", "HYPOTHESES.md", "loadouts.json", "README.md", "CHANGELOG.md", "AUDIT.md", "LICENSE"],
   "engines": { "node": ">=20" },
-  "facetkit": { "govern": { "scanIgnore": ["test/**"] } },
+  "facetkit": { "govern": { "scanIgnore": ["test/**", "docs/governance.md"] } },
   "scripts": {
     "test": "node scripts/test.mjs",
     "counts": "node scripts/counts.mjs",
