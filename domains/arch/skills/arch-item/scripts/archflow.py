@@ -1143,6 +1143,7 @@ def main():
     p = sub.add_parser("plan"); p.add_argument("kind", nargs="?"); p.add_argument("--prefix", default="N1")
     p = sub.add_parser("brief"); p.add_argument("action", choices=["new", "check", "approve"]); p.add_argument("--by"); p.add_argument("--file")
     p = sub.add_parser("start"); p.add_argument("step"); p.add_argument("--force", default=None, metavar="REASON")
+    p = sub.add_parser("tension"); p.add_argument("text"); p.add_argument("--where"); p.add_argument("--criterion"); p.add_argument("--owner"); p.add_argument("--proposal")
     p = sub.add_parser("approve-checks"); p.add_argument("step"); p.add_argument("--by", required=True); p.add_argument("--note", required=True)
     p = sub.add_parser("echo"); p.add_argument("action", choices=["check"]); p.add_argument("step"); p.add_argument("--file")
     p = sub.add_parser("end"); p.add_argument("step"); p.add_argument("--status", required=True, choices=["DONE", "BLOCKED", "NEEDS-USER"])
@@ -1382,6 +1383,13 @@ def main():
         j.add("end", item=s["item"], step=a.step, status=a.status, tokens=a.tokens, agent=started.get("agent"),
               model=a.model or started.get("model"), question=a.question)
         print("ended %s: %s" % (a.step, a.status))
+    elif a.cmd == "tension":
+        # FacetKit plan 2.12: what an agent noticed beyond its task, recorded and shown at the close - nothing else is done about it
+        s = need(j, routes)
+        step = s["running"]
+        agent = next((e.get("agent") for e in reversed(j.events()) if e.get("item") == s["item"] and e["type"] == "start" and e["step"] == step), None) if step else None
+        j.add("tension", item=s["item"], step=step, agent=agent, where=a.where, criterion=a.criterion, owner=a.owner, text=a.text[:500], proposal=(a.proposal or "")[:500] or None)
+        print("tension recorded%s - shown to a person when the item closes" % (" in " + step if step else ""))
     elif a.cmd == "approve-checks":
         s = need(j, routes)
         started = [e for e in j.events() if e["type"] == "start" and e.get("item") == s["item"] and e["step"] == a.step]
@@ -1505,6 +1513,12 @@ def main():
         j.add("close", item=s["item"], forced=s["forced"] or None, waived=sorted(s["waived"]) or None)
         print("closed %s%s%s" % (s["item"], "  (WARNING: %d forced steps - say so in the report)" % s["forced"] if s["forced"] else "",
                                  "  (waived: %s)" % ", ".join(sorted(s["waived"])) if s["waived"] else ""))
+        noticed = [e for e in j.events() if e.get("item") == s["item"] and e["type"] == "tension"]
+        if noticed:  # FacetKit plan 2.12: what the agents noticed beyond the task, for the person
+            print("TENSIONS (%d) - show them to the user:" % len(noticed))
+            for t in noticed:
+                print("  - %s%s%s: %s%s" % (t.get("step") or "?", " (%s)" % t["agent"] if t.get("agent") else "", " at %s" % t["where"] if t.get("where") else "",
+                                           safe.clean(t["text"], 300) if safe else t["text"], "  -> proposes: %s" % t["proposal"] if t.get("proposal") else ""))
         approvals(j, s["item"])
         new = [m for m in memory_rows(j.events(), confirmed=False) if m.get("item") == s["item"]]
         for m in new:

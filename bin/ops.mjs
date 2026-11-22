@@ -38,6 +38,7 @@ import { checkOwners, ownersFromTerritories, renderOwners, resolveOwners } from 
 import { declaredArtifacts, domainSettingsOf, kitDomainFile } from '../lib/domainproof.mjs';
 import { delayOf, findOrigin, FROM } from '../lib/origin.mjs';
 import { checkEcho, fixedOf, renderEcho } from '../lib/echo.mjs';
+import { openedByStep, renderTensions, tensionsOf } from '../lib/tension.mjs';
 import { snapshotRef } from '../lib/evalx.mjs';
 import { witness, witnessDigest, witnessLevelOf, exportProof, renderBundle, verifyBundle, createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
 import { planMutants, probe } from '../lib/mutaprobe.mjs';
@@ -635,6 +636,9 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             const base = ofItem(ev, item).find((e) => e.kind === 'item.open')?.base;
             const commits = base ? (spawnSync('git', ['rev-list', '--abbrev-commit', `${base}..HEAD`], { cwd: CWD, encoding: 'utf-8' }).stdout ?? '').split('\n').filter(Boolean) : [];
             say({ kind: 'item.close', item, commit: opt('commit') ?? commits[0], commits, level: verdictOnItem.level });
+            // what the agents noticed beyond the task, for the person who closes it (plan 2.12)
+            const noticedHere = tensionsOf(events(), item);
+            if (noticedHere.length) console.log(`${item}: ${noticedHere.length} tension(s) recorded by the agents — read them:\n${renderTensions(noticedHere)}`);
             if (govern.attestations) {
                 const dir = path.resolve(CWD, govern.attestations);
                 fs.mkdirSync(dir, { recursive: true });
@@ -788,7 +792,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 if (!origins.length) return void console.log('the fix changed no earlier product lines (new code or tests only)');
                 for (const o of origins) console.log(`${(o.item ?? 'unknown item').padEnd(14)} ${o.lines} line(s) in ${o.files.join(', ')} (commits ${o.commits.join(', ')})`);
                 if (opt('mode') && !MODES.includes(opt('mode'))) fail(`retro hindsight: unknown cause "${opt('mode')}" (one of: ${MODES.join(', ')})`);
-                if (flag('record')) for (const o of origins.filter((x) => x.item && closedItems(ev).includes(x.item))) say({ kind: 'escape', item: o.item, fix: fix.slice(0, 8), lines: o.lines, mode: opt('mode') });
+                if (flag('record')) for (const o of origins.filter((x) => x.item && closedItems(ev).includes(x.item))) say({ kind: 'escape', item: o.item, fix: fix.slice(0, 8), lines: o.lines, files: o.files, mode: opt('mode') });
                 else console.log('add --record to debit the agents of those items in hindsight');
             } else fail('retro: report | signal … | adopt <proposal id> | hindsight --fix <commit> [--record]');
         },
@@ -988,6 +992,22 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 fail(`echo: two failed echoes in a row — the brief cannot be read. Send it back to ${steps[0]?.id ?? 'the step that wrote it'} (${steps[0]?.agent ?? 'the conductor'}) with the lines above; this is recorded against the brief, not against ${stepId}.`, 1);
             }
             process.exit(1);
+        },
+        /** tension add "<text>" [--item ID] [--step S] [--where W] [--criterion C] [--owner O] [--proposal P] | list: what an agent noticed beyond its task (plan 2.12). */
+        tension() {
+            const sub = positional[0] ?? 'list';
+            const item = theItem();
+            if (sub === 'list') {
+                const list = tensionsOf(events(), item);
+                return void console.log(list.length ? `${item}: ${list.length} tension(s)\n${renderTensions(list)}` : `${item}: no tension recorded`);
+            }
+            const text = positional.slice(1).join(' ').trim();
+            if (sub !== 'add' || !text) fail('tension: facet tension add "<what you noticed>" [--where <file or object>] [--criterion C] [--owner <who it is for>] [--proposal "<what could be done>"] | facet tension list');
+            const state = itemState(events(), item);
+            const stepId = opt('step') ?? state?.steps.find((s) => s.status === 'running')?.id ?? null;
+            const agent = state?.steps.find((s) => s.id === stepId)?.agent ?? null;
+            say({ kind: 'tension', item, step: stepId ?? undefined, agent: agent ?? undefined, where: opt('where'), criterion: opt('criterion'), owner: opt('owner'), text: text.slice(0, 500), proposal: opt('proposal')?.slice(0, 500) });
+            console.log(`${item}: tension recorded${stepId ? ` in ${stepId}` : ''} — it is shown to a person when the item closes; nothing else is done about it`);
         },
         waive() {
             const item = theItem();
@@ -1709,6 +1729,8 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 beliefs: beliefs(sigs),
                 plan: Object.keys(items).length ? plan(items, ev, { capacity: s.capacity ?? 120, perWeek: s.perWeek ?? 3, start: s.start ?? new Date().toISOString().slice(0, 10), milestones: s.milestones ?? {}, prior: s.prior, seed: s.seed ?? 7 }) : null,
                 atlas: atlasPart,
+                // I5: what each step opened — the reads of the item's ledger in the step's time, and the files its handoff lists
+                openedBy: (item) => openedByStep(ev, item, { reads: readLedger(path.join(work, item, 'ledger.jsonl')).filter((r) => r.kind === 'read').map((r) => ({ ...r, file: path.isAbsolute(r.file) ? path.relative(CWD, r.file) : r.file })), listed: (step) => (TEMPLATE_OF[step] && fs.existsSync(path.join(work, item, `${TEMPLATE_OF[step]}.md`)) ? listedFiles(fs.readFileSync(path.join(work, item, `${TEMPLATE_OF[step]}.md`), 'utf-8')) : []) }),
                 skills: { rows: diagnose(exposures(ev, { ledgerOf, facets: allFacets() }), allFacets()).filter((r) => r.exposed || r.withheld).map(({ facet, verdict, action, exposed, withheld, adherence, withRule, without, effect }) => ({ facet, verdict, action, exposed, withheld, adherence, withRule, without, effect })), coverage: coverage(ev, allFacets(), { loaded: loadedRefs() }), total: allFacets().length, blind: allFacets().filter((f) => !f.footprint.length).length },
             });
             fs.mkdirSync(path.dirname(out), { recursive: true });

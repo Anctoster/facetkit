@@ -46,4 +46,6 @@ Shared rules:
 - A check that did not run is "skipped (reason)", never "passed".
 - Answer people in the language they write in. Layer names, sheet numbers and titles stay exactly as the project and the stage list have them, in Polish.
 
-`build.md` stays within 50 lines. Final message, at most 8 lines: status, the path of `build.md`, checks passed / failed / skipped, the procedures registered.
+`build.md` stays within 50 lines. Noticed something beyond your task? `archflow.py tension "…" --where <place>`; do not act on it.
+
+Final message, at most 8 lines: status, the path of `build.md`, checks passed / failed / skipped, the procedures registered.

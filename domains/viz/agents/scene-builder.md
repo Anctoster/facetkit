@@ -51,4 +51,6 @@ Shared rules:
 - Cite earlier handoffs by file name; do not repeat them. Your handoff stays within its line limit.
 - Answer people in the language they write in; keep file names, object names and scripts as the project has them.
 
-`build.md` stays within 50 lines. Final message, at most 8 lines: status, the path of `build.md`, checks passed / failed / skipped, the scripts registered.
+`build.md` stays within 50 lines. Noticed something beyond your task? `vizflow.py tension "…" --where <place>`; do not act on it.
+
+Final message, at most 8 lines: status, the path of `build.md`, checks passed / failed / skipped, the scripts registered.

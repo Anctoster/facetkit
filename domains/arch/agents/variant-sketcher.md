@@ -42,4 +42,6 @@ Shared rules:
 - A check that did not run is "skipped (reason)", never "passed".
 - Answer people in the language they write in.
 
+Noticed something beyond your task? `archflow.py tension "…" --where <place>`; do not act on it.
+
 Final message, at most 8 lines: status, the paths, the number of variants and how many keep every limit, the tool's RESULT lines.

@@ -50,4 +50,6 @@ Shared rules:
 - A check that did not run is "skipped (reason)", never "passed".
 - Answer people in the language they write in. Layer names, sheet numbers and titles stay exactly as the project and the stage list have them, in Polish.
 
+Noticed something beyond your task? `archflow.py tension "…" --where <place>`; do not act on it.
+
 Final message, at most 8 lines: status, the path of the brief, criteria by tag (check / look / user), the biggest risk.

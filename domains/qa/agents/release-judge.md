@@ -23,4 +23,6 @@ Rules:
 - Never turn a STOP into a warning. A person may ship despite it; that is their recorded decision, not yours.
 - Answer people in the language they write in.
 
+Noticed something beyond your task? `facet tension add "…" --where <place>`; do not act on it.
+
 Final message, at most 10 lines: GO or NO-GO, the stop reasons with their owner, the two pages written.
