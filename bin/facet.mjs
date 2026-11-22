@@ -60,7 +60,7 @@ import { opsCommands } from './ops.mjs';
 import { setupCommands } from './setup.mjs';
 import { EXIT_CAP, excerpt, ledgerStatus, readLedger, run } from '../lib/thrift.mjs';
 import { safeEnv } from '../lib/shell.mjs';
-import { docProblems } from '../lib/docaudit.mjs';
+import { docProblems, docWarnings } from '../lib/docaudit.mjs';
 import { ciVerify } from '../lib/ci-verify.mjs';
 import { resolveItemId } from '../lib/github-context.mjs';
 import { postPrComment, renderPrReport } from '../lib/explain-pr.mjs';
@@ -132,8 +132,12 @@ const commands = {
         const priorDirs = opts('prior').map((d) => path.resolve(CWD, d));
         const result = audit(loadSkills(skillDirs), readJson(loadoutsFile, {}), { prior: loadPrior(priorDirs) });
         // on the kit's own repository the audit also holds its documents to what they promise (plan 1.1, 1.10)
-        const docs = fs.realpathSync(CWD) === fs.realpathSync(KIT) ? await docProblems(KIT) : [];
-        const text = `${renderAudit(result, { priorDirs })}${docs.length ? `\n## Documents\n\n${docs.map((p) => `- ERROR ${p}`).join('\n')}\n` : ''}`;
+        const own = fs.realpathSync(CWD) === fs.realpathSync(KIT);
+        const docs = own ? await docProblems(KIT) : [];
+        // README numbers are written at release: a drift in a pull request is a warning, not a failure
+        const drift = own ? await docWarnings(KIT) : [];
+        const lines = [...docs.map((p) => `- ERROR ${p}`), ...drift.map((p) => `- WARN ${p}`)];
+        const text = `${renderAudit(result, { priorDirs })}${lines.length ? `\n## Documents\n\n${lines.join('\n')}\n` : ''}`;
         if (opt('report')) fs.writeFileSync(path.resolve(CWD, opt('report')), text);
         process.stdout.write(text);
         process.exit(result.errors.length || docs.length ? 1 : 0);

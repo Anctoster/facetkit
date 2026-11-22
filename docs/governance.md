@@ -85,7 +85,20 @@ Checks, decision measures, bug reproductions, `facet run`, `facet eval judge` an
 "govern": { "env": ["HTTPS_PROXY", "NODE_OPTIONS", "npm_config_*"] }
 ```
 
-Some toolchains need more on Windows: Go keeps its build cache under `LOCALAPPDATA` (name it, or `GOCACHE`), npm its cache under `APPDATA`. A name ending in `*` is a prefix. On Windows names compare without case. There is no way to pass everything: `govern.env` must be a list. `FACET_KEY` and `FACET_KEYS` are never passed.
+Some toolchains need more on Windows: Go keeps its build cache under `LOCALAPPDATA` (name it, or `GOCACHE`), npm its cache under `APPDATA`. A name ending in `*` is a prefix. On Windows names compare without case. There is no way to pass everything: `govern.env` must be a list. `FACET_KEY`, `FACET_KEYS` and `FACET_WITNESS_KEY` are never passed.
+
+## Isolation
+
+Every piece of evidence records how far the process that measured it was kept from the developer's machine (`isolation`):
+
+| Value | When |
+|---|---|
+| `ci` | the environment says it is a CI run (`CI` is set) |
+| `container` | the process runs in a container: `/.dockerenv`, `/run/.containerenv`, or a container runtime named in `/proc/1/cgroup` |
+| `declared:<name>` | neither is visible, and the project says it runs in `<name>`: `"govern": { "isolation": "claude-code" }`. Use this for a sandbox that does not show itself. It is marked as declared, not observed |
+| `none` | nothing of the above |
+
+"Observed" means what the environment says about itself: a `CI` variable can be set by hand. Where that matters, ask for a witness in CI (its record is signed) rather than for an isolation value.
 
 ## Waivers and approvals
 
