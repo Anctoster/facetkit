@@ -111,14 +111,15 @@ test('proof: signed by a trusted key; an edited and re-digested pack is TAMPERED
         assert.notEqual(refused.status, 0);
         assert.match(refused.stderr, /is not trusted in the witness role here/);
         assert.match(ci('key', 'trust', '--name', 'ci', '--role', 'witness').stdout, /as ci \(witness\)/);
-        const byCi = ci('proof', 'witness', '--item', 'A');
-        assert.match(byCi.stdout, /witness: 1\/1 checks gave the recorded answer/, byCi.stderr);
-        // trusted in the working copy only: not counted, and the run says why
-        const early = f('proof', 'verify');
-        assert.match(early.stdout, /a witness record by ci does not count: signed by a key this project does not trust/);
+        // trusted in the working copy only: the key is not a witness yet, and the run says why
+        const early = ci('proof', 'witness', '--item', 'A');
+        assert.notEqual(early.status, 0);
+        assert.match(early.stderr, /is not trusted in the witness role here/);
         assert.match(early.stderr, /trust: \.facet\/trust\.json differs from HEAD: uncommitted changes to trust are not counted \(not trusted until committed: \w+\)/);
         spawnSync('git', ['add', '.facet/trust.json'], { cwd: root });
         spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid', 'commit', '-qm', 'trust ci'], { cwd: root });
+        const byCi = ci('proof', 'witness', '--item', 'A');
+        assert.match(byCi.stdout, /witness: 1\/1 checks gave the recorded answer/, byCi.stderr);
         // both keys ran on this machine: a trusted rerun, not an independent reproduction
         assert.match(f('proof', 'verify').stdout, /reproduced by a trusted witness on the same machine: repeatability, not independence/);
         write(root, 'flag', 'set\n');
