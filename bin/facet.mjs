@@ -36,6 +36,7 @@
 //   facet route [files…] [--task "…"] [--item ID --apply]   owners, reach, risk and the route, before the work
 //   facet proof create|verify|status|decay · check --stale   what a result is proven for; what a change sends back
 //   facet criteria check|approve|list [--brief FILE]          numbered acceptance criteria, approved once
+//   facet origin --criterion A3 --from return|human|defect    the step a finding came from, measured where it can be
 //   facet owners · experiment · benchmark · journal repair
 //   facet init [--minimal] [--claude] · facet demo · facet hypotheses [--write FILE]
 //   facet explain --for dev|lead|client|auditor [--lang en|pl|ru] [--html FILE] · facet fitness [--accept] · facet handoff check STEP

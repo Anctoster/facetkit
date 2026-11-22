@@ -1,6 +1,7 @@
 // The journal-based commands of `facet`: flow, note, mem, cost, eval, retro, plan, timeline, journal.
 // Kept apart from facet.mjs so that neither file grows past what a person reads in one sitting.
 import { spawnSync } from 'node:child_process';
+import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
 import { attribute, costReport, fold, parseTranscript, renderCost, totalTokens } from '../lib/cost.mjs';
@@ -28,12 +29,14 @@ import { closeCharter, chartersDir, confirmByHand, loadBug, loadBugs, newBug, ne
 import { history as gitHistory } from '../lib/atlas.mjs';
 import { checkDecision, loadDecisions, newDecision, renderDecisionCheck, saveDecision } from '../lib/decisions.mjs';
 import { ADAPT, adapt, adaptationFor, adaptationsOf, renderAdaptations } from '../lib/adapt.mjs';
-import { approvedCriteria, criteriaHash, gateCriteria, readCriteria, renderProblems } from '../lib/criteria.mjs';
+import { approvedCriteria, criteriaHash, criterionOf, gateCriteria, parseCheck, readCriteria, renderProblems } from '../lib/criteria.mjs';
 import { blocking, checkHandoff, filesForStep, findTemplate, listedFiles, renderHandoff, TEMPLATE_OF, workingChanges } from '../lib/handoff.mjs';
 import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, stepsOf } from '../lib/planner.mjs';
 import { buildGraph, isTest } from '../lib/seams.mjs';
 import { checkOwners, ownersFromTerritories, renderOwners, resolveOwners } from '../lib/ownership.mjs';
-import { declaredArtifacts } from '../lib/domainproof.mjs';
+import { declaredArtifacts, domainSettingsOf } from '../lib/domainproof.mjs';
+import { delayOf, findOrigin, FROM } from '../lib/origin.mjs';
+import { snapshotRef } from '../lib/evalx.mjs';
 import { witness, witnessDigest, witnessLevelOf, exportProof, renderBundle, verifyBundle, createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
 import { planMutants, probe } from '../lib/mutaprobe.mjs';
 import { route } from '../lib/router.mjs';
@@ -122,6 +125,67 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
     // ---- governance: policy, evidence, model routing --------------------------------------
     const govern = project.govern ?? {};
     // what a configured command may see of this process's environment (lib/shell.mjs, safeEnv)
+    /**
+     * The source step of one finding (plan 2.8, step 3), recorded as an `origin` event. The chain and the
+     * snapshots are read here; the algorithm is lib/origin.mjs. A domain item takes its chains from its
+     * domain.json; a core item from "chains" in the project settings and from the git snapshots taken
+     * when each step starts.
+     */
+    const traceOrigin = async (item, id, { from, foundAt = null, judgedStep = null, cause = null, toolDefect = null } = {}) => {
+        const ev = events();
+        const state = itemState(ev, item);
+        const steps = state?.steps.map((s) => s.id) ?? [];
+        const criterion = criterionOf(ev, item, id);
+        const domain = domainSettingsOf({ cwd: CWD, events: ev, item });
+        const chains = domain ? domain.data.chains ?? null : project.chains ?? null;
+        const where = domain ? domain.root : CWD;
+        const env = { ...itemEnv(item, commandEnv()), FACET_CRITERION: id, ...(domain ? { FACET_DOMAIN_ITEM: domain.domainItem } : {}) };
+        const exec = async (cmd, cwd = where) => run(withItem(cmd, item), { cwd, env, timeoutSec: Number(opt('timeout', 600)), ledger: path.join(work, item, 'ledger.jsonl'), logDir: path.join(work, item, 'logs') });
+        // the chain: links with the step that produces each; a pair compares by its command (exit 0 the same, 1 differs) or is "human"
+        const links = criterion?.chain && chains?.links ? criterion.chain.map((name) => ({ name, step: chains.links[name]?.step ?? null })) : null;
+        const compare = async (a, b) => {
+            const how = chains?.compare?.[`${a.name}>${b.name}`];
+            if (how === 'human' || (!how && !(chains?.links?.[a.name]?.read && chains?.links?.[b.name]?.read))) return null;
+            if (how) {
+                const r = await exec(how);
+                return r.exit === 0 ? true : r.exit === 1 ? false : null;
+            }
+            const [x, y] = [await exec(chains.links[a.name].read), await exec(chains.links[b.name].read)];
+            return x.exit === 0 && y.exit === 0 ? String(x.digest ?? x.tail ?? '').trim() === String(y.digest ?? y.tail ?? '').trim() : null;
+        };
+        // the states after each step from `by` on: a snapshot is taken when a step starts, so the state after step k is the snapshot of step k+1; the last is now
+        let states = null;
+        const check = criterion && parseCheck(criterion.check);
+        const cmd = check && !check.user ? (typeof govern.checks?.[check.tool] === 'object' ? govern.checks[check.tool].run : govern.checks?.[check.tool]) : null;
+        const from0 = criterion ? steps.indexOf(criterion.by) : -1;
+        if (!domain && cmd && from0 >= 0) {
+            // up to the step that found it: what came after it cannot be the source
+            const until = foundAt && steps.includes(foundAt) ? steps.indexOf(foundAt) : steps.length - 1;
+            const refs = steps.slice(from0 + 1, until + 1).map((s) => snapshotRef(CWD, { item, step: s }));
+            // a missing snapshot leaves a gap no bisection may jump: then nothing is measured
+            if (refs.every(Boolean)) {
+                const at = (ref) => async () => {
+                    if (!ref) return (await exec(cmd, CWD)).exit === 0;
+                    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'facet-origin-'));
+                    try {
+                        if (spawnSync('git', ['worktree', 'add', '--detach', dir, ref], { cwd: CWD, encoding: 'utf-8' }).status !== 0) return null;
+                        return (await exec(cmd, dir)).exit === 0;
+                    } finally {
+                        spawnSync('git', ['worktree', 'remove', '--force', dir], { cwd: CWD });
+                        fs.rmSync(dir, { recursive: true, force: true });
+                    }
+                };
+                // after the last step the state is the working tree as it is now
+                states = steps.slice(from0, until + 1).map((s, i) => ({ step: s, check: at(i < refs.length ? refs[i] : null) }));
+            }
+        }
+        const found = await findOrigin({ steps, criterion, briefStep: steps[0] ?? null, links, compare, states, judgedStep });
+        const source = state?.steps.find((s) => s.id === found.step) ?? null;
+        const model = ofItem(ev, item).filter((e) => e.kind === 'step.start' && e.step === found.step).at(-1)?.model ?? null;
+        const e = { kind: 'origin', item, criterion: id, from, step: found.step, agent: toolDefect ? null : (source?.agent ?? null), model, tool: toolDefect ?? undefined, method: found.method, cause: cause ?? found.cause, link: found.link, charged: toolDefect ? false : found.charged, foundAt: foundAt ?? undefined, delay: delayOf(steps, found.step, foundAt) };
+        say(e);
+        return { ...e, why: found.why };
+    };
     // tools a criterion may name: the configured checks and the tools that record evidence themselves
     const criteriaTools = () => [...new Set([...checkNames(), 'scan', 'trace', 'accept', 'mutate', 'neighbours', ...(project.criteriaTools ?? [])])];
     const commandEnv = () => safeEnv({ allow: govern.env ?? [], never: keyEnv ? [keyEnv] : [] });
@@ -442,7 +506,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             say({ kind: 'step.end', item, step: stepId, agent: step.agent, status, tokens: opt('tokens') ? Number(opt('tokens')) : undefined, for: opt('for'), question: opt('question'), forced: status === 'DONE' && flag('force') ? true : undefined, reason: status === 'DONE' && flag('force') ? opt('reason') : undefined });
             console.log(`${item} / ${stepId} → ${status}\n\n${describe(upcoming(item))}`);
         },
-        verdict() {
+        async verdict() {
             const item = theItem();
             const verdict = positional[1];
             if (!['PASS', 'REWORK'].includes(verdict)) fail('flow verdict: facet flow verdict PASS|REWORK [--fix agent,agent] [--score agent=8,agent=7]');
@@ -455,7 +519,14 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 if (f.mode && !MODES.includes(f.mode)) fail(`flow verdict: unknown cause "${f.mode}" (one of: ${MODES.join(', ')})`);
                 if (!f.mode && project.skillint?.requireCause) fail(`flow verdict: name the cause of each fix as --fix ${f.agent}:<cause> (one of: ${MODES.join(', ')})`);
             }
-            say({ kind: 'verdict', item, verdict, fixes, scores, forced: (blocker && flag('force')) || undefined });
+            // where it was found: the judging step whose proof this verdict rests on (the last one that ended)
+            const judging = itemState(events(), item)?.steps.filter((s) => s.verdict && s.status === 'done').at(-1)?.id ?? null;
+            say({ kind: 'verdict', item, verdict, fixes, scores, criteria: verdict === 'REWORK' && list(opt('criterion')).length ? list(opt('criterion')) : undefined, forced: (blocker && flag('force')) || undefined });
+            // every return names the criteria it is about, and each gets its source step (plan 2.8)
+            if (verdict === 'REWORK') for (const id of list(opt('criterion'))) {
+                const o = await traceOrigin(item, id, { from: 'return', foundAt: judging });
+                console.log(`origin ${id}: ${o.step ?? '?'}${o.agent ? ` (${o.agent})` : ''} — ${o.method}, ${o.cause}`);
+            }
             console.log(`${item}: ${verdict}\n\n${describe(upcoming(item))}`);
         },
         answer() {
@@ -796,6 +867,18 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             if (approved?.hash === hash) return void console.log(`${item}: this list is already approved (${hash.slice(0, 12)})`);
             say({ kind: 'criterion', item, hash, criteria: stated.criteria, by: opt('by'), brief: path.relative(CWD, brief).split(path.sep).join('/'), replaces: approved?.hash });
             console.log(`${item}: ${stated.criteria.length} criteria approved by ${opt('by')} (${hash.slice(0, 12)})${approved ? ` — replaces ${approved.hash.slice(0, 12)}` : ''}`);
+        },
+        /** origin [--item ID] --criterion A3 --from return|human|defect [--step S] [--found-at STEP] [--cause brief|new-wish] [--tool-defect TOOL]: the step a finding came from. */
+        async origin() {
+            const item = theItem();
+            const ids = list(opt('criterion'));
+            const from = opt('from');
+            if (!ids.length || !FROM.includes(from)) fail('origin: facet origin --criterion A3[,B1] --from return|human|defect [--step S] [--found-at STEP] [--cause brief|new-wish] [--tool-defect TOOL]');
+            if (opt('cause') && !['brief', 'new-wish'].includes(opt('cause'))) fail('origin: --cause is brief or new-wish (for a criterion that is not in the brief; a person decides which)');
+            for (const id of ids) {
+                const o = await traceOrigin(item, id, { from, foundAt: opt('found-at') ?? null, judgedStep: opt('step') ?? null, cause: opt('cause') ?? null, toolDefect: opt('tool-defect') ?? null });
+                console.log(`${item} ${id}: source ${o.step ?? '?'}${o.agent ? ` (${o.agent}${o.charged ? '' : ', not charged'})` : ''} — ${o.method}, ${o.cause}${o.delay !== null ? `, found ${o.delay} step(s) later` : ''}\n  ${o.why}${o.tool ? `\n  charged to the tool ${o.tool}, not to an agent` : ''}`);
+            }
         },
         waive() {
             const item = theItem();
