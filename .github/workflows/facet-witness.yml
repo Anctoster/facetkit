@@ -1,0 +1,111 @@
+name: facet-witness
+# A witness in CI (plan 2.4): the checks of a proof pack are run again on another machine, and the
+# record is signed with the CI key (secret FACET_WITNESS_KEY, trusted in the witness role in
+# .facet/trust.json). It runs on a pull request labelled "witness", or by hand for one pack.
+#
+# Keep the key out of reach of the code it judges:
+#  - never switch this to pull_request_target: pull requests from forks get no secrets, and that is the point;
+#  - the tool comes from the default branch, not from the pull request;
+#  - the key is passed by --key-env and no command the witness runs receives it.
+# Needs facetkit 0.8.0 or later on the default branch (proof witness --pack, --key-env, --record).
+on:
+  pull_request:
+    types: [labeled, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pack:
+        description: Path of the proof pack in the repository (for example .work/P07/proof/manifest.json)
+        required: true
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: facet-witness-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  witness:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'witness')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: The tool, from the default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: kit
+          persist-credentials: false
+      - name: The sources, with their history
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: src
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # a project whose checks need dependencies installs them here, in each worktree below
+      - name: The packs to witness
+        id: packs
+        working-directory: src
+        env:
+          EVENT: ${{ github.event_name }}
+          PACK: ${{ inputs.pack }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" = workflow_dispatch ]; then
+            printf '%s\n' "$PACK"
+          else
+            git diff --name-only --diff-filter=AM "$BASE" "$HEAD" -- '*.proof.json' '*/proof/manifest.json'
+          fi > "$RUNNER_TEMP/packs.txt"
+          echo "count=$(grep -c . "$RUNNER_TEMP/packs.txt" || true)" >> "$GITHUB_OUTPUT"
+          echo "packs:"; cat "$RUNNER_TEMP/packs.txt"
+      - name: Witness each pack at the commit it names
+        id: witness
+        if: steps.packs.outputs.count != '0'
+        env:
+          FACET_WITNESS_KEY: ${{ secrets.FACET_WITNESS_KEY }}
+          FACET_WRITER: ci-witness
+        run: |
+          if [ -z "$FACET_WITNESS_KEY" ]; then
+            echo "::error::the secret FACET_WITNESS_KEY is not set here (pull requests from forks get no secrets)"; exit 1
+          fi
+          out="$RUNNER_TEMP/witness"; mkdir -p "$out"; n=0
+          while IFS= read -r pack; do
+            [ -n "$pack" ] || continue
+            n=$((n + 1))
+            git -C src show "HEAD:$pack" > "$RUNNER_TEMP/pack.json" || { echo "::error::$pack is not in this commit"; exit 1; }
+            commit=$(node -e 'const m = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")); const c = m.source && m.source.commit; if (!/^[0-9a-f]{40}$/.test(c || "")) process.exit(1); console.log(c)' "$RUNNER_TEMP/pack.json") \
+              || { echo "::error::$pack names no commit to witness on"; exit 1; }
+            wt="$RUNNER_TEMP/at-$n"
+            git -C src worktree add --detach "$wt" "$commit"
+            mkdir -p "$wt/.work/ci-witness"
+            cp "$RUNNER_TEMP/pack.json" "$wt/.work/ci-witness/pack.json"
+            (cd "$wt" && node "$GITHUB_WORKSPACE/kit/bin/facet.mjs" proof witness --pack .work/ci-witness/pack.json --key-env FACET_WITNESS_KEY \
+              --out "$out/$n.pack.json" --record "$out/$n.record.json") | tee "$out/$n.txt"
+          done < "$RUNNER_TEMP/packs.txt"
+      - name: Keep the signed records
+        if: always() && steps.packs.outputs.count != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: facet-witness
+          path: ${{ runner.temp }}/witness
+          if-no-files-found: ignore
+      - name: Say it on the pull request
+        if: github.event_name == 'pull_request' && steps.witness.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          node -e '
+            const fs = require("fs"), path = require("path");
+            const dir = process.argv[1];
+            const rows = fs.readdirSync(dir).filter((f) => f.endsWith(".record.json")).sort().map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")));
+            const cell = (s) => String(s ?? "").replace(/[|\r\n]/g, " ");
+            const lines = ["### facet witness", "", "| item | pack | reproduced | level | differs | not run here | key |", "|---|---|---|---|---|---|---|",
+              ...rows.map((r) => `| ${cell(r.item)} | ${cell(r.pack).slice(0, 12)} | ${r.record.reproduced}/${r.record.total}${r.record.sameSources ? "" : " (other sources)"} | ${cell(r.level ?? "vouches for nothing")} | ${cell((r.record.differs || []).join(", "))} | ${cell((r.record.notRun || []).join(", "))} | ${cell(r.record.signature && r.record.signature.key)} |`),
+              "", "The signed records are in the run artifact `facet-witness`. A record vouches only when it ran every check, on the sources the pack names, and got the same answers."];
+            fs.writeFileSync(path.join(dir, "comment.md"), lines.join("\n") + "\n");
+          ' "$RUNNER_TEMP/witness"
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/witness/comment.md"
