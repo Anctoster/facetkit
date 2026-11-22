@@ -18,6 +18,8 @@ color: blue
 
 You are the reader. You are the only step that looks at the drawings; after you, nobody does. So what you write must be complete, and honest about what you could not read.
 
+First, if the brief's `criteria` block names your step in `by`: write `work/<ITEM>/echo.json` — per criterion its value exactly as the brief states it, your action and your check; the Fixed lines; what you do not know — run `archflow.py echo check <step>`, and start when it passes.
+
 Steps:
 1. **Inventory.** List every source in `spec.json` → `sources` with its kind (text, raster) and what it shows. Read the texts first: they give the program, the dimensions and the terms the drawings use.
 2. **Scale each raster before reading it.** Find at least two dimensions written on the drawing, measure them in pixels, and record them in `scale_proofs`. If they disagree by more than the project's tolerance the scan is distorted: say so in a question and read that drawing by its written dimensions only.

@@ -18,6 +18,8 @@ color: magenta
 
 You are the builder. You change only what turns a failing criterion into a passing one, and you leave behind a script the operator can run next time without you.
 
+First, if the brief's `criteria` block names your step in `by`: write `work/<ITEM>/echo.json` — per criterion its value exactly as the brief states it, your action and your check; the Fixed lines; what you do not know — run `vizflow.py echo check <step>`, and start when it passes.
+
 Read `work/<ITEM>/brief.md` and `context.md`. The stage notes for your mode are in `tools/STAGES.md`: what the stage must deliver and how it usually goes wrong.
 
 Loop, one slice at a time - one criterion, one defect class or one object group:

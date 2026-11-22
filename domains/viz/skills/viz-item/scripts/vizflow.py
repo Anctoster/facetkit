@@ -13,6 +13,7 @@ except ImportError:
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import efficiency  # noqa: E402  (next to this script)
+import echo_check  # noqa: E402  (next to this script; FacetKit plan 2.9)
 
 LADDER = ["haiku", "sonnet", "opus"]
 def _r(*steps, checks=(), approve=True):
@@ -480,6 +481,12 @@ def gate_criteria(lst, known=(), steps=None):
 def criteria_hash(lst):
     """The same hash FacetKit's core takes: SHA-256 over canonical JSON (sorted keys, no spaces)."""
     return hashlib.sha256(json.dumps(lst, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def approved_list(events, item):
+    """The criteria block approved last for the item (brief.ok with a list), or []."""
+    mine = [e for e in events if e.get("item") == item and e["type"] == "brief.ok" and e.get("list")]
+    return mine[-1]["list"] if mine else []
 
 
 def brief_state(j, root, item, events):
@@ -1113,6 +1120,7 @@ def main():
     p = sub.add_parser("plan"); p.add_argument("kind", nargs="?"); p.add_argument("--prefix", default="N1")
     p = sub.add_parser("brief"); p.add_argument("action", choices=["new", "check", "approve"]); p.add_argument("--by"); p.add_argument("--file")
     p = sub.add_parser("start"); p.add_argument("step"); p.add_argument("--force", default=None, metavar="REASON")
+    p = sub.add_parser("echo"); p.add_argument("action", choices=["check"]); p.add_argument("step"); p.add_argument("--file")
     p = sub.add_parser("end"); p.add_argument("step"); p.add_argument("--status", required=True, choices=["DONE", "BLOCKED", "NEEDS-USER"])
     p.add_argument("--tokens", type=int); p.add_argument("--model"); p.add_argument("--question")
     p = sub.add_parser("note"); p.add_argument("text")
@@ -1327,10 +1335,44 @@ def main():
             die("Refused: step %s is not running." % a.step)
         if a.status == "NEEDS-USER" and not a.question:
             die("Refused: NEEDS-USER needs --question.")
-        started = [e for e in j.events() if e["type"] == "start" and e.get("item") == s["item"] and e["step"] == a.step][-1]
+        evs = j.events()
+        started = [e for e in evs if e["type"] == "start" and e.get("item") == s["item"] and e["step"] == a.step][-1]
+        # a step that owns criteria of the brief's criteria block does not finish without an echo that passed after it started (FacetKit plan 2.9)
+        owned = [c["id"] for c in approved_list(evs, s["item"]) if c.get("by") == a.step]
+        if a.status == "DONE" and owned and not any(e["type"] == "echo" and e.get("step") == a.step and e.get("ok") and e["n"] > started["n"] for e in evs if e.get("item") == s["item"]):
+            die("Refused: %s owns criteria %s and has no echo that passed. The agent writes work/%s/echo.json before its first action, then: echo check %s" % (a.step, ", ".join(owned), s["item"], a.step))
         j.add("end", item=s["item"], step=a.step, status=a.status, tokens=a.tokens, agent=started.get("agent"),
               model=a.model or started.get("model"), question=a.question)
         print("ended %s: %s" % (a.step, a.status))
+    elif a.cmd == "echo":
+        s = need(j, routes)
+        lst = approved_list(j.events(), s["item"])
+        if not lst:
+            die("Refused: the brief of %s has no approved criteria block - echo check compares with that list." % s["item"])
+        f = a.file or os.path.join(a.root, "work", s["item"], "echo.json")
+        if not os.path.exists(f):
+            die("No echo at %s - the agent of %s writes it before its first action." % (f, a.step))
+        try:
+            said = json.load(open(f, encoding="utf-8"))
+        except ValueError:
+            said = None
+        bp = brief_path(a.root, s["item"])
+        r = echo_check.check_echo(said, a.step, lst, echo_check.fixed_of(open(bp, encoding="utf-8").read()) if os.path.exists(bp) else [])
+        j.add("echo", item=s["item"], step=a.step, ok=r["ok"], u1=r["u1"], u2=r["u2"], u3=r["u3"], u4=r["u4"],
+              problems=["%s %s" % (u, t) for u, t, _ in r["problems"][:8]] or None)
+        print(echo_check.render(r))
+        if r["ok"]:
+            return
+        evs = [e for e in j.events() if e.get("item") == s["item"]]
+        since = max([e["n"] for e in evs if e["type"] == "start" and e["step"] == a.step] or [0])
+        tries = [e for e in evs if e["type"] == "echo" and e.get("step") == a.step and e["n"] > since]
+        streak = len(tries) - 1 - max([i for i, e in enumerate(tries) if e.get("ok")] or [-1])
+        if streak >= 2:
+            first = s["steps"][0]["id"]
+            for cid in sorted({i for u, _, i in r["problems"] if i and u != "U4"}) or [None]:
+                j.add("echo.return", item=s["item"], step=a.step, to=first, criterion=cid)
+            die("BRIEF NOT READABLE: two failed echoes in a row. Send the brief back to %s with the lines above - recorded against the brief, not against %s." % (first, a.step))
+        die("ECHO NOT UNDERSTOOD: fix work/%s/echo.json and run echo check %s again." % (s["item"], a.step))
     elif a.cmd == "note":
         s = need(j, routes)
         j.add("note", item=s["item"], text=a.text[:200])

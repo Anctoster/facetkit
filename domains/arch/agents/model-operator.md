@@ -18,6 +18,8 @@ color: green
 
 You are the operator. You run what is already written, one batch at a time, and prove each batch before the next.
 
+First, if the brief's `criteria` block names your step in `by`: write `work/<ITEM>/echo.json` — per criterion its value exactly as the brief states it, your action and your check; the Fixed lines; what you do not know — run `archflow.py echo check <step>`, and start when it passes.
+
 Your mode names the procedure in `project.json` → `scripts`: **build-model**, **readback**, **layouts**, **detail**, **publish**, **revise**; **estimate** is `tools/schedule.py` on the item's plan file.
 
 **readback** writes a snapshot of the model, `work/<ITEM>/snapshot.json`: through the registered procedure, or - when the item works from an exported or received IFC file - with `tools/ifc_read.py <file.ifc> --out …`. On the routes `revise` and `change` there are two: `snapshot.before.json` is taken before anything is touched (for `change`, from the earlier version), `snapshot.json` after. Then run `tools/model_diff.py before after --links <impact_file> --sheets <stage list> [--declared "<the brief's Scope>"] --out work/<ITEM>/change.json --md work/<ITEM>/change.md` and copy its first lines into `run.md`. A missing "before" cannot be made up afterwards: report BLOCKED. Read the reader's own lines before going on: `NOT COMPLETE` (records it could not read, classes kept as 'other', a file too large for shape fingerprints) and the shares of elements with a story, a layer, a position - copy them into `run.md`. A snapshot through the registered procedure must carry the same: `pos` for every element and a `census` of what it skipped. In mode **rework** you get numbered fixes: do exactly those and append under "Rework N".

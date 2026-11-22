@@ -1,0 +1,2 @@
+### Added
+- **The echo in the domains** (plan 2.9, domain engines). arch-flow and viz-flow get `echo check <step>` (`echo_check.py`, the same rules as the core's), and `end <step> --status DONE` refuses a step that owns criteria of the approved block without a passing echo. Two failures in a row print BRIEF NOT READABLE and write `echo.return`; `facet domain import` turns it into an `origin` against the brief. `echo` events come over as core `echo` events. The producing agents of both domains write the echo first.
