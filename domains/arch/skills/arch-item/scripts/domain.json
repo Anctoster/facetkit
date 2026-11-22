@@ -1,5 +1,11 @@
 {
  "artifacts": ["work/<ITEM>/**"],
+ "measure": {
+  "note": "How facet origin runs a criterion's check on the state after a step (work/<ITEM>/snap/<step>/, taken by archflow.py when a step starts; the last state is work/<ITEM>/). A command per check id, an id prefix with .*, or * for any: the tool when the state holds its inputs, else the state's own results files (with a receipt); exit 0 holds, 1 does not, 2 cannot say. Placeholders: {python}, {scripts}, {dir} (the state), {check}, {threshold} (--op/--value of the criterion, or nothing).",
+  "model.*": "{python} {scripts}/check_one.py {check} {threshold} --in {dir} -- spec_compare.py {dir}/spec.json {dir}/readback.json",
+  "spec.*": "{python} {scripts}/check_one.py {check} {threshold} --in {dir} -- model_spec.py {dir}/spec.json",
+  "*": "{python} {scripts}/check_one.py {check} {threshold} --in {dir}"
+ },
  "chains": {
   "note": "Where a criterion's value comes from, source first (FacetKit plan 2.8, facet origin). links: the step that produces each link. compare: a command, run in the arch folder, exit 0 the same, 1 differs, anything else cannot say; or human - no tool compares that pair. Placeholders: {python}, {scripts} (this folder), {work} (work/<ITEM>), {item}, {criterion}. spec>model expects work/<ITEM>/spec.json and the readback work/<ITEM>/readback.json.",
   "links": {"drawing": {"step": null}, "task": {"step": null}, "spec": {"step": "read"}, "model": {"step": "work"}, "sheets": {"step": "publish"}},

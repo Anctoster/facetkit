@@ -182,6 +182,22 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 states = steps.slice(from0, until + 1).map((s, i) => ({ step: s, check: at(i < refs.length ? refs[i] : null) }));
             }
         }
+        // a domain item: its states are the snapshots its engine took at each step start (work/<ITEM>/snap/<step>/), the check is run by domain.json "measure"
+        const measure = domain?.data?.measure ?? null;
+        const how = check && !check.user && measure ? (measure[check.tool] ?? Object.entries(measure).find(([k]) => k.endsWith('.*') && check.tool.startsWith(k.slice(0, -1)))?.[1] ?? measure['*']) : null;
+        if (domain && typeof how === 'string' && from0 >= 0) {
+            const until = foundAt && steps.includes(foundAt) ? steps.indexOf(foundAt) : steps.length - 1;
+            const workDir = path.join(domain.root, 'work', domain.domainItem);
+            const dirs = steps.slice(from0 + 1, until + 1).map((s) => path.join(workDir, 'snap', s));
+            if (dirs.every((d) => fs.existsSync(d))) {
+                const threshold = check.op && check.value !== null ? `--op ${JSON.stringify(check.op)} --value ${check.value}` : '';
+                const at = (dir) => async () => {
+                    const r = await exec(how.replaceAll('{dir}', JSON.stringify(path.relative(domain.root, dir).split(path.sep).join('/'))).replaceAll('{check}', check.tool).replaceAll('{threshold}', threshold));
+                    return r.exit === 0 ? true : r.exit === 1 ? false : null;
+                };
+                states = steps.slice(from0, until + 1).map((s, i) => ({ step: s, check: at(i < dirs.length ? dirs[i] : workDir) }));
+            }
+        }
         const found = await findOrigin({ steps, criterion, briefStep: steps[0] ?? null, links, compare, states, judgedStep });
         const source = state?.steps.find((s) => s.id === found.step) ?? null;
         const model = ofItem(ev, item).filter((e) => e.kind === 'step.start' && e.step === found.step).at(-1)?.model ?? null;
