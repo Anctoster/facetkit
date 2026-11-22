@@ -58,3 +58,36 @@ j.add("end", item="D1", step="work", agent="model-operator", status="DONE")
     const e = readJournal(path.join(root, '.facet', 'journal')).filter((x) => x.kind === 'origin').at(-1);
     assert.deepEqual([e.method, e.link, e.step, e.agent], ['chain', 'model', 'work', 'model-operator']);
 });
+
+test('cli: a domain finding is measured on the snapshots its engine took at each step start', { skip: !PYTHON }, () => {
+    const root = tmp();
+    write(root, 'facet.json', JSON.stringify({ journal: '.facet/journal' }));
+    const layers = [{ id: 'A2', text: 'every element on its layer', check: 'model.layers', by: 'work' }];
+    const script = `
+import sys, json; sys.path.insert(0, sys.argv[1])
+import archflow
+crit = json.loads(sys.argv[3])
+j = archflow.Journal(sys.argv[2])
+j.add("open", item="D1", route="model", title="t")
+j.add("brief.ok", item="D1", brief="abc", by="architect", criteria=1, list=crit, list_hash=archflow.criteria_hash(crit))
+for step, agent in (("order", "arch-conductor"), ("work", "model-operator"), ("readback", "model-operator"), ("proof", "arch-inspector")):
+    j.add("start", item="D1", step=step, agent=agent, model="haiku")
+    j.add("end", item="D1", step=step, agent=agent, status="DONE")
+`;
+    assert.equal(spawnSync(PYTHON, ['-c', script, ENGINE, path.join(root, '_arch'), JSON.stringify(layers)], { encoding: 'utf-8' }).status, 0);
+    // the states the engine kept: the layers held after work (the snapshot taken when readback started), were broken by readback
+    const results = (status) => JSON.stringify({ 'model.layers': { status }, _receipt: { tool: 'model_audit.py' } });
+    write(root, '_arch/work/D1/snap/readback/audit.json', results('OK'));
+    write(root, '_arch/work/D1/snap/proof/audit.json', results('FAIL'));
+    write(root, '_arch/work/D1/audit.json', results('FAIL'));
+    const f = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf-8', env: { ...process.env, FACET_WRITER: 'ann' } });
+    assert.equal(f('domain', 'import', '_arch/journal.jsonl', '--domain', 'arch').status, 0);
+    const o = f('origin', '--item', 'D1', '--criterion', 'A2', '--from', 'return', '--found-at', 'proof');
+    assert.equal(o.status, 0, o.stderr);
+    const e = readJournal(path.join(root, '.facet', 'journal')).filter((x) => x.kind === 'origin').at(-1);
+    assert.deepEqual([e.method, e.cause, e.step, e.agent], ['measured', 'regression', 'readback', 'model-operator']);
+    // a state with no result for the check cannot say: then nothing is measured, and the reviewer's word is marked as such
+    fs.rmSync(path.join(root, '_arch/work/D1/snap/proof/audit.json'));
+    f('origin', '--item', 'D1', '--criterion', 'A2', '--from', 'return', '--found-at', 'proof');
+    assert.equal(readJournal(path.join(root, '.facet', 'journal')).filter((x) => x.kind === 'origin').at(-1).method, 'judged');
+});

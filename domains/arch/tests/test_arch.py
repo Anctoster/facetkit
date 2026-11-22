@@ -576,7 +576,7 @@ class Flow(unittest.TestCase):
             self.skipTest("the viz domain is not next to this one (a plugin installed on its own)")
         with open(viz, encoding="utf-8") as a, open(os.path.join(SCRIPTS, "archflow.py"), encoding="utf-8") as b:
             self.assertEqual(a.read().replace("vizflow.py", "archflow.py"), b.read(), "a fix made in one journal engine must be made in the other")
-        for shared in ("receipt.py", "safe.py", "echo_check.py"):
+        for shared in ("receipt.py", "safe.py", "echo_check.py", "check_one.py"):
             with open(os.path.join(os.path.dirname(viz), shared), encoding="utf-8") as a, open(os.path.join(SCRIPTS, shared), encoding="utf-8") as b:
                 self.assertEqual(a.read(), b.read(), shared)
 
@@ -1047,3 +1047,38 @@ class Echo(unittest.TestCase):
         f("end", "work", "--status", "DONE", ok=True)
         types = [json.loads(l)["type"] for l in open(os.path.join(root, "journal.jsonl"), encoding="utf-8")]
         self.assertEqual((types.count("echo"), types.count("echo.return")), (3, 2))
+
+
+class Snapshots(unittest.TestCase):
+    """FacetKit plan 2.8: the state at each step start, and one check answered on one state."""
+
+    def test_a_step_start_keeps_the_json_state_of_the_item(self):
+        import archflow
+        root = tempfile.mkdtemp()
+        work = os.path.join(root, "work", "D1")
+        os.makedirs(work)
+        json.dump({"a": 1}, open(os.path.join(work, "spec.json"), "w"))
+        open(os.path.join(work, "render.png"), "wb").write(b"\x89PNG")
+        archflow.snapshot_state(root, "D1", "readback")
+        self.assertEqual(sorted(os.listdir(os.path.join(work, "snap", "readback"))), ["spec.json"], "images and models are not copied")
+
+    def test_one_check_on_one_state_by_the_tool_or_from_its_results(self):
+        state = tempfile.mkdtemp()
+        spec = load("spec.example.json")
+        json.dump(spec, open(os.path.join(state, "spec.json"), "w"))
+        back = readback_of(spec)
+        json.dump(back, open(os.path.join(state, "readback.json"), "w"))
+        one = lambda *a: subprocess.run([sys.executable, os.path.join(SCRIPTS, "check_one.py"), *a], capture_output=True, text=True).returncode
+        run = lambda check: one(check, "--in", state, "--", "spec_compare.py", os.path.join(state, "spec.json"), os.path.join(state, "readback.json"))
+        self.assertEqual(run("model.counts"), 0)
+        back["elements"].pop(0)
+        json.dump(back, open(os.path.join(state, "readback.json"), "w"))
+        self.assertEqual(run("model.counts"), 1)
+        self.assertEqual(run("no.such.check"), 2)
+        empty = tempfile.mkdtemp()
+        json.dump({"model.layers": {"status": "FAIL"}, "_receipt": {"tool": "model_audit.py"}}, open(os.path.join(empty, "audit.json"), "w"))
+        json.dump({"model.layers": {"status": "OK"}}, open(os.path.join(empty, "a_typed.json"), "w"))
+        self.assertEqual(one("model.layers", "--in", empty, "--", "spec_compare.py", os.path.join(empty, "spec.json"), os.path.join(empty, "readback.json")), 1,
+                         "no inputs for the tool: the state's results file with a receipt answers; a file without one is not taken")
+        json.dump({"junction.step": {"status": "OK", "value": 0.08}, "_receipt": {}}, open(os.path.join(empty, "stage.json"), "w"))
+        self.assertEqual(one("junction.step", "--in", empty, "--op", "<=", "--value", "0.05"), 1, "the criterion's threshold, not the tool's")

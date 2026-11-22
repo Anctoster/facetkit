@@ -483,6 +483,23 @@ def criteria_hash(lst):
     return hashlib.sha256(json.dumps(lst, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
 
 
+def snapshot_state(root, item, step):
+    """The state of the item when a step starts: its JSON files (the description, readbacks, results, scene
+    digests, transactions) copied to work/<ITEM>/snap/<step>/. FacetKit's facet origin runs a criterion's check
+    on these states to find the step that broke it (plan 2.8). Images and models are not copied: the checks
+    read their JSON digests."""
+    src = os.path.join(root, "work", item)
+    if not os.path.isdir(src):
+        return
+    dst = os.path.join(src, "snap", step)
+    os.makedirs(dst, exist_ok=True)
+    for name in os.listdir(src):
+        f = os.path.join(src, name)
+        if name.endswith(".json") and os.path.isfile(f):
+            with open(f, "rb") as a, open(os.path.join(dst, name), "wb") as b:
+                b.write(a.read())
+
+
 def approved_list(events, item):
     """The criteria block approved last for the item (brief.ok with a list), or []."""
     mine = [e for e in events if e.get("item") == item and e["type"] == "brief.ok" and e.get("list")]
@@ -1328,6 +1345,7 @@ def main():
         step = next((x for x in s["steps"] if x["id"] == a.step), None) or die("No step '%s' on this route." % a.step)
         agent, model, _ = model_for(a.root, s, step)
         j.add("start", item=s["item"], step=a.step, agent=agent, model=model, forced=a.force)
+        snapshot_state(a.root, s["item"], a.step)
         print("started %s (%s on %s)" % (a.step, agent, model))
     elif a.cmd == "end":
         s = need(j, routes)
