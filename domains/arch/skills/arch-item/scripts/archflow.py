@@ -14,6 +14,7 @@ except ImportError:
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import efficiency  # noqa: E402  (next to this script)
 import echo_check  # noqa: E402  (next to this script; FacetKit plan 2.9)
+import gates  # noqa: E402  (next to this script; FacetKit plan 2.10)
 
 LADDER = ["haiku", "sonnet", "opus"]
 def _r(*steps, checks=(), approve=True):
@@ -1112,6 +1113,9 @@ def cmd_cost(j, routes, a):
 
 
 BUILTIN_MODES = ("pack", "preview", "render")  # modes whose tool ships with the plugin
+# FacetKit plan 2.10: the files that hold the checks (H2) and what stands where work should be (H4); domain.json may name its own
+CHECK_FILES = ["project.json", "domain.json", "routes.json"]
+PLACEHOLDERS = []
 # A domain file next to this script replaces the routes, the checks and the project template:
 # the same journal engine serves any kind of work whose result can be checked.
 _DOMAIN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "domain.json")
@@ -1122,6 +1126,8 @@ if os.path.exists(_DOMAIN):
     KNOWN_CHECKS = _d.get("checks", KNOWN_CHECKS)
     PROJECT_TEMPLATE = _d.get("project", PROJECT_TEMPLATE)
     BUILTIN_MODES = tuple(_d.get("builtin_modes", BUILTIN_MODES))
+    CHECK_FILES = _d.get("checkFiles", CHECK_FILES)
+    PLACEHOLDERS = _d.get("placeholders", PLACEHOLDERS)
 
 
 def main():
@@ -1137,6 +1143,7 @@ def main():
     p = sub.add_parser("plan"); p.add_argument("kind", nargs="?"); p.add_argument("--prefix", default="N1")
     p = sub.add_parser("brief"); p.add_argument("action", choices=["new", "check", "approve"]); p.add_argument("--by"); p.add_argument("--file")
     p = sub.add_parser("start"); p.add_argument("step"); p.add_argument("--force", default=None, metavar="REASON")
+    p = sub.add_parser("approve-checks"); p.add_argument("step"); p.add_argument("--by", required=True); p.add_argument("--note", required=True)
     p = sub.add_parser("echo"); p.add_argument("action", choices=["check"]); p.add_argument("step"); p.add_argument("--file")
     p = sub.add_parser("end"); p.add_argument("step"); p.add_argument("--status", required=True, choices=["DONE", "BLOCKED", "NEEDS-USER"])
     p.add_argument("--tokens", type=int); p.add_argument("--model"); p.add_argument("--question")
@@ -1344,7 +1351,8 @@ def main():
             die("Refused: %s. Run: archflow.py next" % ("the brief is not approved" if block else "the next step is %s, not %s" % (expected, a.step)))
         step = next((x for x in s["steps"] if x["id"] == a.step), None) or die("No step '%s' on this route." % a.step)
         agent, model, _ = model_for(a.root, s, step)
-        j.add("start", item=s["item"], step=a.step, agent=agent, model=model, forced=a.force)
+        j.add("start", item=s["item"], step=a.step, agent=agent, model=model, forced=a.force,
+              checks=gates.checks_hash(a.root, CHECK_FILES), at=round(time.time(), 3))
         snapshot_state(a.root, s["item"], a.step)
         print("started %s (%s on %s)" % (a.step, agent, model))
     elif a.cmd == "end":
@@ -1359,9 +1367,31 @@ def main():
         owned = [c["id"] for c in approved_list(evs, s["item"]) if c.get("by") == a.step]
         if a.status == "DONE" and owned and not any(e["type"] == "echo" and e.get("step") == a.step and e.get("ok") and e["n"] > started["n"] for e in evs if e.get("item") == s["item"]):
             die("Refused: %s owns criteria %s and has no echo that passed. The agent writes work/%s/echo.json before its first action, then: echo check %s" % (a.step, ", ".join(owned), s["item"], a.step))
+        # FacetKit plan 2.10: H2 the checks untouched, H4 no placeholder, H9 every criterion's status - for a working step
+        if a.status == "DONE" and a.step not in ("order", "proof"):
+            work = os.path.join(a.root, "work", s["item"])
+            bad = []
+            approved = any(e["type"] == "checks.ok" and e.get("step") == a.step and e["n"] > started["n"] for e in evs if e.get("item") == s["item"])
+            if gates.changed_checks(a.root, CHECK_FILES, started.get("checks")) and not approved:
+                bad.append("H2 %s changed the files that hold its checks (%s) - undo it, or a person approves: approve-checks %s --by <name> --note \"why\"" % (a.step, ", ".join(CHECK_FILES), a.step))
+            bad += ["H4 " + x for x in gates.placeholders(work, PLACEHOLDERS)[:8]]
+            if owned:
+                bad += ["H9 " + x for x in gates.criteria_status(work, owned, started.get("at", 0))]
+            if bad:
+                die("Refused: %s is not done as declared:\n  - %s" % (a.step, "\n  - ".join(bad)))
         j.add("end", item=s["item"], step=a.step, status=a.status, tokens=a.tokens, agent=started.get("agent"),
               model=a.model or started.get("model"), question=a.question)
         print("ended %s: %s" % (a.step, a.status))
+    elif a.cmd == "approve-checks":
+        s = need(j, routes)
+        started = [e for e in j.events() if e["type"] == "start" and e.get("item") == s["item"] and e["step"] == a.step]
+        if not started:
+            die("Refused: step %s has not started." % a.step)
+        agents = {started[-1].get("agent")} | {x.get("agent") for x in s["steps"]} | {x.get("else", {}).get("agent") for x in s["steps"]}
+        if a.by in agents:
+            die("Refused: an agent of this route cannot approve a change to its own checks - a person of another role does.")
+        j.add("checks.ok", item=s["item"], step=a.step, by=a.by, note=a.note[:300])
+        print("change of the checks during %s approved by %s" % (a.step, a.by))
     elif a.cmd == "echo":
         s = need(j, routes)
         lst = approved_list(j.events(), s["item"])
