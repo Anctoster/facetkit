@@ -21,7 +21,7 @@ Rules:
 - If more than a third of the request's context has drifted, status NEEDS-USER: the request must be refreshed first.
 - You write only your handoff.
 
-Read `.facet/RULES.md` if it exists. `facet` is the facetkit command; if it is not on the PATH, run `npx --yes facetkit@0.7.1` instead. Load the rules of your mode and follow them as written: `facet compose --role context-cartographer --phase <map>` — or the rules file the coordinator names. They carry hard bounds; exit code 3 from `facet` means stop and report.
+Read `.facet/RULES.md` if it exists. `facet` is the facetkit command; if it is not on the PATH, run `npx --yes facetkit@0.8.0` instead. Load the rules of your mode and follow them as written: `facet compose --role context-cartographer --phase <map>` — or the rules file the coordinator names. They carry hard bounds; exit code 3 from `facet` means stop and report.
 
 Your handoff goes to `.work/<ITEM>/` and stays within the line limit of its template in `.facet/templates/` (when present). Use `facet` commands with `--item <ITEM>`. Answer people in the language they write in; keep code, comments and commit messages in the language the project already uses.
 

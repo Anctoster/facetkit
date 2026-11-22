@@ -19,7 +19,7 @@ No dependencies. Node 20+. Works with any agent that can run a shell command; sh
 
 ![One item of work: specification, build, probe, proof, policy gate — evidence accumulates and the assurance level rises](docs/assets/flow.svg)
 
-> **Status: 0.7.1, experimental.** The tools are tested (<!-- count:tests -->304<!-- /count --> tests and a guard benchmark of <!-- count:benchmark -->22<!-- /count --> adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **<!-- count:untested -->69<!-- /count --> untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute: `facet hypotheses --next` says which to try first, the pinned [Trial board](docs/trial-board.md) issue says who is testing what, and `HYPOTHESES.md` shows every reported result.
+> **Status: 0.8.0, experimental.** The tools are tested (<!-- count:tests -->349<!-- /count --> tests and a guard benchmark of <!-- count:benchmark -->22<!-- /count --> adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **<!-- count:untested -->69<!-- /count --> untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute: `facet hypotheses --next` says which to try first, the pinned [Trial board](docs/trial-board.md) issue says who is testing what, and `HYPOTHESES.md` shows every reported result.
 
 ## 🔬 FacetKit Community Research Program
 
@@ -181,6 +181,19 @@ The same record, told to the person who acts on it — see [docs/how-it-works.md
 | team lead | `facet explain --for lead` | first-time-right, why work was sent back, where the tokens go |
 | client, product owner | `facet explain --for client --lang pl --html status.html` (en, pl, ru) | what is done and how sure the team is, in words |
 | auditor | `facet explain --for auditor`, `facet proof witness` | every rule, exception and signature — and the checks re-run by you |
+
+## What 0.8.0 adds
+
+| Guarantee | Command |
+|---|---|
+| **A domain item is proven like a code one**: the arch-flow or viz-flow journal is checked line by line and imported; the pack binds the files the domain declares. | `facet domain import`, `facet proof create --domain arch\|viz` |
+| **A witness in CI**, signing with a key held in a secret, and only for the checks its machine can run. | `facet proof witness --pack --record --key-env`, `facet-witness.yml` |
+| **A proof bundle is checked with one file** and Node alone; every digest is SHA-256 over canonical JSON. | `node tools/verify-bundle.mjs` |
+| **Evidence says how it was isolated**, and a policy can ask for a minimum per level. | `govern.isolation`, `{ "fact": "isolation", "atLeast": … }` |
+| **Acceptance is a numbered list** with a tool and a threshold per criterion; a finding is traced to the step it came from. | `facet criteria`, `facet origin` |
+| **The agent states what it understood before it works**; two failed echoes send the brief back. | `facet echo check` |
+| **Done means done**: a receipt for every OK, no change to the checks, no placeholders, a status per criterion, a result measured in the step. | `facet flow end`, `govern.checkFiles` |
+| **What an agent noticed beyond its task** is recorded, not acted on, and shown at the close. | `facet tension` |
 
 ## What 0.7.1 adds
 

@@ -1,6 +1,6 @@
 {
   "name": "facetkit",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Evidence-first engineering for teams of AI agents: composable skill facets, measuring tools, and one journal from which state, cost, evaluation and the trust in a result are computed.",
   "author": {
     "name": "anctoster"
