@@ -96,7 +96,10 @@ The domain plugins (arch-flow, viz-flow) keep their own journal, `journal.jsonl`
 - the chain of the domain journal is checked first; an edited, removed, reordered or torn line stops the import with its line number, and nothing is written;
 - `--anchor n:hash` — the `ANCHOR` line the domain prints at every close, kept outside the project — must still match, or the history was rewritten after it;
 - each line becomes one core event with `src: { journal, n, hash }`, pointing back to it: `open`, `start`, `end`, `evidence` (with the tool's receipt), `waive`, `verdict`, `close`, `sign`, `accept` and `answer` become their core kinds; every other line is kept as `domain.<type>` with its fields under `data`;
+- an imported item has the steps of its domain route — from `routes.json` beside the journal, or `--routes <file>`, else the steps the item started — and the step of the inspector (`arch-inspector`, `viz-inspector`) is the one that judges;
 - a line already imported (by its hash) is not imported again, so the command can run after every session.
+
+A domain item is then proven on the files its domain declares, not on the git tree: `facet proof create --item D1-02 --domain arch` reads `artifacts` from `domain.json` — beside the domain journal if the project has one there, else the one the kit ships (`work/<ITEM>/**` for both domains) — as globs under the folder of the journal the item came from (`--domain-root DIR` names another), with `<ITEM>` for the item's id in the domain. The files are hashed from disk whether git tracks them or not, the declaration itself is part of the state, and a pattern that matches no file is listed as a blind spot. `facet proof verify` checks the pack against the declaration it carries: an edit to a declared file makes it stale, an edit anywhere else does not.
 
 ## Attestation
 
