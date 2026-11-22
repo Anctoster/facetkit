@@ -51,6 +51,19 @@ Before its first working action, the agent of a step that owns criteria (criteri
 - U7 — returns for an assumption nobody asked about;
 - U8 — returns that were the brief's (above 30 %: change the conductor's skill, not the agents').
 
+## Gates against work declared done without being done (0.8)
+
+When a step ends DONE, four gates are checked. Each refuses; `--force --reason` overrides, and the override is recorded.
+
+| Gate | What it refuses |
+|---|---|
+| H1 | an OK a criterion of the step rests on that has no receipt, or was measured by another command than the one configured now. Checked again at `flow verdict PASS` for every criterion. Evidence facet records itself (`scan`, `trace`, …) needs none |
+| H2 | a `build` or `ops` step that changed the checks it is judged by: tests, check scripts, `facet.json`, the policy, `domain.json` — `govern.checkFiles` names others. Only a person lifts it: `facet approve check-files:<step> --by <name> --note "…"` |
+| H4 | a placeholder in the lines the step added: `TODO`, `FIXME`, not implemented, an empty body — `govern.placeholders` names others |
+| H9 | a handoff that does not name each criterion of the step: `<id>: done`, `<id>: blocked — why`, `<id>: partial — what is left` |
+
+The step's own changes are taken since its snapshot when one was taken (`eval.snapshot`). Otherwise they are the working changes that no other handoff of the item lists.
+
 ## The source of a finding (0.8)
 
 Every return, remark and defect is traced to the step it came from, per criterion. The trace runs on its own on `facet flow verdict REWORK --fix … --criterion A3`; for a remark or a defect after acceptance, run `facet origin --criterion A3 --from human|defect`. The rules, in order:
