@@ -1,4 +1,4 @@
-<!-- max-lines: 40 -->
+<!-- max-lines: 50 -->
 # <ITEM> — work order
 
 ## Inputs
@@ -6,7 +6,10 @@
 - specification, scenarios: <paths>
 
 ## Done when
-- (the done-criteria in the requester's words)
+- (the done-criteria in the requester's words, numbered in the block below; check: a tool and its threshold, or [user])
+```criteria
+[{ "id": "C1", "text": "<what is true when it is met>", "check": "<tool> [<measure> <op> <number>] | [user]", "by": "<step>" }]
+```
 
 ## Stop conditions
 - (one line per NEEDS-USER trigger)

@@ -28,6 +28,7 @@ import { closeCharter, chartersDir, confirmByHand, loadBug, loadBugs, newBug, ne
 import { history as gitHistory } from '../lib/atlas.mjs';
 import { checkDecision, loadDecisions, newDecision, renderDecisionCheck, saveDecision } from '../lib/decisions.mjs';
 import { ADAPT, adapt, adaptationFor, adaptationsOf, renderAdaptations } from '../lib/adapt.mjs';
+import { approvedCriteria, criteriaHash, gateCriteria, readCriteria, renderProblems } from '../lib/criteria.mjs';
 import { blocking, checkHandoff, filesForStep, findTemplate, listedFiles, renderHandoff, TEMPLATE_OF, workingChanges } from '../lib/handoff.mjs';
 import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, stepsOf } from '../lib/planner.mjs';
 import { buildGraph, isTest } from '../lib/seams.mjs';
@@ -121,6 +122,8 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
     // ---- governance: policy, evidence, model routing --------------------------------------
     const govern = project.govern ?? {};
     // what a configured command may see of this process's environment (lib/shell.mjs, safeEnv)
+    // tools a criterion may name: the configured checks and the tools that record evidence themselves
+    const criteriaTools = () => [...new Set([...checkNames(), 'scan', 'trace', 'accept', 'mutate', 'neighbours', ...(project.criteriaTools ?? [])])];
     const commandEnv = () => safeEnv({ allow: govern.env ?? [], never: keyEnv ? [keyEnv] : [] });
     const policy = () => [...(govern.policy ? readJson(path.resolve(CWD, govern.policy), DEFAULT_POLICY) : DEFAULT_POLICY), ...extensions.flatMap((x) => x.rules ?? [])];
     const checkNames = () => [...Object.keys(govern.checks ?? {}), ...extensions.flatMap((x) => Object.keys(x.checks ?? {}))];
@@ -425,6 +428,12 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                     const changed = all && filesForStep(all, { claimedElsewhere: others, owners: manifest ? resolveOwners(all, manifest) : null, agent: step.agent });
                     const problems = checkHandoff(fs.readFileSync(hfile, 'utf-8'), tpl, { root: CWD, changed });
                     say({ kind: 'evidence', item, name: 'handoff', ok: blocking(problems).length === 0, value: blocking(problems).length, step: stepId, detail: blocking(problems).slice(0, 4).map((p) => `${p.kind} ${p.what}`).join('; ') || undefined });
+                    // a criteria block in the handoff is held to the gate now, while its author can still fix it (plan 2.8)
+                    const stated = readCriteria(fs.readFileSync(hfile, 'utf-8'));
+                    if (stated.found) {
+                        const bad = [...stated.problems, ...gateCriteria(stated.criteria, { steps: state.steps.map((s) => s.id), tools: criteriaTools() })];
+                        if (bad.length && !flag('force')) fail(`${path.relative(CWD, hfile)}: the criteria cannot be accepted\n${renderProblems(bad)}\n\nflow end: fix the criteria block and end the step again.`, 1);
+                    }
                     if (blocking(problems).length && !flag('force')) fail(`${renderHandoff(path.relative(CWD, hfile), problems)}\n\nflow end: the step is not DONE until its handoff is whole. Give these lines to ${step.agent ?? 'the step'} and end the step again (or --force --reason "…", which is recorded and shown by facet assure and facet trust).`, 1);
                     if (problems.length) console.log(renderHandoff(path.relative(CWD, hfile), problems));
                 } else if (tpl && !fs.existsSync(hfile) && step.agent) console.log(`note: ${path.relative(CWD, hfile)} does not exist — the next agent has no handoff from ${step.agent}`);
@@ -757,6 +766,36 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             const items = [...new Set(fresh.map((e) => e.item).filter(Boolean))];
             if (!flag('dry-run')) for (const e of fresh) say(e);
             console.log(`domain import: ${journalRef} (${domain}) — chain holds over ${read.lines.length} line(s), head ${read.head.n}:${read.head.hash.slice(0, 16)}; ${fresh.length} new event(s)${flag('dry-run') ? ' would be' : ''} recorded, ${read.lines.length - fresh.length} already imported${items.length ? `; items: ${items.join(', ')}` : ''}`);
+        },
+        /** criteria check|approve|list [--item ID] [--brief FILE] [--by NAME]: numbered acceptance criteria (plan 2.8). */
+        criteria() {
+            const sub = positional[0] ?? 'list';
+            const item = theItem();
+            const approved = approvedCriteria(events(), item);
+            if (sub === 'list') {
+                if (!approved) return void console.log(`${item}: no approved criteria — facet criteria approve --item ${item} --by <person>`);
+                console.log(`${item}: ${approved.criteria.length} criteria, approved by ${approved.by ?? '?'} (${approved.hash.slice(0, 12)})`);
+                for (const c of approved.criteria) console.log(`  ${c.id.padEnd(5)} ${c.text}\n        check ${c.check} · by ${c.by}${c.chain ? ` · chain ${c.chain.join(' → ')}` : ''}`);
+                return;
+            }
+            if (!['check', 'approve'].includes(sub)) fail('criteria: facet criteria check|approve|list [--item ID] [--brief FILE] [--by NAME]');
+            const brief = path.resolve(CWD, opt('brief', path.join(work, item, 'order.md')));
+            if (!fs.existsSync(brief)) fail(`criteria: ${path.relative(CWD, brief)} does not exist — name the brief with --brief`);
+            const stated = readCriteria(fs.readFileSync(brief, 'utf-8'));
+            if (!stated.found) fail(`criteria: ${path.relative(CWD, brief)} has no \`\`\`criteria block`);
+            const steps = itemState(events(), item)?.steps.map((s) => s.id) ?? null;
+            const bad = [...stated.problems, ...gateCriteria(stated.criteria, { steps, tools: criteriaTools() })];
+            if (bad.length) fail(`criteria: ${path.relative(CWD, brief)} cannot be accepted\n${renderProblems(bad)}`);
+            const hash = criteriaHash(stated.criteria);
+            if (sub === 'check') {
+                const same = approved?.hash === hash;
+                console.log(`${item}: ${stated.criteria.length} criteria in ${path.relative(CWD, brief)} pass the gate${approved ? (same ? ' — the approved list' : ` — CHANGED since the approval by ${approved.by ?? '?'}: approve again`) : ' — not approved yet'}`);
+                return void (approved && !same && process.exit(1));
+            }
+            if (!opt('by')) fail('criteria approve: --by <person> — an approval is a person\'s, on record');
+            if (approved?.hash === hash) return void console.log(`${item}: this list is already approved (${hash.slice(0, 12)})`);
+            say({ kind: 'criterion', item, hash, criteria: stated.criteria, by: opt('by'), brief: path.relative(CWD, brief).split(path.sep).join('/'), replaces: approved?.hash });
+            console.log(`${item}: ${stated.criteria.length} criteria approved by ${opt('by')} (${hash.slice(0, 12)})${approved ? ` — replaces ${approved.hash.slice(0, 12)}` : ''}`);
         },
         waive() {
             const item = theItem();
