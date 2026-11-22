@@ -90,3 +90,12 @@ test('board: U6 questions after the work began, U7 silent assumptions, U8 return
     const q = qualityLoop(ev);
     assert.deepEqual([q.U6.value, q.U7.value, q.U8.value], [1, 0.5, 1]);
 });
+
+test('domain import: an echo comes over as an echo, a brief sent back as an origin against the brief', async () => {
+    const { coreEvent } = await import('../lib/domainlog.mjs');
+    const line = (event, n) => ({ n, hash: 'h'.repeat(64), event });
+    const e = coreEvent(line({ type: 'echo', item: 'D1', step: 'work', ok: false, u1: 0.5, u2: 1, u3: 1, u4: 0 }, 5), { domain: 'arch', journal: 'j' });
+    assert.deepEqual([e.kind, e.step, e.ok, e.u1], ['echo', 'work', false, 0.5]);
+    const o = coreEvent(line({ type: 'echo.return', item: 'D1', step: 'work', to: 'order', criterion: 'A2' }, 6), { domain: 'arch', journal: 'j' });
+    assert.deepEqual([o.kind, o.step, o.cause, o.charged, o.criterion, o.foundAt], ['origin', 'order', 'brief-unreadable', false, 'A2', 'work']);
+});

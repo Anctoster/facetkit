@@ -576,7 +576,7 @@ class Flow(unittest.TestCase):
             self.skipTest("the viz domain is not next to this one (a plugin installed on its own)")
         with open(viz, encoding="utf-8") as a, open(os.path.join(SCRIPTS, "archflow.py"), encoding="utf-8") as b:
             self.assertEqual(a.read().replace("vizflow.py", "archflow.py"), b.read(), "a fix made in one journal engine must be made in the other")
-        for shared in ("receipt.py", "safe.py"):
+        for shared in ("receipt.py", "safe.py", "echo_check.py"):
             with open(os.path.join(os.path.dirname(viz), shared), encoding="utf-8") as a, open(os.path.join(SCRIPTS, shared), encoding="utf-8") as b:
                 self.assertEqual(a.read(), b.read(), shared)
 
@@ -1005,3 +1005,45 @@ class Criteria(unittest.TestCase):
     def test_the_hash_is_the_cores(self):
         # sha256 over canonical JSON: sorted keys, no spaces - what lib/criteria.mjs criteriaHash computes
         self.assertEqual(self.e.criteria_hash([{"id": "A1", "by": "b"}]), self.e.criteria_hash([{"by": "b", "id": "A1"}]))
+
+
+class Echo(unittest.TestCase):
+    """FacetKit plan 2.9: before its first action the agent says back the criteria of its step; a tool compares."""
+
+    def flow(self):
+        root = os.path.join(tempfile.mkdtemp(), "a")
+
+        def f(*a, ok=None):
+            r = subprocess.run([sys.executable, os.path.join(SCRIPTS, "archflow.py"), "--root", root, *a], capture_output=True, text=True)
+            if ok is not None:
+                self.assertEqual(r.returncode == 0, ok, "%s -> %s%s" % (a, r.stdout, r.stderr))
+            return r.stdout + r.stderr
+        f("init")
+        return root, f
+
+    def test_a_step_that_owns_criteria_needs_an_echo_and_two_failures_send_the_brief_back(self):
+        root, f = self.flow()
+        f("open", "D1-02", "--route", "model", ok=True)
+        f("start", "order"); f("end", "order", "--status", "DONE")
+        crit = [{"id": "A1", "text": "External walls 25 cm thick", "check": "model.dimensions", "by": "work"},
+                {"id": "A2", "text": "Every element on its layer", "check": "model.layers", "by": "work"}]
+        with open(os.path.join(root, "work", "D1-02", "brief.md"), "w", encoding="utf-8") as b:
+            b.write("# Brief\nroute: model\n\n## Goal\nx\n\n## Reference\nspec.json\n\n## Scope\nx\n\n## Fixed\nThe survey drawings.\n\n## Acceptance\n"
+                    "```criteria\n%s\n```\n\n## Views\nnone\n\n## Decisions\nx\n\n## Budget\n10 runs\n" % json.dumps(crit))
+        f("brief", "approve", "--by", "architect", ok=True)
+        f("start", "work")
+        self.assertIn("work owns criteria A1, A2 and has no echo that passed", f("end", "work", "--status", "DONE", ok=False))
+        echo = os.path.join(root, "work", "D1-02", "echo.json")
+        bad = {"step": "work", "criteria": [{"id": "A1", "value": "walls 20 cm", "action": "a", "check": "c"}], "fixed": ["the survey drawings"]}
+        json.dump(bad, open(echo, "w", encoding="utf-8"))
+        out = f("echo", "check", "work", ok=False)
+        self.assertIn('the brief says "25 cm"', out)
+        self.assertIn("criterion A2 of this step is not in the echo", out)
+        self.assertIn("BRIEF NOT READABLE", f("echo", "check", "work", ok=False))
+        good = {"step": "work", "criteria": [{"id": "A1", "value": "external walls 25cm", "action": "a", "check": "c"},
+                                             {"id": "A2", "value": "every element on its layer", "action": "a", "check": "c"}], "fixed": ["the survey drawings"]}
+        json.dump(good, open(echo, "w", encoding="utf-8"))
+        self.assertIn("echo: understood", f("echo", "check", "work", ok=True))
+        f("end", "work", "--status", "DONE", ok=True)
+        types = [json.loads(l)["type"] for l in open(os.path.join(root, "journal.jsonl"), encoding="utf-8")]
+        self.assertEqual((types.count("echo"), types.count("echo.return")), (3, 2))

@@ -18,6 +18,8 @@ color: green
 
 You are the operator. You run what is already written, one batch at a time, and prove each batch before the next.
 
+First, if the brief's `criteria` block names your step in `by`: write `work/<ITEM>/echo.json` — per criterion its value exactly as the brief states it, your action and your check; the Fixed lines; what you do not know — run `vizflow.py echo check <step>`, and start when it passes.
+
 Your mode names the script in `project.json` → `scripts` (or a bundled tool): **export**, **environment**, **materials**, **cameras**, **render-setup**, **env-adjust**, **preview** (a low-resolution contact sheet of the brief's Views, made with `tools/contact_sheet.py`), **render**, **pack** (`tools/web_pack.py`). In mode **rework** you get numbered fixes: do exactly those, with the script of the step's own mode, and append under "Rework N".
 
 Loop, one batch at a time:
