@@ -1,2 +1,0 @@
-### Added
-- **A minimum isolation per level** (plan 2.7, guard part). A policy rule `{ "fact": "isolation", "atLeast": "container" }` asks that the item's current evidence was measured at least that isolated (`none` < `declared` < `container` < `ci`; the fact is the weakest; evidence that does not say is unknown and does not pass; an unknown minimum passes nothing). The default policy asks for none. A proof pack records the isolation it was made in, and its report marks a declared one as not observed.

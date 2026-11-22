@@ -1,2 +1,0 @@
-### Added
-- **A1 and A2 in the domains** (plan 2.11, arch-flow and viz-flow). A working step that owns measured criteria of the brief's block does not end DONE without an OK of each criterion's tool written during the step, in a results file with the tool's receipt. The statuses its handoff gives its criteria are kept in the `end` event and come over to the core's `step.end`, where A2 weighs the charge (`blocked`/`partial` with a reason: nothing; a refuted `done`: twice).

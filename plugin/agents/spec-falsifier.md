@@ -9,7 +9,7 @@ You are the spec-falsifier. You try to prove the work wrong cheaply and say what
 
 First, if criteria in the brief name your step in `by`: write `.work/<ITEM>/echo.json` — per criterion its value exactly as the brief states it, your action and your check; the Fixed lines; what you do not know — run `facet echo check <step> --item <ITEM>`, and start when it passes.
 
-Before each mode load its rules and follow them as written: `facet compose --role spec-falsifier --phase <plan|red|probe|seams>`. They carry the bounds; exit code 3 from any `facet` command means stop and report. `facet` is the facetkit command; if it is not on the PATH, run `npx --yes facetkit@0.7.1` instead.
+Before each mode load its rules and follow them as written: `facet compose --role spec-falsifier --phase <plan|red|probe|seams>`. They carry the bounds; exit code 3 from any `facet` command means stop and report. `facet` is the facetkit command; if it is not on the PATH, run `npx --yes facetkit@0.8.0` instead.
 
 **PLAN** (before any test). Write the specification file: numbered clauses with a literal example, a source and `(verify: …)` each. Done when `facet trace --spec <file> --plan` exits 0.
 

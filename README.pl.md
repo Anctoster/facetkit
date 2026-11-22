@@ -19,7 +19,7 @@ Bez zależności. Node 20+. Działa z każdym agentem, który potrafi uruchomić
 
 ![Jeden element pracy: specyfikacja, budowa, próba, dowód, bramka polityki — dowody przybywają, a poziom pewności rośnie](docs/assets/flow.svg)
 
-> **Stan: 0.7.1, wersja eksperymentalna.** Narzędzia są przetestowane (liczba testów: <!-- count:tests -->304<!-- /count -->, liczba przypadków testu odporności: <!-- count:benchmark -->22<!-- /count -->; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **niesprawdzone hipotezy o zachowaniu agentów (liczba: <!-- count:untested -->69<!-- /count -->)** — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
+> **Stan: 0.8.0, wersja eksperymentalna.** Narzędzia są przetestowane (liczba testów: <!-- count:tests -->349<!-- /count -->, liczba przypadków testu odporności: <!-- count:benchmark -->22<!-- /count -->; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **niesprawdzone hipotezy o zachowaniu agentów (liczba: <!-- count:untested -->69<!-- /count -->)** — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
 
 
 ## 🔬 Badania Społeczności
@@ -154,6 +154,17 @@ Ten sam zapis, opowiedziany osobie, która ma na jego podstawie działać:
 | liderem zespołu | `facet explain --for lead` | ile pracy wraca do poprawki i dlaczego, gdzie idą tokeny |
 | klientem, właścicielem produktu | `facet explain --for client --lang pl --html status.html` | co jest gotowe i na ile zespół jest pewny — słowami |
 | audytorem | `facet explain --for auditor`, `facet proof witness` | każdą regułę, wyjątek i podpis — oraz kontrole uruchomione ponownie przez ciebie |
+
+## Co dodaje 0.8.0
+
+- **Zadanie domeny jest dowodzone jak zadanie kodu**: dziennik arch-flow lub viz-flow jest sprawdzany wiersz po wierszu i importowany; paczka wiąże pliki zadeklarowane przez domenę (`facet domain import`, `facet proof create --domain arch|viz`).
+- **Świadek w CI** podpisuje kluczem z sekretu i tylko te kontrole, które jego maszyna potrafi uruchomić (`facet proof witness --pack --record --key-env`).
+- **Paczkę dowodową sprawdza jeden plik** i sam Node; każdy skrót to SHA-256 z kanonicznego JSON (`node tools/verify-bundle.mjs`).
+- **Dowód mówi, jak był izolowany**, a polityka może wymagać minimum dla poziomu (`govern.isolation`).
+- **Odbiór to numerowana lista** z narzędziem i progiem dla każdego kryterium; znalezisko wskazuje krok, z którego pochodzi (`facet criteria`, `facet origin`).
+- **Agent mówi, co zrozumiał, zanim zacznie**; dwa nieudane echa odsyłają brief (`facet echo check`).
+- **Gotowe znaczy gotowe**: pokwitowanie dla każdego OK, bez zmian w kontrolach, bez zaślepek, status każdego kryterium, wynik zmierzony w kroku.
+- **To, co agent zauważył poza zadaniem**, jest zapisywane, nie wykonywane, i pokazywane przy zamknięciu (`facet tension`).
 
 ## Co dodaje 0.7.1
 
