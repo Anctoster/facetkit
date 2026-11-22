@@ -4,7 +4,8 @@
 //   node scripts/release-check.mjs v0.8.0 [--notes FILE]
 //
 // The tag must be v<version of package.json>, and CHANGELOG.md must have a dated section for that
-// version. With --notes the section is written to FILE, for the GitHub release. Exit 1 with a reason
+// version. At release the READMEs' numbers must be the sources' (scripts/counts.mjs) and no fragment
+// may be left in changelog.d/ (scripts/release-prepare.mjs gathers them). With --notes the section is written to FILE, for the GitHub release. Exit 1 with a reason
 // otherwise — the 0.7.1 tag once pointed at a commit whose package.json said something else.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -43,6 +44,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8'));
     const changelog = fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf-8');
     const problems = releaseProblems({ tag, pkg, changelog });
+    // what a pull request only warns about blocks a release: numbers that drifted, fragments not gathered
+    const { counts, fill, FILES } = await import('./counts.mjs');
+    const values = counts(ROOT);
+    for (const f of FILES) for (const s of fill(fs.readFileSync(path.join(ROOT, f), 'utf-8'), values).stale) problems.push(`${f}: ${s.name} says ${s.was}, the sources say ${s.now} — run: npm run release:prepare ${tag.replace(/^v/, '')}`);
+    const { readFragments, fragmentProblems } = await import('./changelog.mjs');
+    const left = readFragments(ROOT);
+    if (left.length) problems.push(`changelog.d/ still holds ${left.length} fragment(s) (${left.map((f) => f.file).slice(0, 4).join(', ')}) — run: npm run release:prepare ${tag.replace(/^v/, '')}`);
+    problems.push(...fragmentProblems(left));
     if (problems.length) {
         for (const p of problems) console.error(`release-check: ${p}`);
         process.exit(1);

@@ -7,13 +7,12 @@ import { counts, FILES, fill } from '../scripts/counts.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-test('readme: the numbers the READMEs state are the numbers the sources give (npm run counts writes them)', () => {
+test('readme: every README marks the numbers that npm run counts writes at release', () => {
     const values = counts(ROOT);
     assert.ok(values.tests > 0 && values.benchmark > 0 && values.hypotheses >= values.untested);
     for (const f of FILES) {
         const text = fs.readFileSync(path.join(ROOT, f), 'utf-8');
-        const { stale } = fill(text, values);
-        assert.deepEqual(stale, [], `${f} is out of date — run: npm run counts`);
+        fill(text, values); // every marked name is known; whether the numbers are current is checked at release (scripts/release-check.mjs)
         for (const name of ['tests', 'benchmark', 'untested']) assert.match(text, new RegExp(`<!-- count:${name} -->`), `${f} marks ${name}`);
     }
 });

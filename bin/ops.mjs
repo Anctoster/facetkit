@@ -217,7 +217,15 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
     const kitVersion = () => (KIT ? readJson(path.join(KIT, 'package.json'), {}).version ?? null : null);
     let envMemo;
     /** Where this process measures: probed once per command; the external version probes are skipped for plain evidence and run for proofs and benchmarks. */
-    const envNow = (tools = false) => (tools ? environment(CWD, { kit: kitVersion() }) : (envMemo ??= environment(CWD, { tools: false, kit: kitVersion() })));
+    const envNow = (tools = false) => {
+        // govern.isolation names the sandbox this project runs in when it does not show itself (plan 2.7)
+        const declared = govern.isolation ?? null;
+        try {
+            return tools ? environment(CWD, { kit: kitVersion(), declared }) : (envMemo ??= environment(CWD, { tools: false, kit: kitVersion(), declared }));
+        } catch (error) {
+            return fail(error.message);
+        }
+    };
     const inputs = () => govern.inputs ?? []; // ignored files a build reads all the same: they belong to the source state
     /** The guard benchmark shipped with this version of the tool: what says its checks catch anything. */
     const kitBenchmark = () => {
@@ -235,7 +243,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             fs.writeFileSync(file, JSON.stringify(Object.fromEntries(hashesNow())));
         }
         const sc = scopesFor([name])[name];
-        return { state: src, env: envNow().digest, scope: { digest: sc.digest, files: sc.files } };
+        return { state: src, env: envNow().digest, isolation: envNow().isolation, scope: { digest: sc.digest, files: sc.files } };
     };
     const judged = (item) => {
         const cal = calibration(events());
