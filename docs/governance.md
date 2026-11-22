@@ -64,6 +64,13 @@ When a step ends DONE, four gates are checked. Each refuses; `--force --reason` 
 
 The step's own changes are taken since its snapshot when one was taken (`eval.snapshot`). Otherwise they are the working changes that no other handoff of the item lists.
 
+In the domains, arch-flow and viz-flow apply the same gates when a working step ends DONE:
+
+- **H1** is the engines' own rule: an OK only from a results file with the shipped tool's receipt.
+- **H2:** the files `checkFiles` in `domain.json` names are hashed at the step's start and compared at its end. They are thresholds, rules and stage lists: `project.json`, `rules*.json`, `tools/sheets.*.json`, … A change needs `approve-checks <step> --by <person>`, and no agent of the route may approve it.
+- **H4:** the rules in `placeholders` look into the item's JSON files. In arch: a zone without a name, an element on the default layer, an element without an id (`readback.json`). In viz: a default material in use, objects without a material (`scene.json`).
+- **H9:** the statuses are read from the `.md` files of `work/<ITEM>/` written during the step.
+
 ## The source of a finding (0.8)
 
 Every return, remark and defect is traced to the step it came from, per criterion. The trace runs on its own on `facet flow verdict REWORK --fix … --criterion A3`; for a remark or a defect after acceptance, run `facet origin --criterion A3 --from human|defect`. The rules, in order:

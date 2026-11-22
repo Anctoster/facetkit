@@ -576,7 +576,7 @@ class Flow(unittest.TestCase):
             self.skipTest("the viz domain is not next to this one (a plugin installed on its own)")
         with open(viz, encoding="utf-8") as a, open(os.path.join(SCRIPTS, "archflow.py"), encoding="utf-8") as b:
             self.assertEqual(a.read().replace("vizflow.py", "archflow.py"), b.read(), "a fix made in one journal engine must be made in the other")
-        for shared in ("receipt.py", "safe.py", "echo_check.py", "check_one.py"):
+        for shared in ("receipt.py", "safe.py", "echo_check.py", "check_one.py", "gates.py"):
             with open(os.path.join(os.path.dirname(viz), shared), encoding="utf-8") as a, open(os.path.join(SCRIPTS, shared), encoding="utf-8") as b:
                 self.assertEqual(a.read(), b.read(), shared)
 
@@ -1044,6 +1044,7 @@ class Echo(unittest.TestCase):
                                              {"id": "A2", "value": "every element on its layer", "action": "a", "check": "c"}], "fixed": ["the survey drawings"]}
         json.dump(good, open(echo, "w", encoding="utf-8"))
         self.assertIn("echo: understood", f("echo", "check", "work", ok=True))
+        open(os.path.join(root, "work", "D1-02", "build.md"), "w", encoding="utf-8").write("# build\n- A1: done\n- A2: done\n")  # H9 (plan 2.10)
         f("end", "work", "--status", "DONE", ok=True)
         types = [json.loads(l)["type"] for l in open(os.path.join(root, "journal.jsonl"), encoding="utf-8")]
         self.assertEqual((types.count("echo"), types.count("echo.return")), (3, 2))
@@ -1082,3 +1083,40 @@ class Snapshots(unittest.TestCase):
                          "no inputs for the tool: the state's results file with a receipt answers; a file without one is not taken")
         json.dump({"junction.step": {"status": "OK", "value": 0.08}, "_receipt": {}}, open(os.path.join(empty, "stage.json"), "w"))
         self.assertEqual(one("junction.step", "--in", empty, "--op", "<=", "--value", "0.05"), 1, "the criterion's threshold, not the tool's")
+
+
+class Gates(unittest.TestCase):
+    """FacetKit plan 2.10: H2 the checks untouched, H4 no placeholder, H9 every criterion's status."""
+
+    def test_a_working_step_is_refused_for_each_gate_and_passes_when_fixed(self):
+        root = os.path.join(tempfile.mkdtemp(), "a")
+
+        def f(*a, ok=None):
+            r = subprocess.run([sys.executable, os.path.join(SCRIPTS, "archflow.py"), "--root", root, *a], capture_output=True, text=True)
+            if ok is not None:
+                self.assertEqual(r.returncode == 0, ok, "%s -> %s%s" % (a, r.stdout, r.stderr))
+            return r.stdout + r.stderr
+        f("init")
+        json.dump({"tolerances": {"length_m": 0.01}}, open(os.path.join(root, "project.json"), "w"))
+        f("open", "D1-02", "--route", "model", ok=True)
+        f("start", "order"); f("end", "order", "--status", "DONE")
+        crit = [{"id": "A1", "text": "Every element on its layer", "check": "model.layers", "by": "work"}]
+        work = os.path.join(root, "work", "D1-02")
+        with open(os.path.join(work, "brief.md"), "w", encoding="utf-8") as b:
+            b.write("# Brief\nroute: model\n\n## Goal\nx\n\n## Reference\nspec.json\n\n## Scope\nx\n\n## Fixed\nnone\n\n## Acceptance\n"
+                    "```criteria\n%s\n```\n\n## Views\nnone\n\n## Decisions\nx\n\n## Budget\n10 runs\n" % json.dumps(crit))
+        f("brief", "approve", "--by", "architect", ok=True)
+        f("start", "work")
+        json.dump({"step": "work", "criteria": [{"id": "A1", "value": "every element on its layer", "action": "a", "check": "model.layers"}], "fixed": []},
+                  open(os.path.join(work, "echo.json"), "w"))
+        f("echo", "check", "work", ok=True)
+        json.dump({"tolerances": {"length_m": 0.5}}, open(os.path.join(root, "project.json"), "w"))  # a looser threshold, during the work
+        json.dump({"elements": [{"id": "W1", "type": "wall", "layer": "Warstwa ARCHICAD"}, {"id": "Z1", "type": "zone", "name": ""}]}, open(os.path.join(work, "readback.json"), "w"))
+        out = f("end", "work", "--status", "DONE", ok=False)
+        for line in ("H2 work changed the files that hold its checks", "H4 element on the default layer: W1", "H4 zone without a name: Z1", "H9 criterion A1 has no status"):
+            self.assertIn(line, out)
+        self.assertIn("cannot approve a change to its own checks", f("approve-checks", "work", "--by", "model-operator", "--note", "x", ok=False))
+        f("approve-checks", "work", "--by", "architect", "--note", "the tolerance was wrong in the template", ok=True)
+        json.dump({"elements": [{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}, {"id": "Z1", "type": "zone", "name": "Salon"}]}, open(os.path.join(work, "readback.json"), "w"))
+        open(os.path.join(work, "build.md"), "w", encoding="utf-8").write("# build\n- A1: done\n")
+        f("end", "work", "--status", "DONE", ok=True)

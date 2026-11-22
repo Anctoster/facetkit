@@ -3,6 +3,27 @@
   "artifacts": [
     "work/<ITEM>/**"
   ],
+  "checkFiles": [
+    "project.json",
+    "domain.json",
+    "routes.json",
+    "tools/*checks*.py",
+    "tools/*checks*.json"
+  ],
+  "placeholders": [
+    {
+      "what": "default material in use",
+      "file": "scene.json",
+      "keys": "materials",
+      "match": "^Material(\\.\\d+)?$"
+    },
+    {
+      "what": "objects without a material",
+      "file": "scene.json",
+      "field": "objects_without_material",
+      "above": 0
+    }
+  ],
   "measure": {
     "note": "How facet origin runs a criterion's check on the state after a step (work/<ITEM>/snap/<step>/, taken by vizflow.py when a step starts; the last state is work/<ITEM>/). The Blender checks cannot be re-run without Blender, so the state's own results files are read: the first one with a receipt that holds the check. Exit 0 holds, 1 does not, 2 cannot say.",
     "*": "{python} {scripts}/check_one.py {check} {threshold} --in {dir}"

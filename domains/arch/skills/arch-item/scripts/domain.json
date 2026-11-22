@@ -1,5 +1,11 @@
 {
  "artifacts": ["work/<ITEM>/**"],
+ "checkFiles": ["project.json", "domain.json", "routes.json", "rules*.json", "tools/sheets.*.json", "tools/impact*.json"],
+ "placeholders": [
+  {"what": "zone without a name", "file": "readback.json", "list": "elements", "where": {"type": "zone"}, "field": "name", "empty": true},
+  {"what": "element on the default layer", "file": "readback.json", "list": "elements", "field": "layer", "match": "^(ARCHICAD Layer|Warstwa ARCHICAD|Слой ARCHICAD)$"},
+  {"what": "element without an id", "file": "readback.json", "list": "elements", "field": "id", "empty": true}
+ ],
  "measure": {
   "note": "How facet origin runs a criterion's check on the state after a step (work/<ITEM>/snap/<step>/, taken by archflow.py when a step starts; the last state is work/<ITEM>/). A command per check id, an id prefix with .*, or * for any: the tool when the state holds its inputs, else the state's own results files (with a receipt); exit 0 holds, 1 does not, 2 cannot say. Placeholders: {python}, {scripts}, {dir} (the state), {check}, {threshold} (--op/--value of the criterion, or nothing).",
   "model.*": "{python} {scripts}/check_one.py {check} {threshold} --in {dir} -- spec_compare.py {dir}/spec.json {dir}/readback.json",
