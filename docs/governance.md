@@ -28,6 +28,27 @@ Evidence recorded **before the last producing step ended** is stale and does not
 
 The gate refuses a criterion with neither a check nor `[user]`, and more than three `[user]` criteria. It is applied by `facet criteria check`, and by `flow end` of any step whose handoff carries the block. `facet criteria approve --by <person>` records the list with its hash. Changing the list afterwards needs a new approval: `facet criteria check` exits 1 while the brief differs from the approved list. Registered tools are the configured `govern.checks`, the tools that record their own evidence (`scan`, `trace`, `accept`, `mutate`, `neighbours`), and `criteriaTools` in the project settings.
 
+## The source of a finding (0.8)
+
+Every return, remark and defect is traced to the step it came from, per criterion. The trace runs on its own on `facet flow verdict REWORK --fix … --criterion A3`; for a remark or a defect after acceptance, run `facet origin --criterion A3 --from human|defect`. The rules, in order:
+
+1. **Not in the approved list** → the source is the brief. `--cause brief|new-wish` — a person decides which. Nobody who worked is charged.
+2. **The criterion has a `chain`** → pairs of links are compared, source first. The pairs and how to compare them come from `"chains"` in the project settings, or in a domain's `domain.json`: `{ "links": { "spec": { "step": "read" } }, "compare": { "spec>model": "<command: exit 0 the same, 1 differs>", "drawing>spec": "human" } }`. The first pair that differs names the step that produced the later link (`chain`).
+3. **The chain holds** → the criterion's check is run on the state after each step, from its `by` step up to the step that found the problem. The states are git snapshots, taken when a step starts: list the steps in `"eval": { "snapshot": [...] }`.
+   - Never met → the `by` step did not do the work (`not-done`).
+   - Met, then broken → bisection finds the step that broke it (`regression`).
+   - Both are `measured`.
+4. **Otherwise** → the step the reviewer names (`--step`), marked `judged`.
+
+**Who is charged.** An `origin` event records the step, its agent and model, the method, and how many steps late it was found. When an item has origin events, the trust graph charges from them instead of from the verdict's fixes:
+
+- the source step: weight 1;
+- each judging step between the source and where it was found: 0.5;
+- a judge that passed a defect found after acceptance: a false green;
+- `--tool-defect <tool>`: the tool, not the agent.
+
+The board shows K1–K5 for the quality loop: criteria with a tool's result, accepted without a return, defects after acceptance, the delay to detection, and the share of sources that were measured.
+
 ## Facts
 
 Facts are derived from the journal alone: the last verdict; whether the agent that judged also produced (`independent`); how many steps were forced out of order; how many waivers; whether the journal is intact; whether approvals are missing; whether configured checks failed.
