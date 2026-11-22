@@ -90,6 +90,14 @@ A policy is a list of rules. A rule names a fact or one-of several pieces of evi
 
 The default policy is in `lib/govern.mjs`; `examples/policy.json` shows a stricter one. Point `"govern": { "policy": "policy.json", "required": 2 }` at your own.
 
+A rule can ask for a minimum **isolation** of the evidence at a level: `{ "id": "isolated", "level": 4, "fact": "isolation", "atLeast": "ci" }`.
+
+- The order is `none` < `declared` < `container` < `ci`; a `declared:<name>` sandbox counts as `declared`.
+- The fact is the weakest isolation among the item's current evidence.
+- Evidence that does not say how it was isolated (recorded before 0.8, or imported from a domain journal) makes the fact unknown, and unknown does not pass.
+- The default policy asks for no isolation.
+- A proof pack names the isolation it was made in and marks a declared one.
+
 ## Assurance levels
 
 | Level | Name | The record shows |
