@@ -71,6 +71,12 @@ In the domains, arch-flow and viz-flow apply the same gates when a working step 
 - **H4:** the rules in `placeholders` look into the item's JSON files. In arch: a zone without a name, an element on the default layer, an element without an id (`readback.json`). In viz: a default material in use, objects without a material (`scene.json`).
 - **H9:** the statuses are read from the `.md` files of `work/<ITEM>/` written during the step.
 
+## Principles A1, A2, A5 (0.8)
+
+- **A1, an open check.** A step that owns a measured criterion does not end DONE without that criterion's result measured in the step: recorded after the step started, by the step's run when one is named (`flow start --run`, `FACET_RUN`), and passing. Evidence records its `run`.
+- **A2, an asymmetric charge.** When a step ends, the statuses its handoff gives its criteria (H9) are kept in the `step.end` event. In the trust graph, a criterion the step reported `blocked` or `partial` with a reason charges nothing: saying what is not done is the behaviour wanted. One it reported `done` that a check then refuted is a false "done" and charges twice a plain return.
+- **A5, no rating in an agent's context.** `facet audit` reads the definitions of agents (`agents/`, `.claude/agents/`, the domains'), the loadouts and the handoff templates. It reports any trust score, share of trust or rating there as an error: an agent that reads its own number writes for the number. Text in backticks (commands, names) is left out.
+
 ## The source of a finding (0.8)
 
 Every return, remark and defect is traced to the step it came from, per criterion. The trace runs on its own on `facet flow verdict REWORK --fix … --criterion A3`; for a remark or a defect after acceptance, run `facet origin --criterion A3 --from human|defect`. The rules, in order:
