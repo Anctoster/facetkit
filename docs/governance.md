@@ -17,6 +17,17 @@ Evidence is an event `{ kind: "evidence", item, name, ok, value }`. It is writte
 
 Evidence recorded **before the last producing step ended** is stale and does not count (except evidence that is about the time before the change, such as a red test). An agent cannot make evidence true by writing a sentence; it has to run the tool.
 
+## Criteria (0.8)
+
+"Done" is a list of numbered criteria in the brief — in the core, a `criteria` block in the order handoff (`templates/order.md`); in the domains, in `brief.md`. Each criterion has four fields:
+
+- `id` — a number that does not change until the item closes (`A3`);
+- `text` — what is true when it is met;
+- `check` — a registered tool with a threshold (`unit`, `scene_checks terrain.holes = 0`), or `[user]` when only the requester can judge;
+- `by` — the step that must make it true. An optional `chain` names where the value comes from, source first.
+
+The gate refuses a criterion with neither a check nor `[user]`, and more than three `[user]` criteria. It is applied by `facet criteria check`, and by `flow end` of any step whose handoff carries the block. `facet criteria approve --by <person>` records the list with its hash. Changing the list afterwards needs a new approval: `facet criteria check` exits 1 while the brief differs from the approved list. Registered tools are the configured `govern.checks`, the tools that record their own evidence (`scan`, `trace`, `accept`, `mutate`, `neighbours`), and `criteriaTools` in the project settings.
+
 ## Facts
 
 Facts are derived from the journal alone: the last verdict; whether the agent that judged also produced (`independent`); how many steps were forced out of order; how many waivers; whether the journal is intact; whether approvals are missing; whether configured checks failed.
