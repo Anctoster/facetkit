@@ -86,3 +86,36 @@ def criteria_status(work, ids, since):
         elif m.group(1).lower() != "done" and not m.group(2).strip():
             out.append("criterion %s is %s without a reason" % (cid, m.group(1).lower()))
     return out
+
+
+def measured_in_step(work, checks, since):
+    """A1 (plan 2.11): of these check ids, the ones without an OK in a results file with a receipt written during the step."""
+    found = {}
+    for name in sorted(os.listdir(work)) if os.path.isdir(work) else []:
+        p = os.path.join(work, name)
+        if not (name.endswith(".json") and os.path.isfile(p) and os.path.getmtime(p) >= since):
+            continue
+        try:
+            res = json.load(open(p, encoding="utf-8"))
+        except ValueError:
+            continue
+        if isinstance(res, dict) and "_receipt" in res:
+            for c in checks:
+                if isinstance(res.get(c), dict):
+                    found[c] = found.get(c) or res[c].get("status") == "OK"
+    return [c for c in checks if not found.get(c)]
+
+
+def statuses(work, ids, since):
+    """What the step's handoff says of each criterion: {id: "done" | "blocked: why" | "partial: what"} (A2)."""
+    texts = []
+    for name in sorted(os.listdir(work)) if os.path.isdir(work) else []:
+        p = os.path.join(work, name)
+        if name.endswith(".md") and name != "brief.md" and os.path.isfile(p) and os.path.getmtime(p) >= since:
+            texts.append(open(p, encoding="utf-8").read())
+    text, out = "\n".join(texts), {}
+    for cid in ids:
+        m = re.search(STATUS % re.escape(cid), text, re.I | re.M)
+        if m:
+            out[cid] = m.group(1).lower() + (": " + m.group(2).strip() if m.group(2).strip() else "")
+    return out

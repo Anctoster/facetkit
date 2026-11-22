@@ -501,6 +501,12 @@ def snapshot_state(root, item, step):
                 b.write(a.read())
 
 
+def echo_check_judged(check):
+    """A criterion a person judges ([user], [look: ...]) has no tool result to show."""
+    c = str(check or "").strip()
+    return not c or c == "[user]" or c.startswith("[look:")
+
+
 def approved_list(events, item):
     """The criteria block approved last for the item (brief.ok with a list), or []."""
     mine = [e for e in events if e.get("item") == item and e["type"] == "brief.ok" and e.get("list")]
@@ -1377,9 +1383,15 @@ def main():
             bad += ["H4 " + x for x in gates.placeholders(work, PLACEHOLDERS)[:8]]
             if owned:
                 bad += ["H9 " + x for x in gates.criteria_status(work, owned, started.get("at", 0))]
+                # A1 (plan 2.11): each measured criterion of the step has an OK of its tool, with the receipt, written during the step
+                measured = [c for c in approved_list(evs, s["item"]) if c.get("by") == a.step and not echo_check_judged(c.get("check"))]
+                tools = sorted({str(c["check"]).split()[0] for c in measured})
+                bad += ["A1 %s: no OK of %s with its receipt written during %s - run the tool in this step" % (", ".join(c["id"] for c in measured if str(c["check"]).split()[0] == t), t, a.step)
+                        for t in gates.measured_in_step(work, tools, started.get("at", 0))]
             if bad:
                 die("Refused: %s is not done as declared:\n  - %s" % (a.step, "\n  - ".join(bad)))
-        j.add("end", item=s["item"], step=a.step, status=a.status, tokens=a.tokens, agent=started.get("agent"),
+        claimed = gates.statuses(os.path.join(a.root, "work", s["item"]), owned, started.get("at", 0)) if owned and a.status == "DONE" else {}
+        j.add("end", item=s["item"], step=a.step, status=a.status, criteria=claimed or None, tokens=a.tokens, agent=started.get("agent"),
               model=a.model or started.get("model"), question=a.question)
         print("ended %s: %s" % (a.step, a.status))
     elif a.cmd == "approve-checks":

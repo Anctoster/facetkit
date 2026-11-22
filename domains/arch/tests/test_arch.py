@@ -1045,6 +1045,8 @@ class Echo(unittest.TestCase):
         json.dump(good, open(echo, "w", encoding="utf-8"))
         self.assertIn("echo: understood", f("echo", "check", "work", ok=True))
         open(os.path.join(root, "work", "D1-02", "build.md"), "w", encoding="utf-8").write("# build\n- A1: done\n- A2: done\n")  # H9 (plan 2.10)
+        json.dump({"model.dimensions": {"status": "OK"}, "model.layers": {"status": "OK"}, "_receipt": {"tool": "spec_compare.py"}},
+                  open(os.path.join(root, "work", "D1-02", "compare.json"), "w"))  # A1 (plan 2.11): the results, measured in the step
         f("end", "work", "--status", "DONE", ok=True)
         types = [json.loads(l)["type"] for l in open(os.path.join(root, "journal.jsonl"), encoding="utf-8")]
         self.assertEqual((types.count("echo"), types.count("echo.return")), (3, 2))
@@ -1113,10 +1115,16 @@ class Gates(unittest.TestCase):
         json.dump({"tolerances": {"length_m": 0.5}}, open(os.path.join(root, "project.json"), "w"))  # a looser threshold, during the work
         json.dump({"elements": [{"id": "W1", "type": "wall", "layer": "Warstwa ARCHICAD"}, {"id": "Z1", "type": "zone", "name": ""}]}, open(os.path.join(work, "readback.json"), "w"))
         out = f("end", "work", "--status", "DONE", ok=False)
-        for line in ("H2 work changed the files that hold its checks", "H4 element on the default layer: W1", "H4 zone without a name: Z1", "H9 criterion A1 has no status"):
+        for line in ("H2 work changed the files that hold its checks", "H4 element on the default layer: W1", "H4 zone without a name: Z1", "H9 criterion A1 has no status",
+                     "A1 A1: no OK of model.layers with its receipt written during work"):
             self.assertIn(line, out)
         self.assertIn("cannot approve a change to its own checks", f("approve-checks", "work", "--by", "model-operator", "--note", "x", ok=False))
         f("approve-checks", "work", "--by", "architect", "--note", "the tolerance was wrong in the template", ok=True)
         json.dump({"elements": [{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}, {"id": "Z1", "type": "zone", "name": "Salon"}]}, open(os.path.join(work, "readback.json"), "w"))
         open(os.path.join(work, "build.md"), "w", encoding="utf-8").write("# build\n- A1: done\n")
+        json.dump({"model.layers": {"status": "FAIL"}}, open(os.path.join(work, "typed.json"), "w"))
+        self.assertIn("A1 A1: no OK of model.layers", f("end", "work", "--status", "DONE", ok=False), "a results file without a receipt does not count")
+        json.dump({"model.layers": {"status": "OK"}, "_receipt": {"tool": "model_audit.py"}}, open(os.path.join(work, "audit.json"), "w"))
         f("end", "work", "--status", "DONE", ok=True)
+        end = [json.loads(l) for l in open(os.path.join(root, "journal.jsonl"), encoding="utf-8") if '"end"' in l][-1]
+        self.assertEqual(end.get("criteria"), {"A1": "done"}, "A2: the step's own statuses are kept")
