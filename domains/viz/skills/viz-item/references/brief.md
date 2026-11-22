@@ -21,6 +21,20 @@ A result comes back wrong for two different reasons: the work was done badly, or
 - `[look: brick colour against reference A]` - one named thing the inspector looks for on one contact sheet.
 - `[user: framing of the main view]` - only the requester can judge. It is shown at acceptance and does not hold the item open.
 
+At most three criteria are judged by a person - `[look]` and `[user]` together; the rest must be measured.
+
+## Criteria as a block
+
+When an item will be traced back after a return (FacetKit `facet origin` finds the step a defect came from), write Acceptance as a `criteria` block instead of numbered lines. Each criterion names its check the same way, plus the step that must make it true (`by`) and, when it has one, where its value comes from (`chain`, source first, as `domain.json` → `chains` names the links):
+
+```criteria
+[{"id": "A1", "text": "Surroundings meet the site model without a step", "check": "junction.step <= 0.05", "by": "work"},
+ {"id": "A3", "text": "No holes in the terrain other than the one under the site", "check": "terrain_holes", "by": "work", "chain": ["geodata", "scene_index", "scene"]},
+ {"id": "A5", "text": "Roads and the water edge are where the aerial reference shows them", "check": "[look: roads and water edge against aerial_reference.jpg]", "by": "work"}]
+```
+
+`vizflow.py brief check` holds the block to the same rules; `brief approve` records the list and its hash, and FacetKit imports it as the item's approved criteria.
+
 A line the checker refuses: `Buildings look realistic [look: facades]` - it names nothing that can be seen to be true or false.
 The same line, usable: `Facade brick matches reference render A in colour and bond; no stretched or mirrored texture [look: both long facades against reference A]`.
 

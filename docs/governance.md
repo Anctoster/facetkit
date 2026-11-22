@@ -47,6 +47,8 @@ Every return, remark and defect is traced to the step it came from, per criterio
 - a judge that passed a defect found after acceptance: a false green;
 - `--tool-defect <tool>`: the tool, not the agent.
 
+For a domain item, the criteria come over with `facet domain import` from the domain's approved brief (a `criteria` block in Acceptance, `brief approve`). The chain is the domain's: `chains` in its `domain.json`. In arch, `spec>model` is compared by `spec_compare.py`, and a drawing read by eye is `human`; in viz, no tool compares the links yet. In a domain brief, `[look: …]` counts as judged by a person, like `[user]`.
+
 The board shows K1–K5 for the quality loop: criteria with a tool's result, accepted without a return, defects after acceptance, the delay to detection, and the share of sources that were measured.
 
 ## Facts

@@ -34,7 +34,7 @@ import { blocking, checkHandoff, filesForStep, findTemplate, listedFiles, render
 import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, stepsOf } from '../lib/planner.mjs';
 import { buildGraph, isTest } from '../lib/seams.mjs';
 import { checkOwners, ownersFromTerritories, renderOwners, resolveOwners } from '../lib/ownership.mjs';
-import { declaredArtifacts, domainSettingsOf } from '../lib/domainproof.mjs';
+import { declaredArtifacts, domainSettingsOf, kitDomainFile } from '../lib/domainproof.mjs';
 import { delayOf, findOrigin, FROM } from '../lib/origin.mjs';
 import { snapshotRef } from '../lib/evalx.mjs';
 import { witness, witnessDigest, witnessLevelOf, exportProof, renderBundle, verifyBundle, createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
@@ -140,7 +140,9 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
         const chains = domain ? domain.data.chains ?? null : project.chains ?? null;
         const where = domain ? domain.root : CWD;
         const env = { ...itemEnv(item, commandEnv()), FACET_CRITERION: id, ...(domain ? { FACET_DOMAIN_ITEM: domain.domainItem } : {}) };
-        const exec = async (cmd, cwd = where) => run(withItem(cmd, item), { cwd, env, timeoutSec: Number(opt('timeout', 600)), ledger: path.join(work, item, 'ledger.jsonl'), logDir: path.join(work, item, 'logs') });
+        // a domain's commands name its scripts and the item's folder by placeholder, so one domain.json serves every platform
+        const fill = (cmd) => (domain ? cmd.replaceAll('{python}', process.env.FACET_PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3')).replaceAll('{scripts}', JSON.stringify(path.dirname(kitDomainFile(domain.domain)))).replaceAll('{work}', JSON.stringify(`work/${domain.domainItem}`)).replaceAll('{item}', domain.domainItem).replaceAll('{criterion}', id) : cmd);
+        const exec = async (cmd, cwd = where) => run(withItem(fill(cmd), item), { cwd, env, timeoutSec: Number(opt('timeout', 600)), ledger: path.join(work, item, 'ledger.jsonl'), logDir: path.join(work, item, 'logs') });
         // the chain: links with the step that produces each; a pair compares by its command (exit 0 the same, 1 differs) or is "human"
         const links = criterion?.chain && chains?.links ? criterion.chain.map((name) => ({ name, step: chains.links[name]?.step ?? null })) : null;
         const compare = async (a, b) => {

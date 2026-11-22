@@ -359,6 +359,18 @@ def parse_brief(text):
 def check_brief(text, known=()):
     """Problems that make a brief unusable. An empty list means agents can work from it without asking again."""
     sec, out = parse_brief(text), []
+    lst, bad = read_criteria(text)
+    if lst is not None:
+        # the block is the list of criteria: its gate, and the other sections as before
+        for k in SECTIONS:
+            if not sec.get(k):
+                out.append("section '%s' is empty" % k.capitalize())
+        out += bad + gate_criteria(lst, known)
+        if len(lst) > 9:
+            out.append("Acceptance has %d criteria; more than 9 means this is several items" % len(lst))
+        tools = [CRIT_CHECK.match(str(c.get("check") or "").strip()).group(1) for c in lst
+                 if isinstance(c, dict) and not judged_check(c.get("check")) and CRIT_CHECK.match(str(c.get("check") or "").strip())]
+        return out, tools, len(lst)
     for k in SECTIONS:
         if not sec.get(k):
             out.append("section '%s' is empty" % k.capitalize())
@@ -367,6 +379,9 @@ def check_brief(text, known=()):
         out.append("Acceptance has no numbered criterion")
     if len(crit) > 9:
         out.append("Acceptance has %d criteria; more than 9 means this is several items" % len(crit))
+    judged = sum(1 for l in crit if any(t[0] in ("look", "user") for t in TAG.findall(l)))
+    if judged > MAX_JUDGED:
+        out.append("%d criteria are judged by a person ([user] or [look]); at most %d - the rest must be measured" % (judged, MAX_JUDGED))
     checks = []
     for l in crit:
         num = l.split(".")[0].split(")")[0]
@@ -391,6 +406,80 @@ def check_brief(text, known=()):
             if kind == "look" and not sec.get("views"):
                 out.append("criterion %s is a [look] but Views names no camera or frame to look from" % num)
     return out, checks, len(crit)
+
+
+# ---- numbered criteria (FacetKit plan 2.8): a ```criteria block in Acceptance ------------------
+# [{"id": "A3", "text": "...", "check": "terrain_holes = 0" | "[user]" | "[look: ...]", "by": "<step>", "chain": [...]}]
+# check: a known check with an optional threshold, or [user] / [look: what] - judged by a person; at most
+# three of those per item. With the block, the block is the list of criteria; without it, the numbered
+# Acceptance lines are, as before.
+CRIT_BLOCK = re.compile(r"^```criteria[ \t]*\r?\n(.*?)^```[ \t]*$", re.M | re.S)
+CRIT_ID = re.compile(r"^[A-Z][A-Z0-9]{0,7}$")
+CRIT_CHECK = re.compile(r"^([\w.\-]+)(?:\s+([^\s<>=!]+))?(?:\s*(<=|>=|==|=|!=|<|>)\s*(-?\d+(?:\.\d+)?)\s*(%|[a-zA-Z]{1,4})?)?$")
+MAX_JUDGED = 3
+
+
+def judged_check(check):
+    """True for a criterion a person judges: [user] or [look: what]."""
+    c = str(check or "").strip()
+    return c == "[user]" or (c.startswith("[look:") and c.endswith("]") and len(c) > 7)
+
+
+def read_criteria(text):
+    """(list or None when there is no block, problems)."""
+    m = CRIT_BLOCK.search(text)
+    if not m:
+        return None, []
+    try:
+        lst = json.loads(m.group(1))
+    except ValueError as e:
+        return [], ["the criteria block is not JSON: %s" % e]
+    if not isinstance(lst, list):
+        return [], ["the criteria block is a list: [{\"id\": ..., \"text\": ..., \"check\": ..., \"by\": ...}]"]
+    return lst, []
+
+
+def gate_criteria(lst, known=(), steps=None):
+    """Why the criteria cannot be accepted: no check and no [user]/[look] - refused; more than three judged - refused."""
+    out, seen = [], set()
+    if not lst:
+        out.append("no criteria: 'done' is not stated")
+    for c in lst:
+        if not isinstance(c, dict):
+            out.append("a criterion is an object with id, text, check and by")
+            continue
+        cid = c.get("id")
+        if not CRIT_ID.match(str(cid or "")):
+            out.append("criterion %s: the id is a letter and up to seven letters or digits (A3)" % cid)
+        elif cid in seen:
+            out.append("criterion %s: the id is used twice" % cid)
+        seen.add(cid)
+        if not str(c.get("text") or "").strip():
+            out.append("criterion %s: no text" % cid)
+        chk = str(c.get("check") or "").strip()
+        if not chk:
+            out.append("criterion %s: no check - name the check and its threshold, or [user] / [look: what]" % cid)
+        elif not judged_check(chk):
+            m = CRIT_CHECK.match(chk)
+            if not m:
+                out.append("criterion %s: the check '%s' cannot be read: <check> [<op> <number>]" % (cid, chk))
+            elif known and m.group(1) not in known:
+                out.append("criterion %s: no check named '%s' (known: %s)" % (cid, m.group(1), ", ".join(sorted(known))))
+        if not str(c.get("by") or "").strip():
+            out.append("criterion %s: no 'by' - name the step that must make it true" % cid)
+        elif steps and c["by"] not in steps:
+            out.append("criterion %s: 'by' %s is not a step of this route (%s)" % (cid, c["by"], ", ".join(steps)))
+        if "chain" in c and (not isinstance(c["chain"], list) or not all(isinstance(x, str) and x.strip() for x in c["chain"])):
+            out.append("criterion %s: 'chain' is a list of link names, source first" % cid)
+    judged = sum(1 for c in lst if isinstance(c, dict) and judged_check(c.get("check")))
+    if judged > MAX_JUDGED:
+        out.append("%d criteria are judged by a person ([user] or [look]); at most %d - the rest must be measured" % (judged, MAX_JUDGED))
+    return out
+
+
+def criteria_hash(lst):
+    """The same hash FacetKit's core takes: SHA-256 over canonical JSON (sorted keys, no spaces)."""
+    return hashlib.sha256(json.dumps(lst, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
 
 
 def brief_state(j, root, item, events):
@@ -1201,7 +1290,14 @@ def main():
         now, ok, _ = brief_state(j, a.root, s["item"], j.events())
         if ok == now:
             return print("brief already approved in this form")
-        j.add("brief.ok", item=s["item"], brief=now, by=a.by, criteria=n, changed=bool(ok) or None)
+        lst = read_criteria(open(bp, encoding="utf-8").read())[0]
+        if lst:
+            bad = gate_criteria(lst, KNOWN_CHECKS, [x["id"] for x in s["steps"]])
+            if bad:
+                die("BRIEF NOT USABLE - %d problems:\n  - %s" % (len(bad), "\n  - ".join(bad)))
+        # with a criteria block the approved list itself is recorded, with its hash: FacetKit imports it as the item's criteria
+        j.add("brief.ok", item=s["item"], brief=now, by=a.by, criteria=n, changed=bool(ok) or None,
+              list=lst or None, list_hash=criteria_hash(lst) if lst else None)
         print("brief approved by %s: %d criteria%s" % (a.by, n, "  (CHANGED after an earlier approval - counted)" if ok else ""))
     elif a.cmd == "next":
         cmd_next(j, routes, a)
