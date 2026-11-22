@@ -1,4 +1,5 @@
 {
+ "artifacts": ["work/<ITEM>/**"],
  "routes": {
   "note": "One route per kind of item. A step with a registered script runs on the smallest model; until one exists the builder writes it. checks = results the inspector must reproduce before PASS.",
   "caps": {

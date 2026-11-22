@@ -99,6 +99,8 @@ The domain plugins (arch-flow, viz-flow) keep their own journal, `journal.jsonl`
 - an imported item has the steps of its domain route — from `routes.json` beside the journal, or `--routes <file>`, else the steps the item started — and the step of the inspector (`arch-inspector`, `viz-inspector`) is the one that judges;
 - a line already imported (by its hash) is not imported again, so the command can run after every session.
 
+A domain item is then proven on the files its domain declares, not on the git tree: `facet proof create --item D1-02 --domain arch` reads `artifacts` from `domain.json` — beside the domain journal if the project has one there, else the one the kit ships (`work/<ITEM>/**` for both domains) — as globs under the folder of the journal the item came from (`--domain-root DIR` names another), with `<ITEM>` for the item's id in the domain. The files are hashed from disk whether git tracks them or not, the declaration itself is part of the state, and a pattern that matches no file is listed as a blind spot. `facet proof verify` checks the pack against the declaration it carries: an edit to a declared file makes it stale, an edit anywhere else does not.
+
 ## Attestation
 
 `facet attest --item <id>` prints a JSON record: the level, each rule with what was found, evidence, waivers, approvals, commits, and a digest. `facet attest --verify <file>` recomputes it from the journal. With `"govern": { "attestations": "attest" }` one is written at every close. It is a digest, not a signature.

@@ -32,6 +32,7 @@ import { blocking, checkHandoff, filesForStep, findTemplate, listedFiles, render
 import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, stepsOf } from '../lib/planner.mjs';
 import { buildGraph, isTest } from '../lib/seams.mjs';
 import { checkOwners, ownersFromTerritories, renderOwners, resolveOwners } from '../lib/ownership.mjs';
+import { declaredArtifacts } from '../lib/domainproof.mjs';
 import { witness, witnessDigest, exportProof, renderBundle, verifyBundle, createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
 import { planMutants, probe } from '../lib/mutaprobe.mjs';
 import { route } from '../lib/router.mjs';
@@ -752,7 +753,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             say({ kind: 'approval', item, what: positional[0], by: opt('by'), note: opt('note') });
             console.log(`approval recorded: ${positional[0]} for ${item} by ${opt('by')}`);
         },
-        /** proof create|verify|status [--item ID]: the manifest that ties a result to the sources it was checked on. */
+        /** proof create|verify|status [--item ID] [--domain arch|viz [--domain-root DIR]]: the manifest that ties a result to the sources it was checked on. */
         async proof() {
             const sub = positional[0] ?? 'status';
             if (sub === 'verify' && opt('bundle')) { // needs nothing but the file: no project, no settings, no trust in its maker
@@ -771,6 +772,17 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 return;
             }
             if (sub === 'create') {
+                // a domain item is proven on the files its domain declares, not on the git tree
+                if (opt('domain')) {
+                    let d;
+                    try {
+                        d = declaredArtifacts({ cwd: CWD, events: events(), item, domain: opt('domain'), root: opt('domain-root') ?? null });
+                    } catch (error) {
+                        fail(`proof create --domain: ${error.message}`);
+                    }
+                    options.declared = d.globs;
+                    console.log(`${item}: ${opt('domain')} item, proven on its declared artifacts (${d.from}): ${d.globs.join(', ')}`);
+                }
                 const m = createProof(CWD, events(), item, { ...options, environment: envNow(true), calibration: { benchmark: kitBenchmark(), guards: calibration(events()).map(({ guard, n, caught, low }) => ({ guard, n, caught, low })) } });
                 const key = flag('no-sign') ? null : myKey();
                 if (key) m.signatures.push(sign(key, m.digest));
