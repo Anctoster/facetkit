@@ -1,0 +1,4 @@
+{
+  "note": "What a viz item's proof rests on (facet proof create --domain viz). The engine reads routes, checks, project and builtin_modes from this file when present and keeps its built-in ones otherwise; this file names only the artifacts.",
+  "artifacts": ["work/<ITEM>/**"]
+}
