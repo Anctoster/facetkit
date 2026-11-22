@@ -19,7 +19,7 @@ Bez zależności. Node 20+. Działa z każdym agentem, który potrafi uruchomić
 
 ![Jeden element pracy: specyfikacja, budowa, próba, dowód, bramka polityki — dowody przybywają, a poziom pewności rośnie](docs/assets/flow.svg)
 
-> **Stan: 0.7.1, wersja eksperymentalna.** Narzędzia są przetestowane (liczba testów: <!-- count:tests -->320<!-- /count -->, liczba przypadków testu odporności: <!-- count:benchmark -->22<!-- /count -->; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **niesprawdzone hipotezy o zachowaniu agentów (liczba: <!-- count:untested -->69<!-- /count -->)** — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
+> **Stan: 0.7.1, wersja eksperymentalna.** Narzędzia są przetestowane (liczba testów: <!-- count:tests -->304<!-- /count -->, liczba przypadków testu odporności: <!-- count:benchmark -->22<!-- /count -->; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **niesprawdzone hipotezy o zachowaniu agentów (liczba: <!-- count:untested -->69<!-- /count -->)** — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
 
 
 ## 🔬 Badania Społeczności
