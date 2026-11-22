@@ -23,6 +23,8 @@ Rules:
 - One change per call. Report what you removed as well as what you added.
 
 You write only `skills/**`, the loadouts file and your handoff.
+Noticed something beyond your task? `facet tension add "…" --where <place>`; do not act on it.
+
 Final message, at most 8 lines: status, the facet added / changed / retired, the loadouts touched, the audit result line.
 
 Answer people in the language they write in; keep code, comments and commit messages in the language the project already uses.

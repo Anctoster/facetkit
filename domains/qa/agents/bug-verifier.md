@@ -23,4 +23,6 @@ Rules:
 - You never close a bug; closing without a verified fix is a person's decision (`facet qa bug close … --by`).
 - Answer people in the language they write in.
 
+Noticed something beyond your task? `facet tension add "…" --where <place>`; do not act on it.
+
 Final message, at most 6 lines: the bug, the outcome of the runs, the status now, what is missing.

@@ -224,6 +224,20 @@ facet canary reveal --guard proof-inspector --caught yes             # …and re
 
 A guard that has never been shown a planted defect has an unknown catch rate, and `facet trust` says so.
 
+## What the agents noticed (0.8)
+
+An agent that sees something beyond its task — a wall drawn thicker than the description says, a retry loop that never gives up — records it and does not act on it:
+
+```bash
+facet tension add "the retry loop in src/io.mjs never gives up" --where src/io.mjs:40 --proposal "cap it at 3"
+facet tension list --item A
+```
+
+The tension is written for the running step and its agent. Nothing gates on it; `flow close` prints the item's tensions for the person who closes it, and so do the domain engines (`archflow.py tension …`, `vizflow.py tension …`, imported as core `tension` events). The board's Trust tab shows two numbers:
+
+- **I1** — tensions per closed item, and how many items had any. A team that never notices anything is not proven attentive by it.
+- **I5** — *silent passes*: a defect found after acceptance (`facet retro hindsight --record`, which now keeps the files of the fix) in a file an agent opened during its step — read through the ledger inside the step's window, or listed in its handoff — while that agent recorded no tension on the item. Each such agent counts once.
+
 ## Unknown, stale and proof packs (0.6.0)
 
 - **Unknown does not pass.** A fact nobody established — the journal's integrity when nobody verified it — fails its rule and is shown as `UNKNOWN`. A waiver accepts a *known* failure; it does not open the gate for an unknown, and it never raises the level.

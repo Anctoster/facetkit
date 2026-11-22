@@ -615,6 +615,22 @@ class Flow(unittest.TestCase):
         f("end", "proof", "--status", "DONE", ok=True)
         f("verdict", "PASS", ok=True)
 
+    def test_a_tension_is_recorded_in_the_running_step_and_shown_at_the_close(self):
+        root, f = self.flow()
+        f("open", "T-1", "--route", "revise", ok=True)
+        self.item_rest(root, f, "T-1", "revise", {c: {"status": "OK"} for c in ("model.layers", "model.counts", "change.complete", "change.declared")})
+        f("tension", ok=False)  # it says what was noticed
+        self.assertIn("tension recorded", f("tension", "Sciana na osi C jest grubsza niz w opisie", "--where", "story:P0", "--proposal", "zapytac architekta", ok=True))
+        out = f("close", ok=True)
+        self.assertIn("TENSIONS (1) - show them to the user:", out)
+        self.assertIn("at story:P0: Sciana na osi C jest grubsza niz w opisie", out)
+        f("open", "T-2", "--route", "revise", ok=True)
+        f("start", "order", ok=True)
+        self.assertIn("tension recorded in order", f("tension", "Brak skali na skanie", ok=True))
+        with open(os.path.join(root, "journal.jsonl"), encoding="utf-8") as h:
+            t = [json.loads(x) for x in h if '"tension"' in x]
+        self.assertEqual([(e.get("item"), e.get("step")) for e in t], [("T-1", None), ("T-2", "order")])
+
     def test_a_change_sends_back_only_the_proofs_whose_scope_it_touches(self):
         root, f = self.flow()
         self.assertIn("NOTHING TOUCHED", f("stale"))

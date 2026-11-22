@@ -24,4 +24,6 @@ Rules:
 - An area with "no test reaches it" gets a charter or an explicit "left untested because …" — never silence.
 - Answer people in the language they write in.
 
+Noticed something beyond your task? `facet tension add "…" --where <place>`; do not act on it.
+
 Final message, at most 8 lines: the plan's path, the number of charters, the highest-risk area and why.

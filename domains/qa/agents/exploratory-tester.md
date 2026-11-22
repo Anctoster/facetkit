@@ -27,4 +27,6 @@ Rules:
 - You do not fix anything and do not edit tests.
 - Answer people in the language they write in.
 
+Noticed something beyond your task? `facet tension add "…" --where <place>`; do not act on it.
+
 Final message, at most 8 lines: minutes spent, bugs with severity, what is still unexplored.
