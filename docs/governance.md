@@ -89,6 +89,15 @@ facet proof verify --item P07
 | MISMATCH | the journal no longer supports the pack, or a witness got another answer on the same sources |
 | UNKNOWN | the journal could not be verified |
 
+## Domain journals (0.8)
+
+The domain plugins (arch-flow, viz-flow) keep their own journal, `journal.jsonl` in the project's `_arch` or `_viz` folder. `facet domain import <journal.jsonl> --domain arch|viz` reads it into the core journal:
+
+- the chain of the domain journal is checked first; an edited, removed, reordered or torn line stops the import with its line number, and nothing is written;
+- `--anchor n:hash` — the `ANCHOR` line the domain prints at every close, kept outside the project — must still match, or the history was rewritten after it;
+- each line becomes one core event with `src: { journal, n, hash }`, pointing back to it: `open`, `start`, `end`, `evidence` (with the tool's receipt), `waive`, `verdict`, `close`, `sign`, `accept` and `answer` become their core kinds; every other line is kept as `domain.<type>` with its fields under `data`;
+- a line already imported (by its hash) is not imported again, so the command can run after every session.
+
 ## Attestation
 
 `facet attest --item <id>` prints a JSON record: the level, each rule with what was found, evidence, waivers, approvals, commits, and a digest. `facet attest --verify <file>` recomputes it from the journal. With `"govern": { "attestations": "attest" }` one is written at every close. It is a digest, not a signature.
