@@ -44,6 +44,7 @@ import { beliefs, hindsight, proposals, renderBeliefs, reviewChanges, signals } 
 import { plan, renderPlan, sessionPlan } from '../lib/schedule.mjs';
 import { readLedger, run } from '../lib/thrift.mjs';
 import { itemEnv, safeEnv, withItem } from '../lib/shell.mjs';
+import { readDomainJournal, toImport } from '../lib/domainlog.mjs';
 import { environment } from '../lib/envinfo.mjs';
 import { eventSigner, eventVerifiers, loadKey, loadTrust, sign } from '../lib/sign.mjs';
 import { sha256 } from '../lib/text.mjs';
@@ -708,6 +709,31 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             const g = gate(e, { required: Number(opt('level', govern.required ?? 1)) });
             console.log(flag('json') ? JSON.stringify({ ...e, gate: g }, null, 2) : renderEvaluation(e, g));
             process.exit(g.allow ? 0 : 1);
+        },
+        /** domain import <journal.jsonl> --domain arch|viz [--anchor n:hash] [--prefix X] [--dry-run]: a domain journal into the core one (plan 2.3). */
+        domain() {
+            const [sub, file] = positional;
+            if (sub !== 'import' || !file) fail('domain: facet domain import <journal.jsonl> --domain arch|viz [--anchor n:hash] [--prefix ITEM-PREFIX] [--dry-run]');
+            const domain = opt('domain');
+            if (!/^[a-z][a-z0-9-]{0,31}$/.test(domain ?? '')) fail('domain import: name the domain, e.g. --domain arch or --domain viz');
+            const abs = path.resolve(CWD, file);
+            if (!fs.existsSync(abs)) fail(`domain import: ${file} does not exist`);
+            let read;
+            try {
+                read = readDomainJournal(abs, { anchor: opt('anchor') });
+            } catch (error) {
+                fail(`domain import: ${path.relative(CWD, abs)}: ${error.message}`);
+            }
+            const journalRef = path.relative(CWD, abs).split(path.sep).join('/');
+            let fresh;
+            try {
+                fresh = toImport(read.lines, events(), { domain, journal: journalRef, prefix: opt('prefix', '') });
+            } catch (error) {
+                fail(`domain import: ${journalRef}: ${error.message}`);
+            }
+            const items = [...new Set(fresh.map((e) => e.item).filter(Boolean))];
+            if (!flag('dry-run')) for (const e of fresh) say(e);
+            console.log(`domain import: ${journalRef} (${domain}) — chain holds over ${read.lines.length} line(s), head ${read.head.n}:${read.head.hash.slice(0, 16)}; ${fresh.length} new event(s)${flag('dry-run') ? ' would be' : ''} recorded, ${read.lines.length - fresh.length} already imported${items.length ? `; items: ${items.join(', ')}` : ''}`);
         },
         waive() {
             const item = theItem();

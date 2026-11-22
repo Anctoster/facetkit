@@ -4,6 +4,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+- **Domain journals into the core one** (plan 2.3, first part): `facet domain import <journal.jsonl> --domain arch|viz [--anchor n:hash] [--prefix X] [--dry-run]`. The chain of the arch-flow or viz-flow journal is checked first — the hash is recomputed over the line exactly as Python wrote it, Python's number text included, and lines of versions before 0.3.2 at their 16 characters; an edited, removed, reordered or torn line stops the import with its number, and nothing is written. An `ANCHOR` the domain printed at a close must still match. Each line becomes one core event pointing back to it (`src: { journal, n, hash }`); open, steps, evidence with its receipt, waivers, verdict, close, signed lists and acceptance become their core kinds, the rest `domain.<type>`. A second import adds only new lines.
+
 ## [0.7.1] — 2026-11-22
 
 The first item of the plan to 1.0 — close what was obviously open — done as the plan says: a threat model, CI on three systems with Windows required, journal schema 2, required event signatures, signed and levelled witnesses, a scanner that says what it did not read, commands without the process environment, SHA-256 throughout, and trust read from a commit. Besides the plan: a GitHub Action (`facet ci-verify`), guides for new users, `facet init --agents` and `--github`, and the domains arch-flow 0.3.4 and viz-flow 0.4.4. **Read before updating:** commands now get only ten environment variables (name the others in `govern.env`); `govern.signEvents` takes `"off"`, `"on"` or `"required"`; trust is read from the committed `.facet/trust.json`; an item whose change the scan could not read does not close until each file is approved with a reason.
