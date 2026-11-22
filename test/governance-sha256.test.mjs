@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { attest, DEFAULT_POLICY, digestOf, policyHash } from '../lib/govern.mjs';
+import { attest, DEFAULT_POLICY, digestOf, legacyPolicyHash, policyHash } from '../lib/govern.mjs';
 import { proofDigest } from '../lib/proof.mjs';
 import { sha } from '../lib/text.mjs';
 import { gitInit, story, tmp, write } from './helpers.mjs';
@@ -31,7 +31,7 @@ test('governance: an attestation written before 0.7.1 is still checked by its ow
     assert.notEqual(digestOf({ ...old, level: 'L4 calibrated' }), old.digest);
 });
 
-test('cli: a proof made with a short SHA-1 policy hash says to make it again', () => {
+test('cli: a proof made before 0.7.1 is read as legacy and its SHA-1 policy hash checked by the old rule', () => {
     const root = tmp();
     const node = JSON.stringify(process.execPath);
     write(root, 'facet.json', JSON.stringify({ journal: '.facet/journal', govern: { checks: { truth: `${node} -e "process.exit(0)"` } } }));
@@ -49,9 +49,15 @@ test('cli: a proof made with a short SHA-1 policy hash says to make it again', (
     const file = path.join(root, '.work', 'A', 'proof', 'manifest.json');
     const m = JSON.parse(fs.readFileSync(file, 'utf-8'));
     assert.match(m.policy.hash, /^[0-9a-f]{64}$/);
-    const before = { ...m, policy: { hash: m.policy.hash.slice(0, 12) } };
-    fs.writeFileSync(file, JSON.stringify({ ...before, digest: proofDigest(before) }));
-    const out = f('proof', 'verify');
-    assert.equal(out.status, 1);
-    assert.match(out.stdout, /made before 0\.7\.1, with a short SHA-1 hash of its policy that is no longer accepted: create the proof again/);
+    const old = (hash) => {
+        const before = { ...m, policy: { hash } };
+        fs.writeFileSync(file, JSON.stringify({ ...before, digest: proofDigest(before) }));
+        return f('proof', 'verify');
+    };
+    const legacy = old(legacyPolicyHash(DEFAULT_POLICY));
+    assert.equal(legacy.status, 0, legacy.stdout + legacy.stderr);
+    assert.match(legacy.stdout, /legacy: made before 0\.7\.1 — its policy hash is 12 characters of SHA-1 and is checked by that rule/);
+    const other = old(legacyPolicyHash([...DEFAULT_POLICY].reverse()));
+    assert.equal(other.status, 1);
+    assert.match(other.stdout, /the policy is not the one the proof was made under/);
 });

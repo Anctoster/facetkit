@@ -45,3 +45,22 @@ test('cli: a partial scan exits 2 and names what was not read; nothing unread ex
     assert.equal(partial.status, 2, partial.stderr);
     assert.match(partial.stdout, /scan PARTIAL: .* 1 not scanned · needs approval: not-scanned:data\/blob\.bin/);
 });
+
+test('cli: an item whose change the scan could not fully read does not close, whatever level is required, until each file is approved with a reason', () => {
+    const root = tmp();
+    write(root, 'facet.json', JSON.stringify({ journal: '.facet/journal', govern: { required: 0 } }));
+    write(root, 'facet.items.json', JSON.stringify({ items: { A: { deps: [], route: [], gates: [] } } }));
+    gitInit(root);
+    const f = (...args) => spawnSync(process.execPath, [CLI, ...args], { cwd: root, encoding: 'utf-8', env: { ...process.env, FACET_WRITER: 'ann' } });
+    f('flow', 'open', 'A', '--route', '', '--force');
+    write(root, 'data/blob.bin', 'a\u0000b');
+    const refused = f('flow', 'close', '--force');
+    assert.notEqual(refused.status, 0);
+    assert.match(refused.stderr, /the scan could not read 1 changed file\(s\): data\/blob\.bin/);
+    const bare = f('approve', 'not-scanned:data/blob.bin', '--by', 'ann');
+    assert.notEqual(bare.status, 0);
+    assert.match(bare.stderr, /taken off with a reason — add --note/);
+    assert.equal(f('approve', 'not-scanned:data/blob.bin', '--by', 'ann', '--note', 'a test fixture, two bytes').status, 0);
+    const closed = f('flow', 'close', '--force');
+    assert.equal(closed.status, 0, closed.stderr);
+});

@@ -4,31 +4,24 @@ import { scan, scanSecrets } from '../lib/secscan.mjs';
 import { gitInit, tmp, write } from './helpers.mjs';
 
 const KEY = ['gh', 'p_', 'A'.repeat(36)].join(''); // shaped like a GitHub token, built so that no scanner sees it in this file
-const OTHER = ['gh', 'p_', 'B'.repeat(36)].join('');
 
-test('allow-secret: the marker no longer hides a secret — it asks a person to approve that exact line', () => {
-    const [plain] = scanSecrets(`const t = "${KEY}";`, 'src/a.js');
-    assert.deepEqual([plain.kind, plain.severity], ['secret', 'block']);
-    const [marked] = scanSecrets(`const t = "${KEY}"; // facet:allow-secret`, 'src/a.js');
-    assert.deepEqual([marked.kind, marked.severity], ['allowed-secret', 'approve']);
-    assert.match(marked.approval, /^allow-secret:src\/a\.js:[0-9a-f]{16}$/);
-    // another key on the same marked line is another approval; so is the same line in another file
-    const [swapped] = scanSecrets(`const t = "${OTHER}"; // facet:allow-secret`, 'src/a.js');
-    assert.notEqual(swapped.approval, marked.approval);
-    assert.notEqual(scanSecrets(`const t = "${KEY}"; // facet:allow-secret`, 'src/b.js')[0].approval, marked.approval);
-    // the marker on a line without a secret changes nothing
-    assert.deepEqual(scanSecrets('// facet:allow-secret on its own', 'src/a.js'), []);
+test('allow-secret outside an ignored path: an allow-outside-ignore finding with its line, and the secret is still found', () => {
+    const found = scanSecrets(`x\nconst t = "${KEY}"; // facet:allow-secret`, 'src/a.js');
+    assert.deepEqual(found.map((f) => `${f.kind} ${f.severity} ${f.where}`), ['allow-outside-ignore block src/a.js:2', 'secret block src/a.js:2']);
+    // the marker alone, without a secret, is a finding too
+    assert.deepEqual(scanSecrets('// facet:allow-secret', 'src/a.js').map((f) => `${f.kind} ${f.where}`), ['allow-outside-ignore src/a.js:1']);
+    assert.deepEqual(scanSecrets('plain line', 'src/a.js'), []);
 });
 
-test('allow-secret: in a repository, a marked secret needs approval and the L1 approvals rule waits for it', () => {
+test('allow-secret in a repository: blocks outside the ignore list; inside it the file is not searched, marker or not', () => {
     const root = tmp();
     write(root, 'README.md', 'start\n');
     gitInit(root);
     write(root, 'docs/setup.md', `export TOKEN=${KEY} # facet:allow-secret (example)\n`);
     const r = scan(root);
-    assert.equal(r.blocking, 0);
-    assert.equal(r.approvals.length, 1);
-    assert.match(r.approvals[0], /^allow-secret:docs\/setup\.md:/);
-    // an ignored path is not searched at all, marker or not
-    assert.deepEqual(scan(root, { ignore: ['docs/**'] }).approvals, []);
+    assert.equal(r.blocking, 2);
+    assert.deepEqual(r.findings.map((f) => f.kind).sort(), ['allow-outside-ignore', 'secret']);
+    assert.deepEqual(r.approvals, []);
+    const ignored = scan(root, { ignore: ['docs/**'] });
+    assert.deepEqual([ignored.blocking, ignored.findings.length], [0, 0]);
 });

@@ -6,6 +6,7 @@ import { isTestFile, langOf } from '../lib/lang.mjs';
 import { mutateLine, probe } from '../lib/mutaprobe.mjs';
 import { buildGraph, neighbours } from '../lib/seams.mjs';
 import { trace } from '../lib/trace.mjs';
+import { safeEnv } from '../lib/shell.mjs';
 import { tmp, write } from './helpers.mjs';
 
 const has = (cmd, ...args) => spawnSync(cmd, args, { encoding: 'utf-8' }).status === 0;
@@ -79,7 +80,8 @@ test('go: packages are directories, the module path comes from go.mod, a test re
 
 test('go: the probe runs against go test', { skip: !has('go', 'version') }, () => {
     const root = goProject();
-    const r = probe({ cwd: root, files: ['price/price.go'], test: 'go test ./price/', max: 4, timeoutSec: 120, maxMinutes: 4 });
+    // the Go toolchain keeps its build cache under LOCALAPPDATA on Windows: a project names it in govern.env, and so does this test
+    const r = probe({ cwd: root, files: ['price/price.go'], test: 'go test ./price/', max: 4, timeoutSec: 120, maxMinutes: 4, env: safeEnv({ allow: ['LOCALAPPDATA', 'GOCACHE', 'GOPATH', 'GOROOT'] }) });
     assert.equal(r.baseline, 'green', r.message);
     assert.ok(r.planned >= 2 && r.killed + r.survived.length + r.notRun === r.planned);
     assert.ok(r.survived.some((m) => /q > 10|- 5/.test(m.before)), 'the branch for large quantities has no test');

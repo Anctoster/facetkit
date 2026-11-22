@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
-import { SAFE_ITEM, itemEnv, runShellSync, withItem } from '../lib/shell.mjs';
+import { SAFE_ITEM, itemEnv, runCommand, withItem } from '../lib/shell.mjs';
 import { run } from '../lib/thrift.mjs';
 import { checkDecision } from '../lib/decisions.mjs';
 import { tmp } from './helpers.mjs';
@@ -26,9 +26,9 @@ test('shell: the same command line runs on every platform, with spaces in the pa
     const sub = path.join(dir, 'folder with spaces');
     fs.mkdirSync(sub);
     fs.writeFileSync(path.join(sub, 'exit3.mjs'), 'process.exit(3)\n');
-    const r = runShellSync(`${node} "${path.join(sub, 'exit3.mjs')}"`, { cwd: dir });
+    const r = runCommand(`${node} "${path.join(sub, 'exit3.mjs')}"`, { cwd: dir });
     assert.equal(r.status, 3);
-    assert.equal(runShellSync(`${node} -e "console.log(40 + 2)"`, { cwd: dir }).stdout.trim(), '42');
+    assert.equal(runCommand(`${node} -e "console.log(40 + 2)"`, { cwd: dir }).stdout.trim(), '42');
 });
 
 test('shell: a decision measure and a check command go through the platform shell', async () => {

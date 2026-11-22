@@ -175,8 +175,8 @@ test('secscan: the scan of a repository looks at what changed — forbidden path
     assert.equal(scan(root, { forbidden: ['.env'], ignore: ['src/**'] }).blocking, 1, 'ignored files are not searched for secrets');
     write(root, 'src/b.js', `const t = "${FAKE.slack}"; // facet:allow-secret (fixture)\n`);
     const marked = scan(root, { forbidden: ['.env'] });
-    assert.equal(marked.blocking, 1, 'a marked secret no longer blocks…');
-    assert.ok(marked.approvals.some((a) => a.startsWith('allow-secret:src/b.js:')), '…it needs a person\'s approval instead');
+    assert.equal(marked.blocking, 3, 'outside an ignored path the marker hides nothing: the secret blocks, and so does the marker');
+    assert.ok(marked.findings.some((f) => f.kind === 'allow-outside-ignore' && f.where === 'src/b.js:1'));
 });
 
 test('secscan: removing a forbidden path from tracking is not a change of it; editing it still is', () => {

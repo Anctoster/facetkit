@@ -14,13 +14,12 @@ const env = { PATH: '/bin', HOME: '/home/a', AWS_SECRET_ACCESS_KEY: 's3cr3t', GI
 
 test('env: a command gets the base variables and what govern.env names — not tokens, credentials or the key path', () => {
     const base = safeEnv({ env, platform: 'linux' });
-    assert.deepEqual(Object.keys(base).sort(), ['FACET_WRITER', 'HOME', 'JAVA_HOME', 'PATH']);
-    const named = safeEnv({ env, allow: ['GITHUB_TOKEN', 'npm_config_*'], platform: 'linux' });
-    assert.deepEqual(Object.keys(named).sort(), ['FACET_WRITER', 'GITHUB_TOKEN', 'HOME', 'JAVA_HOME', 'PATH', 'npm_config_cache']);
+    assert.deepEqual(Object.keys(base).sort(), ['HOME', 'PATH'], 'the base list of the plan, nothing more: no toolchain homes, no writer name');
+    const named = safeEnv({ env, allow: ['GITHUB_TOKEN', 'JAVA_HOME', 'npm_config_*'], platform: 'linux' });
+    assert.deepEqual(Object.keys(named).sort(), ['GITHUB_TOKEN', 'HOME', 'JAVA_HOME', 'PATH', 'npm_config_cache']);
     assert.equal(safeEnv({ env, allow: ['FACET_KEY', 'FACET_*'], platform: 'linux' }).FACET_KEY, undefined, 'the key path is never handed over');
-    const inherit = safeEnv({ env, allow: 'inherit', platform: 'linux' });
-    assert.equal(inherit.AWS_SECRET_ACCESS_KEY, 's3cr3t', '"inherit" restores the old behaviour, visibly, in the configuration');
-    assert.equal(inherit.FACET_KEY, undefined);
+    // there is no way to pass everything
+    assert.throws(() => safeEnv({ env, allow: 'inherit', platform: 'linux' }), /govern\.env must be a list/);
 });
 
 test('env: names compare without case on Windows, as its environment does', () => {

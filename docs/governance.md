@@ -47,20 +47,22 @@ A level is the highest one whose rules — and those of every level below — al
 
 ## The environment of commands
 
-Checks, decision measures, bug reproductions, `facet run`, `facet eval judge` and the test command of `facet mutate` run with part of the environment only: the variables in `BASE_ENV` (`lib/shell.mjs` — paths, temporary folders, locale, the system folders of Windows, toolchain homes such as `JAVA_HOME` or `VIRTUAL_ENV`) and the ones the project names:
+Checks, decision measures, bug reproductions, `facet run`, `facet eval judge` and the test command of `facet mutate` run with part of the environment only: the variables in `BASE_ENV` — `PATH`, `HOME`, `USERPROFILE`, `TEMP`, `TMP`, `LANG`, `SYSTEMROOT`, `COMSPEC`, `PATHEXT`, `TERM` — and the ones the project names (toolchain homes such as `JAVA_HOME` or `VIRTUAL_ENV`, proxies, `TMPDIR` on macOS):
 
 ```json
 "govern": { "env": ["HTTPS_PROXY", "NODE_OPTIONS", "npm_config_*"] }
 ```
 
-A name ending in `*` is a prefix. On Windows names compare without case. `"env": "inherit"` passes everything, as before 0.7.1. `FACET_KEY` and `FACET_KEYS` are never passed.
+Some toolchains need more on Windows: Go keeps its build cache under `LOCALAPPDATA` (name it, or `GOCACHE`), npm its cache under `APPDATA`. A name ending in `*` is a prefix. On Windows names compare without case. There is no way to pass everything: `govern.env` must be a list. `FACET_KEY` and `FACET_KEYS` are never passed.
 
 ## Waivers and approvals
 
 - `facet waive <rule> --reason "…" --by <person>` records a human decision to close despite a failed rule. The gate opens; the level does not rise; the waiver appears in the attestation and in `facet trust`.
-- `facet approve <what> --by <person>` records the approval a scan asked for (for example a new dependency).
+- `facet approve <what> --by <person>` records the approval a scan asked for (for example a new dependency). A file the scan could not read (`not-scanned:<file>`) is taken off only with a reason: `--note "…"`; until then the item does not close, whatever level is required.
 
-Test fixtures that contain look-alike secrets are excluded with `"govern": { "scanIgnore": ["test/fixtures/**"] }`. A line marked `facet:allow-secret` is still searched: a secret on it does not block, but needs an approval for that exact line (`facet approve allow-secret:<file>:<hash>`, the name `facet scan` prints); change the line and it needs approving again. Forbidden paths are checked regardless.
+**Signed events.** `govern.signEvents` is `"off"` (the default), `"on"` — every event this machine writes is signed when it has a key — or `"required"`: every schema-2 event must be signed by a key the project trusts, an unsigned one makes the journal `tampered`, and a machine without a key writes nothing. `facet journal` prints the number of such events on a line of its own.
+
+Test fixtures that contain look-alike secrets are excluded with `"govern": { "scanIgnore": ["test/fixtures/**"] }`. The marker `facet:allow-secret` counts only in a path listed there, which is not searched anyway; anywhere else it is a blocking `allow-outside-ignore` finding with its line number, and the line is searched like any other. Forbidden paths are checked regardless.
 
 Agents are instructed never to issue either on their own (`assured-work:waiver-is-a-record`).
 
@@ -80,7 +82,7 @@ facet proof verify --item P07
 
 | Status | Means |
 |---|---|
-| VALID | the pack is whole, signed by a trusted key (or signatures are not required), the sources are the ones proven, the journal still gives the same verdict, and no witness disagreed |
+| VALID | the pack is whole, signed by a trusted key (or signatures are not required), the sources are the ones proven, the journal still gives the same verdict, and no witness that counts (signed by a trusted witness that did not sign the pack) disagreed |
 | STALE / DECAYED | the sources moved on — entirely, or only where some checks reach (`rerun` names them) |
 | TAMPERED | the pack does not match its digest, or a signature does not match the pack — it was edited after signing, or the signature was copied |
 | UNSIGNED | `govern.requireSignature` is set and no trusted key signed the pack |
