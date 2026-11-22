@@ -65,7 +65,16 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             return null;
         }
     };
-    const trustNow = () => loadTrust(CWD);
+    let trustWarned = false;
+    // trust as committed (govern.trustRef, default HEAD); a working copy that differs is named once per run, never used
+    const trustNow = () => {
+        const t = loadTrust(CWD, { ref: project.govern?.trustRef ?? 'HEAD' });
+        if (t.warning && !trustWarned) {
+            trustWarned = true;
+            console.error(`trust: ${t.warning}`);
+        }
+        return t;
+    };
     // "required": a process without a key must not write at all — an unsigned event would be damage
     const signRequired = project.govern?.signEvents === 'required';
     if (project.govern?.signEvents && myKey()) setSigner(eventSigner(myKey()));
@@ -762,6 +771,8 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             }
             const v = verifyProof(CWD, events(), m, { ...options, environment: envNow(true) });
             console.log(renderProof(m, v));
+            // plan 2.5: outside git the report says that trust was read from an uncommitted file
+            if (trustNow().source === 'uncommitted') console.log('  · trust: uncommitted — .facet/trust.json is read outside git, so who added a key cannot be checked; no proof reaches L4');
             if (sub === 'verify' && v.status !== 'VALID') process.exit(1);
         },
         /** owners [files…] [--changed] [--agent A]: does every file of the plan have exactly one owner? */
@@ -1281,7 +1292,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 const pub = positional[1] ?? myKey()?.pub ?? fail('key trust: facet key trust <public key> --name NAME --role writer|witness|releaser');
                 if (!['writer', 'witness', 'releaser'].includes(opt('role', 'writer'))) fail('key trust: --role writer|witness|releaser');
                 const e = addTrust(CWD, { pub, name: opt('name') ?? fail('key trust: --name — a key is trusted as somebody'), role: opt('role', 'writer') });
-                return void console.log(`trusted: ${e.id} as ${e.name} (${e.role}) in ${path.relative(CWD, trustFile(CWD))} — commit it; a change of this file is a change of who may vouch`);
+                return void console.log(`trusted: ${e.id} as ${e.name} (${e.role}) in ${path.relative(CWD, trustFile(CWD))} — not trusted until you commit it: trust is read from ${project.govern?.trustRef ?? 'HEAD'}, and a change of this file is a change of who may vouch`);
             }
             const t = trustNow();
             const mine = myKey();
