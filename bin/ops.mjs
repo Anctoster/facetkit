@@ -216,6 +216,15 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
         const mine = ofItem(ev, item);
         const owned = (approvedCriteria(ev, item)?.criteria ?? []).filter((c) => c.by === stepId);
         const out = [];
+        // A1 (plan 2.11): every measured criterion of the step has a result measured in this step — after its start, and by its run when the run is named
+        const startAt = mine.map((e, i) => [e, i]).filter(([e]) => e.kind === 'step.start' && e.step === stepId).at(-1);
+        for (const c of owned) {
+            const tool = String(c.check ?? '').trim().split(/\s+/)[0];
+            if (!tool || tool.startsWith('[')) continue;
+            const got = startAt ? mine.slice(startAt[1] + 1).filter((e) => e.kind === 'evidence' && e.name === tool && (!startAt[0].run || e.run === startAt[0].run)).at(-1) : null;
+            if (!got) out.push({ kind: 'A1', what: `${c.id}: no result of ${tool} measured in this step${startAt?.[0].run ? ` (run ${startAt[0].run})` : ''}`, fix: `run facet check ${tool} --item ${item} during the step${startAt?.[0].run ? ' with FACET_RUN set to the step\'s run' : ''}` });
+            else if (!got.ok) out.push({ kind: 'A1', what: `${c.id}: ${tool} failed in this step`, fix: 'make it pass, or end the step BLOCKED and say why' });
+        }
         // H1: the OKs this step's criteria rest on carry the receipts of the registered tools
         out.push(...receiptProblems(owned, latestEvidence(item), { commands: Object.fromEntries(checkNames().map((n) => [n, commandOf(n)])), builtin: BUILTIN_EVIDENCE, hash: (c) => sha256(c, 16) }));
         // H9: the handoff of the step names each of its criteria with its status
@@ -223,7 +232,11 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
         const hfile = tname ? path.join(work, item, `${tname}.md`) : null;
         if (owned.length) {
             if (!hfile || !fs.existsSync(hfile)) out.push({ kind: 'H9', what: `no handoff to state the criteria ${owned.map((c) => c.id).join(', ')}`, fix: `write ${hfile ? path.relative(CWD, hfile) : 'the step\'s handoff'} with one line per criterion: "<id>: done | blocked — why | partial — what is left"` });
-            else out.push(...criteriaStatus(fs.readFileSync(hfile, 'utf-8'), owned.map((c) => c.id)).problems);
+            else {
+                const st = criteriaStatus(fs.readFileSync(hfile, 'utf-8'), owned.map((c) => c.id));
+                out.push(...st.problems);
+                out.statuses = Object.fromEntries(Object.entries(st.found).map(([id, v]) => [id, v.reason ? `${v.status}: ${v.reason}` : v.status]));
+            }
         }
         // H2 and H4 for the steps that change the product: their own changes, as the handoff check takes them
         if (['build', 'ops'].includes(stepId) && spawnSync('git', ['rev-parse', '--git-dir'], { cwd: CWD }).status === 0) {
@@ -296,7 +309,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             fs.writeFileSync(file, JSON.stringify(Object.fromEntries(hashesNow())));
         }
         const sc = scopesFor([name])[name];
-        return { state: src, env: envNow().digest, isolation: envNow().isolation, scope: { digest: sc.digest, files: sc.files } };
+        return { state: src, env: envNow().digest, isolation: envNow().isolation, run: process.env.FACET_RUN ?? undefined, scope: { digest: sc.digest, files: sc.files } };
     };
     const judged = (item) => {
         const cal = calibration(events());
@@ -567,12 +580,14 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             }
             if (status === 'DONE' && step.agent && !opt('tokens')) console.log('note: no --tokens given — the cost of this step will be unknown (copy the total the agent call reported)');
             // the gates against work declared done without being done (plan 2.10): H1 receipts, H2 checks untouched, H4 no placeholders, H9 every criterion's status
+            let claimed;
             if (status === 'DONE') {
                 const g = gatesFor(item, stepId, step);
+                claimed = g.statuses;
                 if (g.length) say({ kind: 'evidence', item, name: 'gates', ok: false, value: g.length, step: stepId, detail: g.slice(0, 4).map((p) => `${p.kind} ${p.what}`).join('; ') });
                 if (g.length && !flag('force')) fail(`flow end: ${stepId} is not done as declared\n${g.map((p) => `  ✗ ${p.kind} ${p.what} — ${p.fix}`).join('\n')}\n\nFix these and end the step again (or --force --reason "…", recorded and shown by facet assure and facet trust).`, 1);
             }
-            say({ kind: 'step.end', item, step: stepId, agent: step.agent, status, tokens: opt('tokens') ? Number(opt('tokens')) : undefined, for: opt('for'), question: opt('question'), forced: status === 'DONE' && flag('force') ? true : undefined, reason: status === 'DONE' && flag('force') ? opt('reason') : undefined });
+            say({ kind: 'step.end', item, step: stepId, agent: step.agent, status, criteria: claimed, tokens: opt('tokens') ? Number(opt('tokens')) : undefined, for: opt('for'), question: opt('question'), forced: status === 'DONE' && flag('force') ? true : undefined, reason: status === 'DONE' && flag('force') ? opt('reason') : undefined });
             console.log(`${item} / ${stepId} → ${status}\n\n${describe(upcoming(item))}`);
         },
         async verdict() {
