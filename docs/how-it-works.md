@@ -57,6 +57,16 @@ facet proof export --item P07 && facet proof verify --bundle P07.proof.json --ro
 
 A proof pack is signed by a key the project trusts, names the sources it is valid for (content, executable bits, links), the environment it was measured in, and the benchmark that says how much its guards catch. Anyone can recompute it from the journal.
 
+Without installing facetkit, an auditor can check a bundle with one file: `node tools/verify-bundle.mjs P07.proof.json --trust .facet/trust.json`. [`tools/verify-bundle.mjs`](../tools/verify-bundle.mjs) imports nothing but Node's own modules and is short enough to read before running. It checks:
+
+- the seal and the pack's digest;
+- the signatures against the trust file;
+- every carried journal chain;
+- that every event is from that journal;
+- the witness records.
+
+It does not recompute the level from the journal and does not compare the sources: `facet proof verify --bundle … --root` does both. For that reason, always give it `--trust`: a pack edited and re-digested is then caught by its signature.
+
 ## If you test
 
 You want to know where to look, whether a bug is real, and whether the build may ship.
