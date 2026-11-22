@@ -43,14 +43,20 @@ node bin/facet scan                        # nothing blocking in what changed
 npm run build:plugin && claude plugin validate plugin   # the plugin folder (needs Claude Code)
 ```
 
-1. Update `CHANGELOG.md`; bump the version in `package.json` and run `npm run build:plugin` (a test fails when `plugin/` is out of date). The plugin directory accepts from an unverified publisher only Markdown, JSON/YAML and images in the submitted folder: submit `plugin/`, never the repository root.
+1. **Prepare the release in one command:** `npm run release:prepare <version>` (on a branch `release/<version>`). It:
+   - writes the version into `package.json` and rebuilds the plugin folder;
+   - recounts the READMEs' numbers from their sources (`scripts/counts.mjs`, one source for both READMEs);
+   - gathers `changelog.d/` into the dated section of the version in `CHANGELOG.md` (the fragments are removed only after the file was written and read back);
+   - runs the release check.
+
+   Run twice, it changes nothing. Pull requests never do these steps: a pull request adds its entry as a fragment in `changelog.d/` (see its README) and leaves `CHANGELOG.md` and the READMEs' numbers alone, so parallel pull requests do not conflict. Review the gathered section, then commit. The plugin directory accepts from an unverified publisher only Markdown, JSON/YAML and images in the submitted folder: submit `plugin/`, never the repository root.
 2. If skills changed, re-run the audit against the collections named in the README and commit `AUDIT.md`.
 3. If the library changed materially, refresh `docs/dogfood.md` (the commands are in the file).
-4. Check before tagging: `node scripts/release-check.mjs v<version>` — the tag, `package.json` and a dated `## [<version>] — YYYY-MM-DD` section of `CHANGELOG.md` must agree.
+4. Check before tagging: `node scripts/release-check.mjs v<version>`. The tag, `package.json` and a dated `## [<version>] — YYYY-MM-DD` section of `CHANGELOG.md` must agree; the READMEs' numbers must be the sources'; no fragment may be left in `changelog.d/`. What a pull request only warns about blocks here.
 5. Merge to `main`, then tag **the merge commit on `main`** and push the tag: `git fetch origin && git tag v<version> origin/main && git push origin v<version>`. Never tag a local branch that may be behind `main` (the first `v0.7.1` tag pointed at such a commit). `facet init --github` and the guides pin the Action to `v<version>`: until the tag exists, a workflow written by them cannot find the Action.
 6. The tag starts `.github/workflows/release.yml`, which publishes to npm and makes the GitHub release. It refuses when:
    - the tag is not on `main`;
-   - the tag, `package.json` and `CHANGELOG.md` disagree;
+   - the tag, `package.json` and `CHANGELOG.md` disagree, the READMEs' numbers drifted, or fragments were not gathered;
    - the version is already on npm (a published version cannot be replaced);
    - tests, the audit, the benchmark or the domain tests fail.
 
