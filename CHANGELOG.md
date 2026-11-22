@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.7.1] — 2026-11-22
+
+The first item of the plan to 1.0 — close what was obviously open — done as the plan says: a threat model, CI on three systems with Windows required, journal schema 2, required event signatures, signed and levelled witnesses, a scanner that says what it did not read, commands without the process environment, SHA-256 throughout, and trust read from a commit. Besides the plan: a GitHub Action (`facet ci-verify`), guides for new users, `facet init --agents` and `--github`, and the domains arch-flow 0.3.4 and viz-flow 0.4.4. **Read before updating:** commands now get only ten environment variables (name the others in `govern.env`); `govern.signEvents` takes `"off"`, `"on"` or `"required"`; trust is read from the committed `.facet/trust.json`; an item whose change the scan could not read does not close until each file is approved with a reason.
+
 ### Security
 - **L4 needs trust from a commit** (plan 2.5, guard part). When `.facet/trust.json` is read outside git (trust marked *uncommitted*), nobody can check who added the witness's key: a proof stands at L3 even with an independent witness, and `proof verify` says why. In git nothing changes.
 - **Trust comes from a commit** (plan 2.5). `.facet/trust.json` is read as committed at `HEAD`, or at `govern.trustRef` (for example the reviewed `origin/main`); a key added to the working copy and not committed is not trusted, a key removed and not committed still is, and every run that reads trust names the difference on stderr. `facet key trust` says the key counts once committed. Outside git the file is read as it is and marked *uncommitted*; an unreadable file is an error, not an empty list.

@@ -19,7 +19,7 @@ No dependencies. Node 20+. Works with any agent that can run a shell command; sh
 
 ![One item of work: specification, build, probe, proof, policy gate — evidence accumulates and the assurance level rises](docs/assets/flow.svg)
 
-> **Status: 0.7.0, experimental.** The tools are tested (<!-- count:tests -->268<!-- /count --> tests and a guard benchmark of <!-- count:benchmark -->22<!-- /count --> adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **<!-- count:untested -->69<!-- /count --> untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute: `facet hypotheses --next` says which to try first, the pinned [Trial board](docs/trial-board.md) issue says who is testing what, and `HYPOTHESES.md` shows every reported result.
+> **Status: 0.7.1, experimental.** The tools are tested (<!-- count:tests -->268<!-- /count --> tests and a guard benchmark of <!-- count:benchmark -->22<!-- /count --> adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **<!-- count:untested -->69<!-- /count --> untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute: `facet hypotheses --next` says which to try first, the pinned [Trial board](docs/trial-board.md) issue says who is testing what, and `HYPOTHESES.md` shows every reported result.
 
 ## 🔬 FacetKit Community Research Program
 
@@ -181,6 +181,20 @@ The same record, told to the person who acts on it — see [docs/how-it-works.md
 | team lead | `facet explain --for lead` | first-time-right, why work was sent back, where the tokens go |
 | client, product owner | `facet explain --for client --lang pl --html status.html` (en, pl, ru) | what is done and how sure the team is, in words |
 | auditor | `facet explain --for auditor`, `facet proof witness` | every rule, exception and signature — and the checks re-run by you |
+
+## What 0.7.1 adds
+
+| Guarantee | Command |
+|---|---|
+| **Every guarantee names what it protects against** — an agent that errs, one that games the record, foreign content, accidents — and what it rests on; the owner of the machine is out of scope. | `SECURITY.md`, `facet audit` |
+| **Windows is a first-class platform**: CI on Ubuntu, macOS and Windows with Node 20 and 22, commands through the platform's own shell, process trees ended on time-out. | `ci.yml`, `lib/shell.mjs` |
+| **An event's id is the SHA-256 of its canonical form**; the chain covers writer, number and epoch; old segments are read by their own rules. Signatures can be required. | `facet journal`, `govern.signEvents` |
+| **A witness vouches only when it signed**, with a key trusted in the `witness` role that did not sign the pack — and only a witness on another machine and environment makes L4. | `facet proof witness`, `facet proof verify` |
+| **Trust is what was committed**: keys are read from `.facet/trust.json` at `HEAD` (or `govern.trustRef`); outside git no proof reaches L4. | `facet key trust` |
+| **The scan says what it did not read**, and such an item does not close until a person approves each file with a reason; the allow-secret marker counts only in ignored paths. | `facet scan`, `facet approve --note` |
+| **Commands do not see your secrets**: checks, witnesses, tests get ten basic variables and what `govern.env` names. | `govern.env` |
+| **Every pull request gets a level**: scan, tests, mutants of the changed lines, one comment. | `uses: Anctoster/facetkit@v0.7.1`, `facet ci-verify` |
+| **Start small**: three guides, only the agents you choose, a ready workflow. | `facet init --agents`, `facet init --github` |
 
 ## What 0.7.0 adds
 

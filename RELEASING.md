@@ -46,7 +46,7 @@ npm run build:plugin && claude plugin validate plugin   # the plugin folder (nee
 1. Update `CHANGELOG.md`; bump the version in `package.json` and run `npm run build:plugin` (a test fails when `plugin/` is out of date). The plugin directory accepts from an unverified publisher only Markdown, JSON/YAML and images in the submitted folder: submit `plugin/`, never the repository root.
 2. If skills changed, re-run the audit against the collections named in the README and commit `AUDIT.md`.
 3. If the library changed materially, refresh `docs/dogfood.md` (the commands are in the file).
-4. Commit, tag and push: `git tag v0.5.0 && git push --tags`.
+4. Commit, tag and push: `git tag v0.7.1 && git push --tags` (with this release's version). `facet init --github` and the guides pin the Action to `v<version>`: until the tag exists, a workflow written by them cannot find the Action.
 5. GitHub → Releases → *Draft a new release* from the tag; paste the changelog section.
 6. npm (optional, makes `npx facetkit …` work): `npm publish --access public`. Check the tarball first: `npm pack --dry-run`.
 7. Claude Code users install with `/plugin marketplace add <owner>/facetkit` and `/plugin install facetkit@facetkit`. Try it yourself on a clean machine after each release.
@@ -54,5 +54,5 @@ npm run build:plugin && claude plugin validate plugin   # the plugin folder (nee
 ## Not yet verified (do this before announcing)
 
 - The plugin has not been installed from a marketplace: validate and install it once.
-- `action.yml` has not run on GitHub: open a pull request in a test repository that uses it.
+- `action.yml` runs on this repository's own pull requests (`assurance`, `uses: ./`); it has not run from a tag in another repository: open a pull request in a test repository with `uses: <owner>/facetkit@v0.7.1`.
 - `npx facetkit` has not been tried from the registry: after publishing, run `npx facetkit demo` in an empty folder.
