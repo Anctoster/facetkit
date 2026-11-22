@@ -727,7 +727,10 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             const journalRef = path.relative(CWD, abs).split(path.sep).join('/');
             let fresh;
             try {
-                fresh = toImport(read.lines, events(), { domain, journal: journalRef, prefix: opt('prefix', '') });
+                // the routes of the domain project sit beside its journal (archflow.py / vizflow.py init writes them)
+                const routesFile = opt('routes') ? path.resolve(CWD, opt('routes')) : path.join(path.dirname(abs), 'routes.json');
+                const routes = fs.existsSync(routesFile) ? JSON.parse(fs.readFileSync(routesFile, 'utf-8')) : null;
+                fresh = toImport(read.lines, events(), { domain, journal: journalRef, prefix: opt('prefix', ''), routes });
             } catch (error) {
                 fail(`domain import: ${journalRef}: ${error.message}`);
             }
