@@ -46,7 +46,8 @@ test('cli: proof witness --pack --key-env --record — signed by the CI key, the
     const keys = path.join(tmp(), 'keys');
     const env = { ...process.env, FACET_KEYS: keys, FACET_WRITER: 'ann' };
     delete env.FACET_WITNESS_KEY;
-    write(root, 'facet.json', JSON.stringify({ journal: '.facet/journal', govern: { checks: { nokey: 'test -z "$FACET_WITNESS_KEY"', model: { run: 'true', requires: ['archicad'] } } } }));
+    // the commands are node, not shell built-ins, so the test reads the same on Windows
+    write(root, 'facet.json', JSON.stringify({ journal: '.facet/journal', govern: { checks: { nokey: 'node -e "process.exit(process.env.FACET_WITNESS_KEY ? 1 : 0)"', model: { run: 'node -e 0', requires: ['archicad'] } } } }));
     write(root, 'facet.items.json', '{}');
     write(root, 'src/a.txt', 'one\n');
     gitInit(root);
