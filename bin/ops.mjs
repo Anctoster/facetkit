@@ -154,7 +154,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             fs.writeFileSync(file, JSON.stringify(Object.fromEntries(hashesNow())));
         }
         const sc = scopesFor([name])[name];
-        return { src, env: envNow().digest, scope: { digest: sc.digest, files: sc.files } };
+        return { state: src, env: envNow().digest, scope: { digest: sc.digest, files: sc.files } };
     };
     const judged = (item) => {
         const cal = calibration(events());
@@ -777,7 +777,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 else if (govern.requireSignature) console.error('proof: no private key found (facet key new) — this project accepts only signed packs, so this one will read as UNSIGNED');
                 fs.mkdirSync(path.dirname(file), { recursive: true });
                 fs.writeFileSync(file, `${JSON.stringify(m, null, 2)}\n`);
-                if (openItems(events()).includes(item)) say({ kind: 'proof.create', item, digest: m.digest, src: m.source.state, level: m.level });
+                if (openItems(events()).includes(item)) say({ kind: 'proof.create', item, digest: m.digest, state: m.source.state, level: m.level });
                 return void console.log(`${renderProof(m)}\nwritten: ${path.relative(CWD, file)}`);
             }
             if (!fs.existsSync(file)) fail(`proof: ${item} has no proof pack${fs.existsSync(path.join(work, item, 'attestation.json')) ? ' — it has an attestation from before 0.6, which is bound to no source state and proves nothing about these sources' : ''} — facet proof create --item ${item}`);
@@ -1184,7 +1184,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                     const tests = testsNaming(CWD, id, graphNow().files.filter(isTest));
                     const status = nextStatus(bug, r, { regressionTests: tests });
                     saveBug(CWD, { ...bug, status, runs: [...bug.runs, { at: new Date().toISOString(), outcome: r.outcome, failed: r.failed, n: r.runs.length, src: sourceNow() }], tests });
-                    say({ kind: 'qa.verify', bug: id, outcome: r.outcome, status, src: sourceNow() ?? undefined, tests: tests.length });
+                    say({ kind: 'qa.verify', bug: id, outcome: r.outcome, status, state: sourceNow() ?? undefined, tests: tests.length });
                     console.log(`${id}: the reproduction ${r.outcome === 'fails' ? `fails ${r.failed}/${r.runs.length} times` : r.outcome === 'passes' ? `passes ${r.runs.length}/${r.runs.length} times` : `fails ${r.failed} of ${r.runs.length} times — flaky`} → ${status}${status === 'fixed' ? ' (a test that names the bug is still missing)' : ''}${tests.length ? ` · regression test: ${tests.join(', ')}` : ''}`);
                     return void (r.outcome === 'flaky' && process.exit(1));
                 }
