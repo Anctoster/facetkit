@@ -82,6 +82,12 @@ export function cases() {
     b = copy(h.bundle);
     b.manifest.witnesses[0].reproduced = 0;
     add('witness record edited', reseal(b), { plain: 'VALID', trusted: 'VALID', note: 'the edited record no longer counts; it does not count against the pack either' });
+    b = copy(h.bundle);
+    b.manifest.level = 'L4 calibrated';
+    b.manifest.signatures = [];
+    b.manifest.digest = sha256(canon((({ digest: _d, signatures: _s, witnesses: _w, ...body }) => body)(b.manifest)));
+    // re-digested and re-sealed with the signature taken off: only recomputing the level, or asking for a signature, catches it
+    add('level forged, re-digested, unsigned', reseal(b), { plain: 'MISMATCH', trusted: 'UNSIGNED', standalonePlain: 'VALID' });
     add('not a bundle', { schema: 'something-else' }, { plain: 'MISMATCH', trusted: 'MISMATCH' });
     return { cases: out, trust: h.trust, root: h.root };
 }
