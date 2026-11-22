@@ -28,6 +28,29 @@ Evidence recorded **before the last producing step ended** is stale and does not
 
 The gate refuses a criterion with neither a check nor `[user]`, and more than three `[user]` criteria. It is applied by `facet criteria check`, and by `flow end` of any step whose handoff carries the block. `facet criteria approve --by <person>` records the list with its hash. Changing the list afterwards needs a new approval: `facet criteria check` exits 1 while the brief differs from the approved list. Registered tools are the configured `govern.checks`, the tools that record their own evidence (`scan`, `trace`, `accept`, `mutate`, `neighbours`), and `criteriaTools` in the project settings.
 
+## The echo of understanding (0.8)
+
+Before its first working action, the agent of a step that owns criteria (criteria whose `by` is that step) writes `.work/<ITEM>/echo.json`:
+
+```json
+{ "step": "build", "criteria": [{ "id": "A1", "value": "...", "action": "...", "check": "..." }], "fixed": ["..."], "unknown": ["..."] }
+```
+
+`facet echo check <step>` compares it with the approved criteria and the brief's `## Fixed` section. A tool does the comparison, not a model:
+
+| | What it measures | Effect |
+|---|---|---|
+| U1 | every criterion of the step is there | below 100 % refuses |
+| U2 | the numbers with their units, quoted words and identifiers of each criterion appear in its `value` as written (`25 cm` and `25cm` are the same; `20 cm` is not) | below 100 % refuses |
+| U3 | every Fixed line is named as unchangeable | below 100 % refuses |
+| U4 | criteria the brief does not have | scope-creep: a question to a person, not a refusal |
+
+`flow end <step> --status DONE` refuses a step that owns criteria and has no passing echo since it started. Two failed echoes in a row send the brief back to the step that wrote it: an `origin` event with cause `brief-unreadable`, charged to nobody who worked. The board adds:
+
+- U6 — questions once the work began, per item;
+- U7 — returns for an assumption nobody asked about;
+- U8 — returns that were the brief's (above 30 %: change the conductor's skill, not the agents').
+
 ## The source of a finding (0.8)
 
 Every return, remark and defect is traced to the step it came from, per criterion. The trace runs on its own on `facet flow verdict REWORK --fix … --criterion A3`; for a remark or a defect after acceptance, run `facet origin --criterion A3 --from human|defect`. The rules, in order:

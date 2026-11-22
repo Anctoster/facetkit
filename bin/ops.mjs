@@ -36,6 +36,7 @@ import { buildGraph, isTest } from '../lib/seams.mjs';
 import { checkOwners, ownersFromTerritories, renderOwners, resolveOwners } from '../lib/ownership.mjs';
 import { declaredArtifacts, domainSettingsOf, kitDomainFile } from '../lib/domainproof.mjs';
 import { delayOf, findOrigin, FROM } from '../lib/origin.mjs';
+import { checkEcho, fixedOf, renderEcho } from '../lib/echo.mjs';
 import { snapshotRef } from '../lib/evalx.mjs';
 import { witness, witnessDigest, witnessLevelOf, exportProof, renderBundle, verifyBundle, createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
 import { planMutants, probe } from '../lib/mutaprobe.mjs';
@@ -472,6 +473,14 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
             const step = state?.steps.find((s) => s.id === stepId);
             if (!step || step.status !== 'running') fail(`flow end: ${item} / ${stepId} is not running`);
             if (!['DONE', 'BLOCKED', 'NEEDS-USER', 'INTERRUPTED'].includes(status)) fail('flow end: --status DONE|BLOCKED|NEEDS-USER|INTERRUPTED');
+            // a step that owns criteria does not finish without an echo that passed after it started (plan 2.9)
+            if (status === 'DONE' && !flag('force')) {
+                const mineNow = ofItem(events(), item);
+                const owned = (approvedCriteria(mineNow, item)?.criteria ?? []).filter((c) => c.by === stepId);
+                const since = mineNow.map((e, i) => [e, i]).filter(([e]) => e.kind === 'step.start' && e.step === stepId).at(-1)?.[1] ?? -1;
+                const passed = mineNow.slice(since + 1).some((e) => e.kind === 'echo' && e.step === stepId && e.ok);
+                if (owned.length && !passed) fail(`flow end: ${stepId} owns criteria ${owned.map((c) => c.id).join(', ')} and has no echo that passed — the agent writes echo.json before its first action, then: facet echo check ${stepId} --item ${item}`);
+            }
             // the handoff is checked while its author is still in the room, not an hour later by the inspector
             const tname = TEMPLATE_OF[stepId];
             const hfile = tname ? path.join(work, item, `${tname}.md`) : null;
@@ -873,6 +882,41 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 const o = await traceOrigin(item, id, { from, foundAt: opt('found-at') ?? null, judgedStep: opt('step') ?? null, cause: opt('cause') ?? null, toolDefect: opt('tool-defect') ?? null });
                 console.log(`${item} ${id}: source ${o.step ?? '?'}${o.agent ? ` (${o.agent}${o.charged ? '' : ', not charged'})` : ''} — ${o.method}, ${o.cause}${o.delay !== null ? `, found ${o.delay} step(s) later` : ''}\n  ${o.why}${o.tool ? `\n  charged to the tool ${o.tool}, not to an agent` : ''}`);
             }
+        },
+        /** echo check STEP [--item ID] [--file F] [--brief B]: did the agent of the step understand the brief? (plan 2.9) */
+        echo() {
+            const [sub, stepId] = positional;
+            if (sub !== 'check' || !stepId) fail('echo: facet echo check <step> [--item ID] [--file .work/<item>/echo.json] [--brief FILE]');
+            const item = theItem();
+            const ev = events();
+            const approved = approvedCriteria(ev, item);
+            if (!approved) fail(`echo: ${item} has no approved criteria — facet criteria approve --item ${item} --by <person>`);
+            const file = path.resolve(CWD, opt('file', path.join(work, item, 'echo.json')));
+            if (!fs.existsSync(file)) fail(`echo: ${path.relative(CWD, file)} does not exist — the agent of ${stepId} writes it before its first action`);
+            let said;
+            try {
+                said = JSON.parse(fs.readFileSync(file, 'utf-8'));
+            } catch (error) {
+                said = { notJson: error.message };
+            }
+            const brief = path.resolve(CWD, opt('brief', approved.brief ?? path.join(work, item, 'order.md')));
+            const fixed = fs.existsSync(brief) ? fixedOf(fs.readFileSync(brief, 'utf-8')) : [];
+            const r = checkEcho(said, { step: stepId, criteria: approved.criteria, fixed });
+            say({ kind: 'echo', item, step: stepId, ok: r.ok, u1: r.u1, u2: r.u2, u3: r.u3, u4: r.u4, extra: r.extra.length ? r.extra : undefined, problems: r.problems.slice(0, 8).map((p) => `${p.u} ${p.why}`) });
+            console.log(renderEcho(r));
+            if (r.ok) return;
+            // two failures in a row since the step started: the brief cannot be read — it goes back, and it is the brief's
+            const mine = ofItem(events(), item);
+            const since = mine.map((e, i) => [e, i]).filter(([e]) => e.kind === 'step.start' && e.step === stepId).at(-1)?.[1] ?? -1;
+            const tries = mine.slice(since + 1).filter((e) => e.kind === 'echo' && e.step === stepId);
+            const streak = tries.length - 1 - tries.map((e) => e.ok).lastIndexOf(true);
+            if (streak >= 2) {
+                const steps = itemState(mine, item)?.steps ?? [];
+                const ids = [...new Set(r.problems.filter((p) => p.id && p.u !== 'U4').map((p) => p.id))];
+                for (const id of ids.length ? ids : [null]) say({ kind: 'origin', item, criterion: id ?? undefined, from: 'return', step: steps[0]?.id ?? null, agent: steps[0]?.agent ?? null, method: 'human', cause: 'brief-unreadable', charged: false, foundAt: stepId, delay: delayOf(steps.map((s) => s.id), steps[0]?.id, stepId) });
+                fail(`echo: two failed echoes in a row — the brief cannot be read. Send it back to ${steps[0]?.id ?? 'the step that wrote it'} (${steps[0]?.agent ?? 'the conductor'}) with the lines above; this is recorded against the brief, not against ${stepId}.`, 1);
+            }
+            process.exit(1);
         },
         waive() {
             const item = theItem();
