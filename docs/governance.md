@@ -96,6 +96,7 @@ The domain plugins (arch-flow, viz-flow) keep their own journal, `journal.jsonl`
 - the chain of the domain journal is checked first; an edited, removed, reordered or torn line stops the import with its line number, and nothing is written;
 - `--anchor n:hash` — the `ANCHOR` line the domain prints at every close, kept outside the project — must still match, or the history was rewritten after it;
 - each line becomes one core event with `src: { journal, n, hash }`, pointing back to it: `open`, `start`, `end`, `evidence` (with the tool's receipt), `waive`, `verdict`, `close`, `sign`, `accept` and `answer` become their core kinds; every other line is kept as `domain.<type>` with its fields under `data`;
+- an imported item has the steps of its domain route — from `routes.json` beside the journal, or `--routes <file>`, else the steps the item started — and the step of the inspector (`arch-inspector`, `viz-inspector`) is the one that judges;
 - a line already imported (by its hash) is not imported again, so the command can run after every session.
 
 ## Attestation
