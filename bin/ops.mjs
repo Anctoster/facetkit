@@ -33,7 +33,7 @@ import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, steps
 import { buildGraph, isTest } from '../lib/seams.mjs';
 import { checkOwners, ownersFromTerritories, renderOwners, resolveOwners } from '../lib/ownership.mjs';
 import { declaredArtifacts } from '../lib/domainproof.mjs';
-import { witness, witnessDigest, exportProof, renderBundle, verifyBundle, createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
+import { witness, witnessDigest, witnessLevelOf, exportProof, renderBundle, verifyBundle, createProof, decay, fileHashes, proofPath, renderDecay, renderProof, scopesNow, sourceState, verifyProof } from '../lib/proof.mjs';
 import { planMutants, probe } from '../lib/mutaprobe.mjs';
 import { route } from '../lib/router.mjs';
 import { scan } from '../lib/secscan.mjs';
@@ -44,10 +44,10 @@ import { anomalies, timeline } from '../lib/observe.mjs';
 import { beliefs, hindsight, proposals, renderBeliefs, reviewChanges, signals } from '../lib/retro.mjs';
 import { plan, renderPlan, sessionPlan } from '../lib/schedule.mjs';
 import { readLedger, run } from '../lib/thrift.mjs';
-import { itemEnv, safeEnv, withItem } from '../lib/shell.mjs';
+import { itemEnv, safeEnv, SAFE_ITEM, withItem } from '../lib/shell.mjs';
 import { readDomainJournal, toImport } from '../lib/domainlog.mjs';
 import { environment } from '../lib/envinfo.mjs';
-import { eventSigner, eventVerifiers, loadKey, loadTrust, sign } from '../lib/sign.mjs';
+import { eventSigner, eventVerifiers, keyFromPem, loadKey, loadTrust, sign } from '../lib/sign.mjs';
 import { sha256 } from '../lib/text.mjs';
 
 export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], flag, list, fail, positional, work, readJson, loadoutsFile, extensions = [], skills = () => [] }) {
@@ -60,7 +60,18 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
     const loadouts = () => readJson(loadoutsFile, {});
     const events = () => readJournal(journal);
     // authorship: with a private key at hand and `govern.signEvents`, every event this process writes is signed
+    // --key-env NAME: the private key is the text of that variable (a CI secret); it is never written to disk nor passed to a command
+    const keyEnv = opt('key-env') ?? null;
+    if (keyEnv && !/^[A-Z_][A-Z0-9_]{0,63}$/.test(keyEnv)) fail(`--key-env: ${JSON.stringify(keyEnv)} is not a variable name`);
+    if (keyEnv && !process.env[keyEnv]) fail(`--key-env ${keyEnv}: the variable is empty or not set — in GitHub Actions pass the secret as env: ${keyEnv}: \${{ secrets.${keyEnv} }}`);
     const myKey = () => {
+        if (keyEnv) {
+            try {
+                return keyFromPem(process.env[keyEnv]);
+            } catch {
+                fail(`--key-env ${keyEnv}: the variable does not hold a private key in PEM form`);
+            }
+        }
         try {
             return loadKey();
         } catch {
@@ -110,7 +121,7 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
     // ---- governance: policy, evidence, model routing --------------------------------------
     const govern = project.govern ?? {};
     // what a configured command may see of this process's environment (lib/shell.mjs, safeEnv)
-    const commandEnv = () => safeEnv({ allow: govern.env ?? [] });
+    const commandEnv = () => safeEnv({ allow: govern.env ?? [], never: keyEnv ? [keyEnv] : [] });
     const policy = () => [...(govern.policy ? readJson(path.resolve(CWD, govern.policy), DEFAULT_POLICY) : DEFAULT_POLICY), ...extensions.flatMap((x) => x.rules ?? [])];
     const checkNames = () => [...Object.keys(govern.checks ?? {}), ...extensions.flatMap((x) => Object.keys(x.checks ?? {}))];
     const projectFacts = () => {
@@ -761,10 +772,15 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 console.log(renderBundle(v));
                 return void (v.status === 'VALID' || process.exit(1));
             }
-            const item = opt('item') ?? positional[1] ?? openItems(events(), me)[0] ?? closedItems(events()).at(-1);
+            // --pack FILE: a pack named by its file (a witness in CI reads the one the pull request carries)
+            const packFile = opt('pack') ? path.resolve(CWD, opt('pack')) : null;
+            if (packFile && !fs.existsSync(packFile)) fail(`proof: ${opt('pack')} does not exist`);
+            const packed = packFile ? readJson(packFile, null) : null;
+            if (packFile && !SAFE_ITEM.test(String(packed?.item ?? ''))) fail(`proof: ${opt('pack')} is not a proof pack (no usable item id)`);
+            const item = packed?.item ?? opt('item') ?? positional[1] ?? openItems(events(), me)[0] ?? closedItems(events()).at(-1);
             if (!item) fail('proof: no item (facet proof create|verify|status --item ID)');
             const options = { policy: policy(), checks: checkNames(), project: projectFacts(), ignore: sourceIgnore(), include: inputs(), scopes: scopesFor(evidenceNames(item)), trust: trustNow(), requireSignature: !!govern.requireSignature, benchmark: kitBenchmark() };
-            const file = proofPath(work, item);
+            const file = packFile ?? proofPath(work, item);
             if (sub === 'decay') {
                 const d = decay(events(), item, { hashes: hashesNow(), scopes: options.scopes ?? {}, snapshotOf: (src) => readJson(snapshotFile(item, src), null) });
                 console.log(`${item}: trust in the recorded proofs, on the sources as they are now\n${renderDecay(d)}`);
@@ -808,7 +824,11 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 if (sub === 'witness' && !myKey()) fail('proof witness: no private key here (facet key new, then facet key trust --role witness on the project) — an unsigned witness record is anybody\'s claim and is not recorded');
                 if (sub === 'witness' && !trustNow().keys.some((k) => k.id === myKey().id && k.role === 'witness')) fail(`proof witness: key ${myKey().id} is not trusted in the witness role here (facet key trust <public key> --role witness, committed) — its record could not count, so none is written`);
                 const dir = path.join(work, item, 'witness');
+                // a check that needs a program this machine does not have (Archicad, Blender) is not run here: --with names what it has
+                const have = new Set(String(opt('with', '')).split(',').map((s) => s.trim().toLowerCase()).filter(Boolean));
+                const needs = (name) => [].concat(typeof govern.checks[name] === 'object' ? (govern.checks[name].requires ?? []) : []).map((r) => String(r).toLowerCase()).filter((r) => !have.has(r));
                 const w = await witness(m, names, async (name) => {
+                    if (needs(name).length) return null;
                     const cmd = typeof govern.checks[name] === 'object' ? govern.checks[name].run : govern.checks[name];
                     const r = await run(withItem(cmd, item), { cwd: CWD, env: itemEnv(item, commandEnv()), timeoutSec: Number(opt('timeout', 600)), ledger: path.join(dir, 'ledger.jsonl'), logDir: path.join(dir, 'logs') });
                     return { ok: r.exit === 0 };
@@ -818,8 +838,14 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 if (key) w.signature = sign(key, witnessDigest(w));
                 if (!w.signature) console.error('proof verify --rerun: this run is not signed, so its record is shown but does not count — neither for the pack nor against it; a witness signs with facet proof witness');
                 m.witnesses = [...(m.witnesses ?? []), w];
-                say({ kind: 'proof.witness', item, checks: names.filter((n) => !w.notRun.includes(n)), differs: w.differs, sameSources: w.sameSources, by: w.by, env: w.env });
-                fs.writeFileSync(file, `${JSON.stringify(m, null, 2)}\n`);
+                // the level this record could vouch at; a record that did not run everything, differs, or ran on other sources vouches for nothing
+                const level = w.signature && w.sameSources && w.total > 0 && !w.differs.length && !w.notRun.length ? witnessLevelOf(w, m) : null;
+                say({ kind: 'proof.witness', item, checks: names.filter((n) => !w.notRun.includes(n)), differs: w.differs, sameSources: w.sameSources, by: w.by, env: w.env, level, notRun: w.notRun.length ? w.notRun : undefined });
+                const out = opt('out') ? path.resolve(CWD, opt('out')) : file;
+                fs.mkdirSync(path.dirname(out), { recursive: true });
+                fs.writeFileSync(out, `${JSON.stringify(m, null, 2)}\n`);
+                if (opt('record')) fs.writeFileSync(path.resolve(CWD, opt('record')), `${JSON.stringify({ item, pack: m.digest, level, record: w }, null, 2)}\n`);
+                for (const name of w.notRun) if (needs(name).length) console.log(`  not run here: ${name} needs ${needs(name).join(', ')} (run on a machine that has it, with --with ${needs(name).join(',')})`);
                 console.log(`witness: ${w.reproduced}/${w.total} checks gave the recorded answer${w.sameSources ? '' : ' — on OTHER sources than the pack describes, so this says nothing about the pack'}${w.differs.length ? ` · differs: ${w.differs.join(', ')}` : ''}${w.notRun.length ? ` · could not run: ${w.notRun.join(', ')}` : ''}`);
             }
             const v = verifyProof(CWD, events(), m, { ...options, environment: envNow(true) });
