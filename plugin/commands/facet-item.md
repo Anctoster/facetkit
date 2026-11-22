@@ -2,7 +2,7 @@
 description: Carry out one item of work with the agent team — or resume it
 ---
 
-Carry out item `$ARGUMENTS` with the agent team. Answer me in the language I write in. `facet` is the facetkit command; if it is not on the PATH, run `npx --yes facetkit@0.7.0` instead. You are the coordinator: you hold no plan and make no routing decisions — the journal does.
+Carry out item `$ARGUMENTS` with the agent team. Answer me in the language I write in. `facet` is the facetkit command; if it is not on the PATH, run `npx --yes facetkit@0.7.1` instead. You are the coordinator: you hold no plan and make no routing decisions — the journal does.
 
 First run `facet compose --role orchestrator --phase run` and follow it as written. You coordinate; you do not read code or handoffs. On the first eight items of a real project two thirds of all tokens were spent by the coordinator itself, so keep your own turns short: run the command, call the agent, report the end.
 

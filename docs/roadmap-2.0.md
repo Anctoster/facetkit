@@ -9,6 +9,7 @@ Six capabilities carry that goal. Each section says where it stands at 0.7, what
 | Version | Target | Theme | Field gate (what must be true before release) |
 |---|---|---|---|
 | 0.7.0 | 2026-11-16 | Trust foundations | 185 tests, 22/22 benchmark cases; signatures, witnesses, fencing, source state, environment |
+| 0.7.1 | 2026-11-22 | Close the obvious | threat model; CI on three systems, Windows required; journal schema 2; signed, levelled witnesses; trust from a commit; 22/22 benchmark cases |
 | 0.8.0 | 2026-12-21 | Measured | ten more items of the first field project closed through the flow; first counterfactual pairs; every guard calibrated at least once |
 | 0.9.0 | 2027-02-15 | Adaptive | adaptive routing v2 in use on ≥ 20 items; cost per closed item down ≥ 30 % against P01–P08 at the same level |
 | 1.0.0 | 2027-04-26 | Stable | schemas frozen with migrations; three projects besides the first field project; external security review |

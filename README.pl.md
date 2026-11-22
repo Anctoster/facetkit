@@ -19,7 +19,7 @@ Bez zależności. Node 20+. Działa z każdym agentem, który potrafi uruchomić
 
 ![Jeden element pracy: specyfikacja, budowa, próba, dowód, bramka polityki — dowody przybywają, a poziom pewności rośnie](docs/assets/flow.svg)
 
-> **Stan: 0.7.0, wersja eksperymentalna.** Narzędzia są przetestowane (liczba testów: <!-- count:tests -->268<!-- /count -->, liczba przypadków testu odporności: <!-- count:benchmark -->22<!-- /count -->; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **niesprawdzone hipotezy o zachowaniu agentów (liczba: <!-- count:untested -->69<!-- /count -->)** — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
+> **Stan: 0.7.1, wersja eksperymentalna.** Narzędzia są przetestowane (liczba testów: <!-- count:tests -->268<!-- /count -->, liczba przypadków testu odporności: <!-- count:benchmark -->22<!-- /count -->; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **niesprawdzone hipotezy o zachowaniu agentów (liczba: <!-- count:untested -->69<!-- /count -->)** — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
 
 
 ## 🔬 Badania Społeczności
@@ -154,6 +154,18 @@ Ten sam zapis, opowiedziany osobie, która ma na jego podstawie działać:
 | liderem zespołu | `facet explain --for lead` | ile pracy wraca do poprawki i dlaczego, gdzie idą tokeny |
 | klientem, właścicielem produktu | `facet explain --for client --lang pl --html status.html` | co jest gotowe i na ile zespół jest pewny — słowami |
 | audytorem | `facet explain --for auditor`, `facet proof witness` | każdą regułę, wyjątek i podpis — oraz kontrole uruchomione ponownie przez ciebie |
+
+## Co dodaje 0.7.1
+
+- **Każda gwarancja mówi, przed czym chroni** — agent, który się myli; agent, który nagina zapis; obca treść; przypadek — i na czym się opiera; właściciel komputera jest poza zakresem (`SECURITY.md`, `facet audit`).
+- **Windows jest pełnoprawną platformą**: CI na Ubuntu, macOS i Windows z Node 20 i 22, polecenia przez powłokę systemu, drzewa procesów kończone po przekroczeniu czasu.
+- **Identyfikator zdarzenia to SHA-256 jego postaci kanonicznej**; łańcuch obejmuje autora, numer i epokę; stare segmenty są czytane według własnych reguł. Podpisy można wymagać (`govern.signEvents`).
+- **Świadek poręcza tylko podpisany** kluczem zaufanym w roli `witness`, który nie podpisał paczki — a L4 daje tylko świadek na innej maszynie i w innym środowisku.
+- **Zaufanie to to, co zatwierdzone w repozytorium**: klucze są czytane z `.facet/trust.json` z `HEAD` (lub `govern.trustRef`); poza git żaden dowód nie osiąga L4.
+- **Skan mówi, czego nie przeczytał**, a takie zadanie nie zamyka się, dopóki człowiek nie zatwierdzi każdego pliku z podaniem przyczyny; znacznik allow-secret działa tylko w ścieżkach ignorowanych.
+- **Polecenia nie widzą Twoich sekretów**: kontrole, świadkowie i testy dostają dziesięć podstawowych zmiennych i to, co wymienia `govern.env`.
+- **Każdy pull request dostaje poziom**: skan, testy, mutanty zmienionych wierszy, jeden komentarz (`uses: Anctoster/facetkit@v0.7.1`).
+- **Zacznij od małego**: trzy przewodniki, tylko wybrani agenci, gotowy workflow (`facet init --agents`, `facet init --github`).
 
 ## Co dodaje 0.7.0
 

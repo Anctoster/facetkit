@@ -73,3 +73,25 @@ Ten mutants per module, tests of 0.7 (`test/v07`, `test/fencing`, `test/journal-
 | **all** | **34 / 70 (49 %)** | | |
 
 The adaptive orchestrator was the weakest module, as `govern` was in 0.5: its tests showed that it adds the right steps, not that it adds nothing when it must not. The added tests pin exactly that — no growth after a passed verdict, none for a closed item, no escalation below five items, none above the top of the ladder.
+
+## 0.7.1: the new and rewritten modules, first run (22 November 2026)
+
+Ten mutants per module (fewer where fewer are possible), each against the tests written for it. No test was added after this run: what survived is listed as found, to be closed in 0.8.
+
+```bash
+node bin/facet mutate --files lib/sign.mjs --test "node --test test/trust-commit.test.mjs test/witness-signature.test.mjs test/journal-sign.test.mjs" --max 10
+```
+
+| Module | Noticed | What survived, and what it means |
+|---|---|---|
+| `canon` | 9 / 10 | the sort comparator returning −2 instead of −1: equivalent — only the sign is read |
+| `shell` | 8 / 10 | `SAFE_ITEM` allowing a one-character id to be refused (`{0,63}` → `{1,63}`): no test uses a one-character id; the `SIGKILL` fallback of `killTree` after `taskkill`: no test makes the first kill fail |
+| `secscan` | 7 / 10 | `AKIA[0-9A-Z]` → `[1-9A-Z]` and `[A-Za-z0-9]` → `[A-Za-z0-10]` in two secret patterns: the test keys contain no `0`; a hunk start `+ i` → `- i`: no test has a hunk longer than one line |
+| `sign` | 6 / 10 | the length of a key id (16 → 17 characters) is not pinned; the fallback when `FACET_KEYS` is unset, the return value of `addTrust` and a `false` from a key check nobody reads alone |
+| `docaudit` | 6 / 6 | — |
+| `github-context` | 8 / 10 | `before` made of zeros (a new branch pushed) is not tested; an event file that does not exist with a path given |
+| `explain-pr` | 8 / 10 | the cut length of the change cell (80 → 81); a comment without a repository name but with a token and a PR number |
+| **all** | **52 / 66 (79 %)** | |
+
+The weakest of the new code is the key handling in `sign` — the part the trust from a commit (plan 2.5) was added to. Its new lines were not reached by this sample (the probe takes mutants in operator rotation); a run on changed lines only is the first thing to do in 0.8.
+
