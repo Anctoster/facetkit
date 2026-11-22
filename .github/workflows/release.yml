@@ -1,39 +1,91 @@
 name: Publish to npm
-
+# A tag v<version> publishes that version to npm (with provenance) and makes its GitHub release.
+# Before anything is published it checks that:
+#  - the tag is on main;
+#  - the tag, package.json and a dated CHANGELOG section agree (scripts/release-check.mjs);
+#  - this version is not on npm yet;
+#  - tests, the audit, the guard benchmark and the domain tests pass.
+# Release steps for a person: RELEASING.md.
 on:
   push:
     tags:
       - 'v*'
 
 permissions:
-  contents: write
-  id-token: write # Необходимо для npm provenance
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write # the GitHub release
+      id-token: write # npm provenance
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
-          registry-url: 'https://npmjs.org'
+          registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Setup Python (domain tests)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-      - name: Run tests
-        run: npm test
+      - name: The tag is a commit of main
+        run: |
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main \
+            || { echo "::error::$GITHUB_REF_NAME is not on main — tag a commit of main"; exit 1; }
+
+      - name: The tag, package.json and CHANGELOG.md agree
+        run: node scripts/release-check.mjs "$GITHUB_REF_NAME" --notes "$RUNNER_TEMP/notes.md"
+
+      - name: This version is not on npm yet
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          if npm view "facetkit@$version" version >/dev/null 2>&1; then
+            echo "::error::facetkit@$version is already on npm — a published version cannot be replaced; bump the version"; exit 1
+          fi
+
+      # no dependencies: there is nothing to install (and no lockfile for npm ci)
+      - name: Tests, audit, guard benchmark
+        run: |
+          npm test
+          npm run audit
+          npm run benchmark
+
+      - name: Domain tests
+        run: |
+          npm run test:arch
+          npm run test:viz
+
+      - name: What goes into the package
+        run: npm pack --dry-run
 
       - name: Publish to npm with provenance
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
+      # a release drafted by hand for this tag is kept and only gets the notes
+      - name: GitHub release with the changelog section
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --notes-file "$RUNNER_TEMP/notes.md"
+          else
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" --latest
+          fi
