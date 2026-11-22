@@ -60,6 +60,8 @@
   "scripts": {
     "test": "node scripts/test.mjs",
     "counts": "node scripts/counts.mjs",
+    "changelog": "node scripts/changelog.mjs",
+    "release:prepare": "node scripts/release-prepare.mjs",
     "build:plugin": "node scripts/build-plugin.mjs",
     "audit": "node bin/facet.mjs audit",
     "benchmark": "node bin/facet.mjs benchmark",
