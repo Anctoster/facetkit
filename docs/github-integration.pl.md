@@ -92,6 +92,24 @@ Nieudana kontrola powoduje niepowodzenie przebiegu niezależnie od poziomu. Skan
 - **Monorepo.** Action sprawdza katalog główny repozytorium. Dla pakietu w podfolderze uruchom `npx facetkit ci-verify` w kroku `run:` z `working-directory:`.
 - **Lokalnie.** `facet ci-verify --base main` daje ten sam raport przed wypchnięciem zmian.
 
+## Świadek w CI
+
+Pakiet dowodowy zrobiony na Twoim komputerze stoi najwyżej na L3, dopóki ktoś inny nie dostanie tych samych odpowiedzi: **świadek** uruchamia kontrole jeszcze raz i podpisuje wynik. Zapis z innej maszyny i innego środowiska — runnera CI — jest `independent` i tylko on pozwala pakietowi stanąć na L4.
+
+1. **Klucz dla CI, raz.** Na zaufanym komputerze: `facet key new`, potem `facet key trust <klucz publiczny> --name ci --role witness` i commit `.facet/trust.json`. Klucz prywatny (plik `.pem` zapisany przez `facet key new`) wstaw do sekretów repozytorium jako `FACET_WITNESS_KEY`, a plik usuń.
+2. **Workflow.** Skopiuj z FacetKit [`.github/workflows/facet-witness.yml`](../.github/workflows/facet-witness.yml). Uruchamia się, gdy pull request dostaje etykietę `witness` (i ponownie przy nowych commitach, dopóki ją ma), albo ręcznie ze ścieżką pakietu. Dla każdego pakietu zmienionego w pull requeście pobiera commit wskazany w pakiecie, wykonuje
+
+   ```bash
+   facet proof witness --pack <pakiet> --key-env FACET_WITNESS_KEY --out <kopia> --record <zapis>
+   ```
+
+   i dołącza podpisany zapis do przebiegu jako artefakt oraz do pull requesta jako komentarz. Pakiet w repozytorium zostaje bez zmian.
+3. **Czego CI nie uruchomi.** Kontrola wymagająca programu, którego runner nie ma, mówi to w `govern.checks`: `"model.layers": { "run": "python tools/model_audit.py …", "requires": ["archicad"] }`. Świadek jej nie uruchamia (`not run here`), a zapis, który nie wykonał wszystkich kontroli, za nic nie ręczy — taki pakiet zostaje tam, gdzie był. Na komputerze biura, który ma ten program, `--with archicad,blender` uruchamia i je. Kontrole na wyeksportowanych danych (snapshot modelu w JSON, indeks sceny, obrazy) działają wszędzie.
+
+`--key-env NAZWA` czyta klucz prywatny z tej zmiennej — tekst PEM, z prawdziwymi łamaniami linii lub `\n` — i nie przekazuje go żadnej komendzie uruchamianej przez świadka, cokolwiek wymienia `govern.env`; `FACET_WITNESS_KEY` nie jest przekazywany nigdy. Tablica (`facet board`, *Trust*) pokazuje odsetek pakietów odtworzonych przez niezależnego świadka.
+
+**Trzymaj klucz z dala od kodu, który ocenia.** Sekrety nie trafiają do workflow pull requestów z forków, a tego workflow nie wolno zmieniać na `pull_request_target`. Uruchamiają go tylko osoby, które mogą nadawać etykiety. Narzędzie działa z gałęzi domyślnej, nie z pull requesta.
+
 ## Bez Action
 
 Dowolne CI może wykonać tę samą kontrolę:

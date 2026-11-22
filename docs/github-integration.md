@@ -92,6 +92,24 @@ A check that fails makes the run fail whatever the level. A scan that could not 
 - **Monorepos.** The Action checks the repository root. For a package in a subfolder, run `npx facetkit ci-verify` in a `run:` step with `working-directory:`.
 - **Locally.** `facet ci-verify --base main` gives the same report before you push.
 
+## A witness in CI
+
+A proof pack made on your machine stands at L3 at most until someone else gets the same answers: a **witness** runs the checks again and signs what it found. A record from another machine and environment — a CI runner — is `independent`, and only that lets a pack stand at L4.
+
+1. **A key for CI, once.** On a trusted machine: `facet key new`, then `facet key trust <public key> --name ci --role witness` and commit `.facet/trust.json`. Put the private key (the `.pem` file `facet key new` wrote) into the repository's secrets as `FACET_WITNESS_KEY`, and delete the file.
+2. **The workflow.** Copy [`.github/workflows/facet-witness.yml`](../.github/workflows/facet-witness.yml) from FacetKit. It runs when a pull request gets the label `witness` (and again on new commits while it has it), or by hand with the path of a pack. For every pack the pull request changes it checks out the commit the pack names, runs
+
+   ```bash
+   facet proof witness --pack <pack> --key-env FACET_WITNESS_KEY --out <copy> --record <record>
+   ```
+
+   and attaches the signed record to the run as an artifact and to the pull request as a comment. The pack in the repository is left as it is.
+3. **What CI cannot run.** A check that needs a program the runner does not have says so in `govern.checks`: `"model.layers": { "run": "python tools/model_audit.py …", "requires": ["archicad"] }`. The witness does not run it (`not run here`), and a record that could not run every check vouches for nothing — such a pack stays where it was. On a machine of the office that has the program, `--with archicad,blender` runs them too. Checks over exported data (the model snapshot as JSON, the scene index, the images) run anywhere.
+
+`--key-env NAME` reads the private key from that variable — PEM text, with real or `\n` line breaks — and keeps it out of every command the witness runs, whatever `govern.env` names; `FACET_WITNESS_KEY` is never passed in any case. The board (`facet board`, *Trust*) shows the share of packs reproduced by an independent witness.
+
+**Keep the key out of reach of the code it judges.** Secrets are not given to workflows of pull requests from forks, and this workflow must never be changed to `pull_request_target`. Only people who can label pull requests start it. The tool runs from the default branch, not from the pull request.
+
 ## Without the Action
 
 Any CI can run the same check:
