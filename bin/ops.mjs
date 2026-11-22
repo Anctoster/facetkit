@@ -30,6 +30,7 @@ import { history as gitHistory } from '../lib/atlas.mjs';
 import { checkDecision, loadDecisions, newDecision, renderDecisionCheck, saveDecision } from '../lib/decisions.mjs';
 import { ADAPT, adapt, adaptationFor, adaptationsOf, renderAdaptations } from '../lib/adapt.mjs';
 import { approvedCriteria, criteriaHash, criterionOf, gateCriteria, parseCheck, readCriteria, renderProblems } from '../lib/criteria.mjs';
+import { addedLines, changedSince, CHECK_FILES, checkFileChanges, criteriaStatus, PLACEHOLDERS, placeholderLines, receiptProblems } from '../lib/handoff.mjs';
 import { blocking, checkHandoff, filesForStep, findTemplate, listedFiles, renderHandoff, TEMPLATE_OF, workingChanges } from '../lib/handoff.mjs';
 import { DEFAULT_PLANNING, discover, planRoute, renderPlan as renderRoute, stepsOf } from '../lib/planner.mjs';
 import { buildGraph, isTest } from '../lib/seams.mjs';
@@ -204,6 +205,41 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
         const e = { kind: 'origin', item, criterion: id, from, step: found.step, agent: toolDefect ? null : (source?.agent ?? null), model, tool: toolDefect ?? undefined, method: found.method, cause: cause ?? found.cause, link: found.link, charged: toolDefect ? false : found.charged, foundAt: foundAt ?? undefined, delay: delayOf(steps, found.step, foundAt) };
         say(e);
         return { ...e, why: found.why };
+    };
+    // the latest evidence per name for an item, and the configured command of each check
+    const latestEvidence = (item) => Object.fromEntries(ofItem(events(), item).filter((e) => e.kind === 'evidence').map((e) => [e.name, e]));
+    const commandOf = (name) => (typeof govern.checks?.[name] === 'object' ? govern.checks[name].run : govern.checks?.[name]) ?? null;
+    const BUILTIN_EVIDENCE = ['scan', 'trace', 'accept', 'mutate', 'neighbours', 'handoff', 'owners', 'fitness'];
+    /** H1, H2, H4 and H9 for one step that is ending DONE (plan 2.10). */
+    const gatesFor = (item, stepId, step) => {
+        const ev = events();
+        const mine = ofItem(ev, item);
+        const owned = (approvedCriteria(ev, item)?.criteria ?? []).filter((c) => c.by === stepId);
+        const out = [];
+        // H1: the OKs this step's criteria rest on carry the receipts of the registered tools
+        out.push(...receiptProblems(owned, latestEvidence(item), { commands: Object.fromEntries(checkNames().map((n) => [n, commandOf(n)])), builtin: BUILTIN_EVIDENCE, hash: (c) => sha256(c, 16) }));
+        // H9: the handoff of the step names each of its criteria with its status
+        const tname = TEMPLATE_OF[stepId];
+        const hfile = tname ? path.join(work, item, `${tname}.md`) : null;
+        if (owned.length) {
+            if (!hfile || !fs.existsSync(hfile)) out.push({ kind: 'H9', what: `no handoff to state the criteria ${owned.map((c) => c.id).join(', ')}`, fix: `write ${hfile ? path.relative(CWD, hfile) : 'the step\'s handoff'} with one line per criterion: "<id>: done | blocked — why | partial — what is left"` });
+            else out.push(...criteriaStatus(fs.readFileSync(hfile, 'utf-8'), owned.map((c) => c.id)).problems);
+        }
+        // H2 and H4 for the steps that change the product: their own changes, as the handoff check takes them
+        if (['build', 'ops'].includes(stepId) && spawnSync('git', ['rev-parse', '--git-dir'], { cwd: CWD }).status === 0) {
+            // what this step changed: since its snapshot when one was taken (eval.snapshot), else the working changes no other handoff of the item lists
+            const base = snapshotRef(CWD, { item, step: stepId });
+            const others = fs.existsSync(path.join(work, item)) ? fs.readdirSync(path.join(work, item)).filter((f) => f.endsWith('.md') && f !== `${tname}.md`).flatMap((f) => listedFiles(fs.readFileSync(path.join(work, item, f), 'utf-8'))) : [];
+            const mineOnly = (files) => files.filter((f) => !f.startsWith(path.relative(CWD, work)) && !f.startsWith(path.relative(CWD, journal)) && (base || !others.some((o) => f === o || f.endsWith(o))));
+            const changed = mineOnly(base ? changedSince(CWD, base) : workingChanges(CWD));
+            const since = mine.map((e, i) => [e, i]).filter(([e]) => e.kind === 'step.start' && e.step === stepId).at(-1)?.[1] ?? -1;
+            const lifted = mine.slice(since + 1).some((e) => e.kind === 'approval' && e.what === `check-files:${stepId}` && e.by && e.by !== step.agent);
+            const checks = checkFileChanges(changed, govern.checkFiles ?? CHECK_FILES);
+            if (checks.length && !lifted) out.push({ kind: 'H2', what: `${stepId} changed the checks it is judged by: ${checks.slice(0, 5).join(', ')}`, fix: `undo those changes, or a person approves them: facet approve check-files:${stepId} --by <name> --note "<why>"` });
+            const holes = placeholderLines(addedLines(CWD, changed.filter((f) => !checks.includes(f)), base ?? 'HEAD'), govern.placeholders ?? PLACEHOLDERS);
+            for (const h of holes.slice(0, 8)) out.push({ kind: 'H4', what: `${h.file}: "${h.text}"`, fix: 'a placeholder where the work should be — do the work, or end the step BLOCKED and say what is missing' });
+        }
+        return out;
     };
     // tools a criterion may name: the configured checks and the tools that record evidence themselves
     const criteriaTools = () => [...new Set([...checkNames(), 'scan', 'trace', 'accept', 'mutate', 'neighbours', ...(project.criteriaTools ?? [])])];
@@ -530,6 +566,12 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 } else if (tpl && !fs.existsSync(hfile) && step.agent) console.log(`note: ${path.relative(CWD, hfile)} does not exist — the next agent has no handoff from ${step.agent}`);
             }
             if (status === 'DONE' && step.agent && !opt('tokens')) console.log('note: no --tokens given — the cost of this step will be unknown (copy the total the agent call reported)');
+            // the gates against work declared done without being done (plan 2.10): H1 receipts, H2 checks untouched, H4 no placeholders, H9 every criterion's status
+            if (status === 'DONE') {
+                const g = gatesFor(item, stepId, step);
+                if (g.length) say({ kind: 'evidence', item, name: 'gates', ok: false, value: g.length, step: stepId, detail: g.slice(0, 4).map((p) => `${p.kind} ${p.what}`).join('; ') });
+                if (g.length && !flag('force')) fail(`flow end: ${stepId} is not done as declared\n${g.map((p) => `  ✗ ${p.kind} ${p.what} — ${p.fix}`).join('\n')}\n\nFix these and end the step again (or --force --reason "…", recorded and shown by facet assure and facet trust).`, 1);
+            }
             say({ kind: 'step.end', item, step: stepId, agent: step.agent, status, tokens: opt('tokens') ? Number(opt('tokens')) : undefined, for: opt('for'), question: opt('question'), forced: status === 'DONE' && flag('force') ? true : undefined, reason: status === 'DONE' && flag('force') ? opt('reason') : undefined });
             console.log(`${item} / ${stepId} → ${status}\n\n${describe(upcoming(item))}`);
         },
@@ -547,6 +589,11 @@ export function opsCommands({ CWD, KIT = null, project, opt, opts = () => [], fl
                 if (!f.mode && project.skillint?.requireCause) fail(`flow verdict: name the cause of each fix as --fix ${f.agent}:<cause> (one of: ${MODES.join(', ')})`);
             }
             // where it was found: the judging step whose proof this verdict rests on (the last one that ended)
+            // H1 at the verdict: a PASS does not rest on an OK without the receipt of the registered tool (plan 2.10)
+            if (verdict === 'PASS' && !flag('force')) {
+                const h1 = receiptProblems(approvedCriteria(events(), item)?.criteria ?? [], latestEvidence(item), { commands: Object.fromEntries(checkNames().map((n) => [n, commandOf(n)])), builtin: BUILTIN_EVIDENCE, hash: (c) => sha256(c, 16) });
+                if (h1.length) fail(`flow verdict: PASS rests on OKs without a valid receipt\n${h1.map((p) => `  ✗ ${p.kind} ${p.what} — ${p.fix}`).join('\n')}`);
+            }
             const judging = itemState(events(), item)?.steps.filter((s) => s.verdict && s.status === 'done').at(-1)?.id ?? null;
             say({ kind: 'verdict', item, verdict, fixes, scores, criteria: verdict === 'REWORK' && list(opt('criterion')).length ? list(opt('criterion')) : undefined, forced: (blocker && flag('force')) || undefined });
             // every return names the criteria it is about, and each gets its source step (plan 2.8)
