@@ -66,6 +66,10 @@ jobs:
           npm run audit
           npm run benchmark
 
+      # the same packages as ci.yml: the viz tests import numpy, the image and PDF checks need Pillow and pypdf
+      - name: Python packages of the domain tests
+        run: pip install numpy pillow pypdf
+
       - name: Domain tests
         run: |
           npm run test:arch
