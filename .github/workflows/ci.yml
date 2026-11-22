@@ -6,6 +6,26 @@ on:
 permissions:
   contents: read
 jobs:
+  changelog:
+    # a pull request adds its entry as changelog.d/<id>-<slug>.md and leaves CHANGELOG.md alone, so that
+    # parallel pull requests never edit the same lines; a release pull request (branch release/<version>) writes it
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: The change adds a changelog fragment and leaves CHANGELOG.md to the release
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [ "${HEAD_REF#release/}" != "$HEAD_REF" ]; then release=--release; else release=; fi
+          node scripts/changelog.mjs check --base "$BASE" $release
   test:
     # Windows and macOS too: architects run facetkit next to Archicad on Windows; a check that only
     # passes on Linux is not a check they can rely on
