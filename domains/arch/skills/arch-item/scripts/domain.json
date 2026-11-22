@@ -1,5 +1,15 @@
 {
  "artifacts": ["work/<ITEM>/**"],
+ "chains": {
+  "note": "Where a criterion's value comes from, source first (FacetKit plan 2.8, facet origin). links: the step that produces each link. compare: a command, run in the arch folder, exit 0 the same, 1 differs, anything else cannot say; or human - no tool compares that pair. Placeholders: {python}, {scripts} (this folder), {work} (work/<ITEM>), {item}, {criterion}. spec>model expects work/<ITEM>/spec.json and the readback work/<ITEM>/readback.json.",
+  "links": {"drawing": {"step": null}, "task": {"step": null}, "spec": {"step": "read"}, "model": {"step": "work"}, "sheets": {"step": "publish"}},
+  "compare": {
+   "drawing>spec": "human",
+   "task>spec": "human",
+   "spec>model": "{python} {scripts}/spec_compare.py {work}/spec.json {work}/readback.json",
+   "model>sheets": "human"
+  }
+ },
  "routes": {
   "note": "One route per kind of item. A step with a registered script runs on the smallest model; until one exists the builder writes it. checks = results the inspector must reproduce before PASS.",
   "caps": {

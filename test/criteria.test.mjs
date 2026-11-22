@@ -19,6 +19,7 @@ test('check: a tool with a threshold, a bare tool, or [user]', () => {
     assert.deepEqual(parseCheck('spec_compare wall.thickness = 25 cm'), { user: false, tool: 'spec_compare', measure: 'wall.thickness', op: '=', value: 25, unit: 'cm' });
     assert.equal(parseCheck('unit').tool, 'unit');
     assert.deepEqual(parseCheck('[user]'), { user: true });
+    assert.deepEqual(parseCheck('[look: brick against reference A]'), { user: true, look: 'brick against reference A' }, '[look] counts as judged by a person (owner\'s decision, 22.11)');
     assert.equal(parseCheck('looks good to me'), null);
 });
 
@@ -28,7 +29,7 @@ test('gate: no check and no [user] is refused; more than three [user] is refused
     assert.match(why([c('A1', undefined)]), /no check/);
     assert.match(why([c('A1', 'looks good to me')]), /cannot be read/);
     assert.match(why([c('A1', 'nope')], { tools: ['unit'] }), /not a registered tool/);
-    assert.match(why(['A1', 'A2', 'A3', 'A4'].map((id) => c(id, '[user]'))), /4 criteria are \[user\]; at most 3/);
+    assert.match(why(['A1', 'A2', 'A3', 'A4'].map((id) => c(id, '[user]'))), /4 criteria are judged by a person \(\[user\] or \[look\]\); at most 3/);
     assert.match(why([c('a1', 'unit')]), /the id is a letter/);
     assert.match(why([c('A1', 'unit'), c('A1', 'unit')]), /used twice/);
     assert.match(why([c('A1', 'unit', { by: 'deploy' })], { steps: ['build'] }), /not a step of this item/);

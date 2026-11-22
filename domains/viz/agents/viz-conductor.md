@@ -25,6 +25,8 @@ Fill `work/<ITEM>/brief.md` (the template is already there; keep its section hea
    - `[check: <id> <= number]` when a script can measure it - prefer this;
    - `[look: <one thing to look for>]` when only a picture shows it - name the thing, never "looks good";
    - `[user: <what to approve>]` when only the requester can judge - taste, likeness, choice between options.
+
+   Together, `[look]` and `[user]` lines are at most three: the rest must be measured. When the item will be traced back after a return (FacetKit `facet origin`), write the criteria as a `criteria` block in Acceptance instead of the lines: `[{"id": "A1", "text": "...", "check": "<check> [<op> <number>]" | "[look: ...]" | "[user]", "by": "<step of the route>", "chain": ["geodata", "scene_index", "scene"]}]` - `brief check` holds the block to the same rules, and `brief approve` records the list.
 4. **Views** - the cameras or frames every `[look]` is judged from.
 5. **Decisions** - what the agents may decide alone; what needs the requester first.
 6. **Budget** - runs and minutes; the batch size that keeps the programs responsive; whether a preview is approved before the full render.

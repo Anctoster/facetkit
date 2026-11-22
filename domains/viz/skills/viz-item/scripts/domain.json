@@ -1,4 +1,32 @@
 {
   "note": "What a viz item's proof rests on (facet proof create --domain viz). The engine reads routes, checks, project and builtin_modes from this file when present and keeps its built-in ones otherwise; this file names only the artifacts.",
-  "artifacts": ["work/<ITEM>/**"]
+  "artifacts": [
+    "work/<ITEM>/**"
+  ],
+  "chains": {
+    "note": "Where a criterion's value comes from, source first (FacetKit plan 2.8, facet origin). No viz tool compares these pairs yet: each is human, so a viz finding is traced by the snapshots of the steps or named by the reviewer.",
+    "links": {
+      "geodata": {
+        "step": null
+      },
+      "reference": {
+        "step": null
+      },
+      "scene_index": {
+        "step": "map"
+      },
+      "scene": {
+        "step": "work"
+      },
+      "images": {
+        "step": "render"
+      }
+    },
+    "compare": {
+      "geodata>scene_index": "human",
+      "scene_index>scene": "human",
+      "reference>images": "human",
+      "scene>images": "human"
+    }
+  }
 }

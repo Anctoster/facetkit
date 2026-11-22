@@ -973,3 +973,35 @@ class WindowsLock(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Criteria(unittest.TestCase):
+    """FacetKit plan 2.8: a criteria block in Acceptance, held to the core's gate; [look] counts as [user]."""
+
+    def setUp(self):
+        import archflow
+        self.e = archflow
+
+    def brief(self, crit):
+        return ("# Brief\nroute: x\n\n## Goal\nx\n\n## Reference\nnone\n\n## Scope\nx\n\n## Fixed\nx\n\n## Acceptance\n"
+                "```criteria\n%s\n```\n\n## Views\nCAM_1\n\n## Decisions\nx\n\n## Budget\nx\n" % json.dumps(crit))
+
+    def test_a_block_is_the_list_and_passes_the_gate(self):
+        crit = [{"id": "A1", "text": "t", "check": "k.one <= 0.05", "by": "work"}, {"id": "A2", "text": "t", "check": "[look: brick against A]", "by": "work"}]
+        problems, tools, n = self.e.check_brief(self.brief(crit), ("k.one",))
+        self.assertEqual((problems, tools, n), ([], ["k.one"], 2))
+
+    def test_no_check_four_judged_and_unknown_tools_are_refused(self):
+        bad = [{"id": "A1", "text": "t", "by": "work"}]
+        self.assertTrue(any("no check" in p for p in self.e.check_brief(self.brief(bad))[0]))
+        judged = [{"id": "A%d" % i, "text": "t", "check": "[look: x]" if i % 2 else "[user]", "by": "work"} for i in range(1, 5)]
+        self.assertTrue(any("4 criteria are judged by a person" in p for p in self.e.check_brief(self.brief(judged))[0]))
+        self.assertTrue(any("no check named 'nope'" in p for p in self.e.check_brief(self.brief([{"id": "A1", "text": "t", "check": "nope", "by": "w"}]), ("k.one",))[0]))
+
+    def test_lines_count_look_with_user(self):
+        lines = "# B\n## Goal\nx\n## Reference\nx\n## Scope\nx\n## Fixed\nx\n## Acceptance\n" + "".join("%d. thing %d [look: wall %d]\n" % (i, i, i) for i in range(1, 5)) + "## Views\nCAM\n## Decisions\nx\n## Budget\nx\n"
+        self.assertTrue(any("4 criteria are judged by a person" in p for p in self.e.check_brief(lines)[0]))
+
+    def test_the_hash_is_the_cores(self):
+        # sha256 over canonical JSON: sorted keys, no spaces - what lib/criteria.mjs criteriaHash computes
+        self.assertEqual(self.e.criteria_hash([{"id": "A1", "by": "b"}]), self.e.criteria_hash([{"by": "b", "id": "A1"}]))
