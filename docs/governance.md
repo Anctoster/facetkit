@@ -70,6 +70,7 @@ In the domains, arch-flow and viz-flow apply the same gates when a working step 
 - **H2:** the files `checkFiles` in `domain.json` names are hashed at the step's start and compared at its end. They are thresholds, rules and stage lists: `project.json`, `rules*.json`, `tools/sheets.*.json`, … A change needs `approve-checks <step> --by <person>`, and no agent of the route may approve it.
 - **H4:** the rules in `placeholders` look into the item's JSON files. In arch: a zone without a name, an element on the default layer, an element without an id (`readback.json`). In viz: a default material in use, objects without a material (`scene.json`).
 - **H9:** the statuses are read from the `.md` files of `work/<ITEM>/` written during the step.
+- **A1** (plan 2.11): each measured criterion of the step needs an OK of its tool in a results file with the receipt, written during the step. The statuses of H9 are kept in the `end` event for A2.
 
 ## Principles A1, A2, A5 (0.8)
 
