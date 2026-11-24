@@ -74,6 +74,12 @@ Start with the [Experiment Protocol](EXPERIMENT_PROTOCOL.md) and [Contributor Gu
 
 
 
+### New to community research?
+
+Start with the [Community Research — Start Here guide](COMMUNITY_RESEARCH_START_HERE.md). It explains how non-programmers can contribute, how to run a fair first comparison, and how submitted observations are reviewed.
+
+---
+
 ## 🚀 Start Researching in 5 Minutes
 
 You don't need to be a programmer or AI researcher to help validate FacetKit hypotheses. You can run a small task, observe an agent's behavior, review evidence, or repeat another contributor's experiment.
