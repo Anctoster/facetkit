@@ -205,7 +205,7 @@ Dołącz do dyskusji:
 - **Ideas & Proposals** — propozycje nowych kierunków badań.
 - **Q&A** — pytania dotyczące metodologii i implementacji.
 
-Możesz również przesyłać zgłoszenia za pomocą [formularzy badawczych GitHub](../../.github/ISSUE_TEMPLATE/): raport eksperymentu, replikację, propozycję karty zadania, hipotezę lub recenzję. Pull Requesty są mile widziane w przypadku bezpośrednich zmian dokumentacji lub kodu.
+Możesz również przesyłać zgłoszenia za pomocą [formularzy badawczych](https://github.com/Anctoster/facetkit/issues/new/choose). GitHub pozwoli Ci wybrać odpowiedni formularz: raport eksperymentu, raport replikacji, propozycję karty zadania, propozycję hipotezy lub recenzję badań. Pull Requesty są mile widziane w przypadku bezpośrednich zmian dokumentacji lub kodu.
 
 ---
 
