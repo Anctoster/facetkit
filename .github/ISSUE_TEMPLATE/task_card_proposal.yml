@@ -1,0 +1,51 @@
+name: Community task card proposal
+description: Propose a reusable task for the FacetKit Community Task Bank.
+title: "[Task] "
+labels: ["research", "task-bank"]
+body:
+  - type: input
+    id: title
+    attributes:
+      label: Task title
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Behavior or hypothesis group to investigate
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Exact task input / scenario
+      description: Provide copyable, reproducible instructions and any fixture data.
+    validations:
+      required: true
+  - type: textarea
+    id: observe
+    attributes:
+      label: What should the contributor observe?
+    validations:
+      required: true
+  - type: textarea
+    id: rubric
+    attributes:
+      label: Pass condition and scoring anchors
+      description: Make the expected behavior observable and falsifiable.
+    validations:
+      required: true
+  - type: dropdown
+    id: skill
+    attributes:
+      label: Required skill level
+      options:
+        - No coding required
+        - Basic technical knowledge
+        - Developer assistance recommended
+    validations:
+      required: true
+  - type: textarea
+    id: limitations
+    attributes:
+      label: Limitations, safety considerations, or known confounders
