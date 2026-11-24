@@ -197,7 +197,7 @@ Dołącz do dyskusji:
 - **Ideas & Proposals** — propozycje nowych kierunków badań.
 - **Q&A** — pytania dotyczące metodologii i implementacji.
 
-Możesz również zgłaszać wyniki badań za pomocą GitHub Issues lub Pull Requests, zgodnie z zasadami współtworzenia projektu.
+Możesz również przesyłać zgłoszenia za pomocą [formularzy badawczych GitHub](../../.github/ISSUE_TEMPLATE/): raport eksperymentu, replikację, propozycję karty zadania, hipotezę lub recenzję. Pull Requesty są mile widziane w przypadku bezpośrednich zmian dokumentacji lub kodu.
 
 ---
 
