@@ -1,0 +1,80 @@
+name: Research experiment report
+description: Submit a documented FacetKit experiment and its results.
+title: "[Research] "
+labels: ["research", "experiment"]
+body:
+  - type: markdown
+    attributes:
+      value: "Use the [Experiment Report Template](../../docs/research/EXPERIMENT_REPORT_TEMPLATE.md). Do not submit secrets or private data. A single run is a pilot observation, not proof."
+  - type: input
+    id: hypothesis
+    attributes:
+      label: Hypothesis ID and exact claim
+      placeholder: "Pxx — ..."
+    validations:
+      required: true
+  - type: input
+    id: facet
+    attributes:
+      label: Facet ID and version / commit
+    validations:
+      required: true
+  - type: input
+    id: task
+    attributes:
+      label: Task Bank card ID or task description
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Research question and pre-registered prediction
+      description: State what would support, contradict, or leave the claim inconclusive.
+    validations:
+      required: true
+  - type: textarea
+    id: conditions
+    attributes:
+      label: Baseline and Treatment conditions
+      description: Include model/version, settings, tools, context, and differences.
+    validations:
+      required: true
+  - type: textarea
+    id: rubric
+    attributes:
+      label: Evaluation criteria and scoring rubric
+      description: Criteria must have been defined before execution. Explain score anchors and N/A.
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Results and run count
+      description: Report all runs, scores, failures, exclusions, costs, and side effects.
+    validations:
+      required: true
+  - type: dropdown
+    id: conclusion
+    attributes:
+      label: Conclusion
+      options:
+        - SUPPORTED
+        - NOT_SUPPORTED
+        - MIXED
+        - INCONCLUSIVE
+        - NOT_REPLICATED
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence package / raw output links
+      description: Link prompts, complete outputs, logs, configuration, and report artifacts.
+    validations:
+      required: true
+  - type: textarea
+    id: limitations
+    attributes:
+      label: Limitations, deviations, and possible confounders
+    validations:
+      required: true
