@@ -1,3 +1,4 @@
+[🇬🇧 English](README.md) | [🇵🇱 Polski]
 # 🔬 Program Badawczy Społeczności FacetKit
 
 ### Wspólnie rozwijamy bardziej niezawodnych, skutecznych i weryfikowalnych agentów AI poprzez badania i eksperymenty.
