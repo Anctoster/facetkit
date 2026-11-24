@@ -1,0 +1,59 @@
+name: Independent replication report
+description: Independently repeat a previously reported FacetKit experiment.
+title: "[Replication] "
+labels: ["research", "replication"]
+body:
+  - type: markdown
+    attributes:
+      value: "Replication should be conducted independently. Record deviations and do not silently copy the original scoring."
+  - type: input
+    id: original
+    attributes:
+      label: Original report / experiment URL or ID
+    validations:
+      required: true
+  - type: input
+    id: hypothesis
+    attributes:
+      label: Hypothesis ID and Facet version
+    validations:
+      required: true
+  - type: textarea
+    id: independence
+    attributes:
+      label: What was independently repeated?
+      description: Explain which materials were reused and whether original scores/results were hidden during evaluation.
+    validations:
+      required: true
+  - type: textarea
+    id: conditions
+    attributes:
+      label: Replication conditions
+      description: Model/version, tools, settings, task input, and environment.
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Results compared with original
+      description: Include all runs, rubric, scores, disagreements, and deviations.
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: Replication outcome
+      options:
+        - REPLICATED
+        - PARTIALLY_REPLICATED
+        - NOT_REPLICATED
+        - INCONCLUSIVE
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence package
+      description: Link full prompts, outputs, metadata, scoring, and artifacts.
+    validations:
+      required: true
