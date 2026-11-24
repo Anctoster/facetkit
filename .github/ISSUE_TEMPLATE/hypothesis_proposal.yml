@@ -1,0 +1,48 @@
+name: Research hypothesis proposal
+description: Propose a falsifiable behavioral hypothesis for FacetKit.
+title: "[Hypothesis] "
+labels: ["research", "hypothesis"]
+body:
+  - type: input
+    id: claim
+    attributes:
+      label: Proposed hypothesis (one clear claim)
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why does this hypothesis matter?
+    validations:
+      required: true
+  - type: textarea
+    id: conditions
+    attributes:
+      label: Conditions and scope
+      description: When should the behavior occur, and when should it not?
+    validations:
+      required: true
+  - type: textarea
+    id: observable
+    attributes:
+      label: Observable evidence
+      description: What can an evaluator see or measure?
+    validations:
+      required: true
+  - type: textarea
+    id: falsification
+    attributes:
+      label: What result would contradict the hypothesis?
+    validations:
+      required: true
+  - type: textarea
+    id: experiment
+    attributes:
+      label: Suggested Baseline / Treatment experiment
+      description: Include a task idea and measurable criteria.
+    validations:
+      required: true
+  - type: textarea
+    id: related
+    attributes:
+      label: Related existing hypotheses / Facets
