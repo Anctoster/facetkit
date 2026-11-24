@@ -97,7 +97,9 @@ Nie musisz być programistą ani badaczem AI, aby pomóc w weryfikacji hipotez F
 6. **Porównaj wyniki** według wcześniej ustalonych kryteriów. Zapisz model, wersję, ustawienia, treść zadania, odpowiedzi i wszelkie odstępstwa.
 7. **Opublikuj wynik** w GitHub Issue lub Pull Request. Wskazówki dotyczące raportowania znajdziesz w [Przewodniku dla uczestników](CONTRIBUTOR_GUIDE_pl.md).
 
-### Przykładowe zadania na początek\n\nWiększy wybór gotowych zadań znajdziesz w [Banku zadań badawczych dla społeczności](TASK_BANK.pl.md). Poniższe przykłady to krótkie propozycje na start.
+### Przykładowe zadania na początek
+
+Większy wybór gotowych zadań znajdziesz w [Banku zadań badawczych dla społeczności](TASK_BANK.pl.md). Poniższe przykłady to krótkie propozycje na start.
 
 | Zadanie | Co sprawdzić | Możliwe dowody |
 |---|---|---|
