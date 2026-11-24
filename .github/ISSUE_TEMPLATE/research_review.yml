@@ -1,0 +1,46 @@
+name: Research report review
+description: Review the methodology, evidence, and conclusion of a research report.
+title: "[Research Review] "
+labels: ["research", "review"]
+body:
+  - type: input
+    id: report
+    attributes:
+      label: Report / experiment URL or ID
+    validations:
+      required: true
+  - type: dropdown
+    id: disposition
+    attributes:
+      label: Review recommendation
+      options:
+        - ACCEPT_REPORT
+        - NEEDS_REVISION
+        - INVALID_METHOD
+        - REPLICATION_RECOMMENDED
+    validations:
+      required: true
+  - type: textarea
+    id: strengths
+    attributes:
+      label: Methodological strengths
+    validations:
+      required: true
+  - type: textarea
+    id: concerns
+    attributes:
+      label: Methodological concerns
+      description: Consider controls, rubric, missing data, evaluator bias, confounders, and claim scope.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and reproducibility assessment
+      description: Can another contributor inspect and repeat the work?
+    validations:
+      required: true
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Required changes or next steps
