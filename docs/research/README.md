@@ -1,3 +1,4 @@
+[🇬🇧 English] | [🇵🇱 Polski](README.pl.md)
 # 🔬 FacetKit Community Research Program
 
 ### Building more reliable, effective and verifiable AI agents through collaborative research.
