@@ -83,6 +83,12 @@ Zacznij od zapoznania się z dokumentami:
 
 
 
+### Pierwszy raz bierzesz udział w badaniach społeczności?
+
+Zacznij od przewodnika [Badania społeczności — Zacznij tutaj](COMMUNITY_RESEARCH_START_HERE_pl.md). Wyjaśnia on, jak mogą uczestniczyć osoby nieprogramujące, jak przeprowadzić pierwsze rzetelne porównanie i jak oceniane są zgłoszone obserwacje.
+
+---
+
 ## 🚀 Rozpocznij badania w 5 minut
 
 Nie musisz być programistą ani badaczem AI, aby pomóc w weryfikacji hipotez FacetKit. Możesz wykonać niewielkie zadanie, obserwować zachowanie agenta, przejrzeć dowody lub powtórzyć eksperyment innego uczestnika.
