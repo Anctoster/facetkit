@@ -188,7 +188,7 @@ Join the discussion:
 - **Ideas & Proposals** — propose new research directions.
 - **Q&A** — ask questions about methodology and implementation.
 
-You can also submit your research contributions through GitHub Issues or Pull Requests, according to the repository's contribution guidelines.
+You can also submit contributions through the [research Issue Forms](../../.github/ISSUE_TEMPLATE/). Choose an experiment report, replication, task-card proposal, hypothesis proposal, or research review form. Pull Requests are welcome for direct documentation or code contributions.
 
 ---
 
