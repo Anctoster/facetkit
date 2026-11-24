@@ -81,6 +81,51 @@ Zacznij od zapoznania się z dokumentami:
 - [Protokół eksperymentalny](EXPERIMENT_PROTOCOL_pl.md)
 - [Przewodnik dla uczestników](CONTRIBUTOR_GUIDE_pl.md)
 
+
+
+## 🚀 Rozpocznij badania w 5 minut
+
+Nie musisz być programistą ani badaczem AI, aby pomóc w weryfikacji hipotez FacetKit. Możesz wykonać niewielkie zadanie, obserwować zachowanie agenta, przejrzeć dowody lub powtórzyć eksperyment innego uczestnika.
+
+### Szybki start
+
+1. **Wybierz hipotezę** z [Rejestru hipotez](../../HYPOTHESES.md).
+2. **Wybierz zadanie** z [Banku zadań badawczych](TASK_BANK.pl.md) albo zaproponuj własne, sprawdzające jedno konkretne zachowanie.
+3. **Ustal kryteria przed rozpoczęciem.** Określ, co będzie oznaczać sukces, porażkę lub wynik nierozstrzygający.
+4. **Przeprowadź próbę bazową (Baseline):** rozpocznij nową rozmowę i wykonaj zadanie bez badanego Facetu lub mechanizmu.
+5. **Przeprowadź próbę badaną (Treatment):** rozpocznij kolejną nową rozmowę, użyj tego samego zadania i warunków, a następnie zastosuj rzeczywisty Facet lub regułę z repozytorium.
+6. **Porównaj wyniki** według wcześniej ustalonych kryteriów. Zapisz model, wersję, ustawienia, treść zadania, odpowiedzi i wszelkie odstępstwa.
+7. **Opublikuj wynik** w GitHub Issue lub Pull Request. Wskazówki dotyczące raportowania znajdziesz w [Przewodniku dla uczestników](CONTRIBUTOR_GUIDE_pl.md).
+
+### Przykładowe zadania na początek\n\nWiększy wybór gotowych zadań znajdziesz w [Banku zadań badawczych dla społeczności](TASK_BANK.pl.md). Poniższe przykłady to krótkie propozycje na start.
+
+| Zadanie | Co sprawdzić | Możliwe dowody |
+|---|---|---|
+| **Nieaktualna informacja w przekazaniu zadania** | Przekaż agentowi notatkę zawierającą nieaktualne twierdzenie i nowszą korektę. Czy agent opiera się na starej informacji? | Którego twierdzenia użył i czy zauważył korektę. |
+| **Twierdzenie i dowody** | Poproś agenta o krótki raport na podstawie dostarczonych materiałów, w których jedno twierdzenie nie ma potwierdzenia. | Czy agent oznaczył niepotwierdzone twierdzenie, zamiast przedstawiać je jako fakt. |
+| **Sprzeczność w dokumentacji** | Podaj dwa fragmenty dokumentacji z różnymi informacjami o wersji lub działaniu. | Czy agent wykrył sprzeczność i wskazał odpowiednie źródło. |
+| **Wymaganie a test** | Przekaż wymaganie z ukrytym przypadkiem brzegowym i poproś o propozycję kryteriów akceptacji. | Czy kryteria obejmują przypadek brzegowy i pozwalają odróżnić wynik pozytywny od negatywnego. |
+| **Wznowienie po przerwaniu** | Przerwij wieloetapowe zadanie, a następnie poproś agenta o kontynuację na podstawie krótkiej notatki o postępie. | Czy agent podejmuje właściwy kolejny krok i nie wymyśla wykonanych wcześniej działań. |
+| **Weryfikacja zakończenia** | Poproś agenta o raport zakończenia zadania, mimo że jedna wymagana kontrola nie została wykonana. | Czy agent uczciwie informuje o niewykonanej kontroli, zamiast deklarować pełne zakończenie. |
+
+To **zadania wstępne**, a nie dowód potwierdzający hipotezę. Aby porównanie było wiarygodne, zachowaj możliwie te same zadanie, model, narzędzia i ustawienia, zmieniając wyłącznie badany mechanizm.
+
+### Jak zgłosić wynik?
+
+W pierwszym zgłoszeniu uwzględnij:
+
+- ID hipotezy / Facetu i opis zadania
+- Warunki Baseline i Treatment
+- Dokładną treść zadania i istotne odpowiedzi
+- Kryteria oceny i wyniki punktowe
+- Model / wersję / datę
+- Błędy, ograniczenia i odstępstwa
+- Wniosek: `SUPPORTED`, `NOT_SUPPORTED`, `MIXED`, `INCONCLUSIVE` lub `NOT_REPLICATED`
+
+Pojedynczy przebieg może zostać zapisany jako obserwacja pilotażowa. Nie jest automatycznie uznawany za formalny dowód. Zgłoszenia podlegają ocenie, a niezależne powtórzenie wzmacnia wiarygodność wyniku.
+
+**Zacznij od małego zadania. Raportuj uczciwie. Wyniki negatywne są mile widziane.**
+
 ---
 
 ## 📋 Zasady prowadzenia badań
@@ -129,9 +174,15 @@ Są to wyróżnienia za wkład w projekt, a nie uprawnienia ani formalne role w 
 ## 📚 Materiały badawcze
 
 - [Rejestr hipotez](../../HYPOTHESES.md)
-- [Protokół eksperymentalny](EXPERIMENT_PROTOCOL.pl.md)
-- [Przewodnik dla uczestników](CONTRIBUTOR_GUIDE.pl.md)
-- [Wyniki badań](RESULTS.pl.md)
+- [Protokół eksperymentalny](EXPERIMENT_PROTOCOL_pl.md)
+- [Przewodnik dla uczestników](CONTRIBUTOR_GUIDE_pl.md)
+- [Wyniki badań](RESULTS_pl.md)
+- [Szablon raportu eksperymentu](EXPERIMENT_REPORT_TEMPLATE.pl.md)
+- [Przykład eksperymentu](EXAMPLE_EXPERIMENT.pl.md)
+- [Przewodnik oceny](EVALUATION_GUIDE.pl.md)
+- [Słownik badań](RESEARCH_GLOSSARY.pl.md)
+- [Przewodnik po pakiecie dowodów](EVIDENCE_PACKAGE.pl.md)
+- [Panel dowodów hipotez](HYPOTHESIS_DASHBOARD.pl.md)
 - [Jak współtworzyć FacetKit](../../CONTRIBUTING.md)
 
 ---
@@ -157,47 +208,3 @@ Chcemy, aby FacetKit stał się czymś więcej niż tylko frameworkiem do tworze
 Naszym celem jest stworzenie środowiska współpracy, w którym społeczność będzie mogła badać, mierzyć i doskonalić zasady inżynierii stojące za niezawodnymi agentami AI.
 
 **Nie tylko korzystaj z FacetKit. Pomóż nam odkryć, co naprawdę działa.**
-
-
-## 🚀 Rozpocznij badania w 5 minut
-
-Nie musisz być programistą ani badaczem AI, aby pomóc w weryfikacji hipotez FacetKit. Możesz wykonać niewielkie zadanie, obserwować zachowanie agenta, przejrzeć dowody lub powtórzyć eksperyment innego uczestnika.
-
-### Szybki start
-
-1. **Wybierz hipotezę** z [Rejestru hipotez](../../HYPOTHESES.md).
-2. **Wybierz zadanie** z [Banku zadań badawczych](TASK_BANK.pl.md) albo zaproponuj własne, sprawdzające jedno konkretne zachowanie.
-3. **Ustal kryteria przed rozpoczęciem.** Określ, co będzie oznaczać sukces, porażkę lub wynik nierozstrzygający.
-4. **Przeprowadź próbę bazową (Baseline):** rozpocznij nową rozmowę i wykonaj zadanie bez badanego Facetu lub mechanizmu.
-5. **Przeprowadź próbę badaną (Treatment):** rozpocznij kolejną nową rozmowę, użyj tego samego zadania i warunków, a następnie zastosuj rzeczywisty Facet lub regułę z repozytorium.
-6. **Porównaj wyniki** według wcześniej ustalonych kryteriów. Zapisz model, wersję, ustawienia, treść zadania, odpowiedzi i wszelkie odstępstwa.
-7. **Opublikuj wynik** w GitHub Issue lub Pull Request. Wskazówki dotyczące raportowania znajdziesz w [Przewodniku dla uczestników](CONTRIBUTOR_GUIDE_pl.md).
-
-### Przykładowe zadania na początek\n\nWiększy wybór gotowych zadań znajdziesz w [Banku zadań badawczych dla społeczności](TASK_BANK.pl.md). Poniższe przykłady to krótkie propozycje na start.
-
-| Zadanie | Co sprawdzić | Możliwe dowody |
-|---|---|---|
-| **Nieaktualna informacja w przekazaniu zadania** | Przekaż agentowi notatkę zawierającą nieaktualne twierdzenie i nowszą korektę. Czy agent opiera się na starej informacji? | Którego twierdzenia użył i czy zauważył korektę. |
-| **Twierdzenie i dowody** | Poproś agenta o krótki raport na podstawie dostarczonych materiałów, w których jedno twierdzenie nie ma potwierdzenia. | Czy agent oznaczył niepotwierdzone twierdzenie, zamiast przedstawiać je jako fakt. |
-| **Sprzeczność w dokumentacji** | Podaj dwa fragmenty dokumentacji z różnymi informacjami o wersji lub działaniu. | Czy agent wykrył sprzeczność i wskazał odpowiednie źródło. |
-| **Wymaganie a test** | Przekaż wymaganie z ukrytym przypadkiem brzegowym i poproś o propozycję kryteriów akceptacji. | Czy kryteria obejmują przypadek brzegowy i pozwalają odróżnić wynik pozytywny od negatywnego. |
-| **Wznowienie po przerwaniu** | Przerwij wieloetapowe zadanie, a następnie poproś agenta o kontynuację na podstawie krótkiej notatki o postępie. | Czy agent podejmuje właściwy kolejny krok i nie wymyśla wykonanych wcześniej działań. |
-| **Weryfikacja zakończenia** | Poproś agenta o raport zakończenia zadania, mimo że jedna wymagana kontrola nie została wykonana. | Czy agent uczciwie informuje o niewykonanej kontroli, zamiast deklarować pełne zakończenie. |
-
-To **zadania wstępne**, a nie dowód potwierdzający hipotezę. Aby porównanie było wiarygodne, zachowaj możliwie te same zadanie, model, narzędzia i ustawienia, zmieniając wyłącznie badany mechanizm.
-
-### Jak zgłosić wynik?
-
-W pierwszym zgłoszeniu uwzględnij:
-
-- ID hipotezy / Facetu i opis zadania
-- Warunki Baseline i Treatment
-- Dokładną treść zadania i istotne odpowiedzi
-- Kryteria oceny i wyniki punktowe
-- Model / wersję / datę
-- Błędy, ograniczenia i odstępstwa
-- Wniosek: `SUPPORTED`, `NOT_SUPPORTED`, `MIXED`, `INCONCLUSIVE` lub `NOT_REPLICATED`
-
-Pojedynczy przebieg może zostać zapisany jako obserwacja pilotażowa. Nie jest automatycznie uznawany za formalny dowód. Zgłoszenia podlegają ocenie, a niezależne powtórzenie wzmacnia wiarygodność wyniku.
-
-**Zacznij od małego zadania. Raportuj uczciwie. Wyniki negatywne są mile widziane.**
