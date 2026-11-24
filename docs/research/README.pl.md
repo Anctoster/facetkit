@@ -166,14 +166,14 @@ Nie musisz być programistą ani badaczem AI, aby pomóc w weryfikacji hipotez F
 ### Szybki start
 
 1. **Wybierz hipotezę** z [Rejestru hipotez](../../HYPOTHESES.md).
-2. **Wybierz małe zadanie** z poniższych propozycji albo zaproponuj własne, sprawdzające jedno konkretne zachowanie.
+2. **Wybierz zadanie** z [Banku zadań badawczych](TASK_BANK.pl.md) albo zaproponuj własne, sprawdzające jedno konkretne zachowanie.
 3. **Ustal kryteria przed rozpoczęciem.** Określ, co będzie oznaczać sukces, porażkę lub wynik nierozstrzygający.
 4. **Przeprowadź próbę bazową (Baseline):** rozpocznij nową rozmowę i wykonaj zadanie bez badanego Facetu lub mechanizmu.
 5. **Przeprowadź próbę badaną (Treatment):** rozpocznij kolejną nową rozmowę, użyj tego samego zadania i warunków, a następnie zastosuj rzeczywisty Facet lub regułę z repozytorium.
 6. **Porównaj wyniki** według wcześniej ustalonych kryteriów. Zapisz model, wersję, ustawienia, treść zadania, odpowiedzi i wszelkie odstępstwa.
 7. **Opublikuj wynik** w GitHub Issue lub Pull Request. Wskazówki dotyczące raportowania znajdziesz w [Przewodniku dla uczestników](CONTRIBUTOR_GUIDE_pl.md).
 
-### Przykładowe zadania na początek
+### Przykładowe zadania na początek\n\nWiększy wybór gotowych zadań znajdziesz w [Banku zadań badawczych dla społeczności](TASK_BANK.pl.md). Poniższe przykłady to krótkie propozycje na start.
 
 | Zadanie | Co sprawdzić | Możliwe dowody |
 |---|---|---|
