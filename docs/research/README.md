@@ -157,14 +157,14 @@ You don't need to be a programmer or AI researcher to help validate FacetKit hyp
 ### Quick Start
 
 1. **Choose a hypothesis** from the [Hypothesis Registry](../../HYPOTHESES.md).
-2. **Pick one small task** from the starter ideas below, or propose your own task that tests one specific behavior.
+2. **Choose a task** from the [Task Bank](TASK_BANK.md), or propose your own task that tests one specific behavior.
 3. **Set the criteria before the run.** Decide what counts as success, failure, or an inconclusive result.
 4. **Run a Baseline:** start a fresh chat and give the agent the task without the Facet or mechanism being tested.
 5. **Run a Treatment:** start another fresh chat, use the same task and conditions, and apply the actual Facet or rule from the repository.
 6. **Compare the outputs** using your pre-defined criteria. Record the model, version, settings, task input, outputs, and any deviations.
 7. **Share the result** in a GitHub Issue or Pull Request. Use the [Contributor Guide](CONTRIBUTOR_GUIDE.md) for reporting guidance.
 
-### Starter Task Ideas
+### Starter Task Ideas\n\nFor a larger selection of ready-to-run tasks, see the [Community Research Task Bank](TASK_BANK.md). The examples below are quick ideas to help you get started.
 
 | Task | What to test | Possible evidence |
 |---|---|---|
