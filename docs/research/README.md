@@ -196,7 +196,7 @@ Join the discussion:
 - **Ideas & Proposals** — propose new research directions.
 - **Q&A** — ask questions about methodology and implementation.
 
-You can also submit contributions through the [research Issue Forms](../../.github/ISSUE_TEMPLATE/). Choose an experiment report, replication, task-card proposal, hypothesis proposal, or research review form. Pull Requests are welcome for direct documentation or code contributions.
+You can also submit contributions through the [research submission forms](https://github.com/Anctoster/facetkit/issues/new/choose). GitHub will let you choose the appropriate form: experiment report, replication report, task-card proposal, hypothesis proposal, or research review. Pull Requests are welcome for direct documentation or code contributions.
 
 ---
 
