@@ -4,18 +4,25 @@ about: You ran a facet's trial against a model — confirmed, no difference, or 
 labels: trial-result
 ---
 
-**Facet** (`skill:facet`):
+<!-- One facet × one model × one scenario, 3 runs without the rule and 3 with it, a fresh chat each run.
+     Worked example: docs/running-a-trial.md (po polsku: docs/running-a-trial.pl.md) -->
 
-**Model and harness** (model id, tool or CLI, date):
+**Facet** (one rule, `skill:facet` — not the whole skill):
 
-**Task given to the agent** (the tempting wrong path included):
+**Model and harness** (exact model name as the tool shows it, tool or CLI, date):
 
-**Without the facet**: runs / passed, and what the agent did
+**Trial** (scenario number from the skill's `## Trials`, and the task text as sent, the tempting wrong path included):
 
-**With the facet**: runs / passed, and what the agent did
+**Added text** (output of `npx facetkit compose --take <skill>:<facet>`; its language — say if you translated it):
+
+**Language of the runs** (all 6 runs in one language):
+
+**Without the facet** (3 runs — one line each: run, pass/fail, what the agent did):
+
+**With the facet** (3 runs — same):
 
 **Pass criterion used** (from the skill's Trials, or your own — say which):
 
-**Verdict**: confirmed / no difference / refuted
+**Verdict** (better by ≥ 2 runs → confirmed; differ by ≤ 1 → no difference; worse with the rule → refuted):
 
-**Transcripts or ledgers** (links; remove anything private):
+**Transcripts or ledgers** (6 links; remove anything private):

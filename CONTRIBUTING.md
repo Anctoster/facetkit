@@ -30,6 +30,8 @@ npm run audit     # the skill collection
 
 A trial tests one hypothesis from [HYPOTHESES.md](HYPOTHESES.md): does an agent behave differently when it has read the facet?
 
+A complete example to copy, with the task, the rule text, the pass criterion and the verdict rule: [docs/running-a-trial.md](docs/running-a-trial.md) ([po polsku](docs/running-a-trial.pl.md)).
+
 1. Pick a facet: `facet hypotheses --next` lists the untested ones worth trying first (field reports first, then rules whose observance leaves a trace). Say on the pinned **Trial board** issue which one you take, so nobody runs it twice. Then pick one of the trials listed under its skill. Write the task for the agent so that the tempting wrong path is really there (the deadline, the passing test, the authority who says "skip it").
 2. Run the task **without** the facet at least three times on one model, and **with** it (`facet compose --take <skill>:<facet>` prepended to the instructions) at least three times. Fresh context each run.
 3. Decide pass or fail by the trial's pass criterion — something an observer can see in the transcript or in the ledger, not an impression.
