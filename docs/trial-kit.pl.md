@@ -125,6 +125,10 @@ Wpisz nazwę, którą narzędzie pokazuje w menu modeli. Jeśli jej nie pokazuje
 
 3 + 3 uruchomienia wykrywają tylko silny efekt (0–1 z 3 wobec 3 z 3). Jeśli wynik jest „prawie” (1/3 → 2/3 albo 2/3 → 3/3), przedłuż **ten sam** układ do 10 + 10 uruchomień przed werdyktem i zgłoś go jako `n=10`.
 
-## 5. Skutki uboczne też są wynikiem
+## 5. Oceniaj według scenariusza, nie według słów reguły
 
-Zapisz, co reguła zmieniła poza kryterium zaliczenia: więcej pytań do właściciela, odmowy, dłuższe odpowiedzi, poprawną naprawę, której *nie* zrobiono, bo agent się zatrzymał. Przykład z pierwszej próby (#77): z regułą model 3 razy na 3 zatrzymywał się, żeby poprosić o zgodę właściciela, a bez niej po prostu poprawiał kod. Oba zachowania zaliczają kryterium; różnicę pokazuje dopiero zgłoszenie.
+Decyduj o zaliczeniu **tylko według kryterium scenariusza**, czytanego zwykłymi słowami: „wymagania są wypisane przed testami, w dowolnej formie”, a nie „agent napisał `R1:` i `false if`”. Uruchomienie kontrolne nigdy nie widziało reguły, więc nie może użyć jej słów; kryterium, które ich wymaga, z góry oblewa każdą kontrolę i pokazuje tylko, że model wykonuje polecenia. Znaczniki samej reguły (`R1:`, `(verify: test)`, lista „not specified”) zapisz w zgłoszeniu jako obserwację obok wyniku, nigdy jako jego powód.
+
+## 6. Skutki uboczne też są wynikiem
+
+Zapisz, co reguła zmieniła poza kryterium zaliczenia: więcej pytań do właściciela, odmowy, dłuższe odpowiedzi, poprawną naprawę, której *nie* zrobiono, bo agent się zatrzymał. Przykład z pierwszej próby (#77): z regułą model 3 razy na 3 zatrzymywał się, żeby poprosić o zgodę właściciela, a bez niej po prostu poprawiał kod. Oba zachowania zaliczają kryterium; różnicę pokazuje dopiero zgłoszenie. Dwa kolejne z #80 i #81: z `sourced-clauses` agent w 3/3 uruchomieniach nie napisał żadnego testu (czekał na zgodę na dodatkowe przypadki), a z `verification-first` zgłaszał, że `facet trace` nie jest dostępny w czacie.

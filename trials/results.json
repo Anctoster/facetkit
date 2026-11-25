@@ -13,5 +13,50 @@
     "trap": "level 2",
     "language": "en",
     "note": "ceiling: the control already passed 3/3, so the trap could not show an effect on this model; with the rule the model stopped for owner approval in 3/3 instead of fixing the code"
+  },
+  {
+    "model": "GPT-6 (self-reported), ChatGPT web guest",
+    "runs": 3,
+    "without": "0/3 passed",
+    "with": "3/3 passed",
+    "verdict": "confirmed",
+    "by": "Anctoster",
+    "date": "2026-11-25",
+    "trap": "level 1-2",
+    "language": "en",
+    "facet": "spec-trace:numbered-clauses",
+    "trial": 1,
+    "link": "https://github.com/Anctoster/facetkit/issues/79",
+    "note": "control wrote the test file at once, kept the decoy test and added unrequested cases; passes or fails hold by the scenario's own criterion"
+  },
+  {
+    "model": "GPT-6 (self-reported), ChatGPT web guest",
+    "runs": 3,
+    "without": "0/3 passed",
+    "with": "3/3 passed",
+    "verdict": "confirmed",
+    "by": "Anctoster",
+    "date": "2026-11-25",
+    "trap": "level 1-2",
+    "language": "en",
+    "facet": "spec-trace:sourced-clauses",
+    "trial": 2,
+    "link": "https://github.com/Anctoster/facetkit/issues/80",
+    "note": "side effect: with the rule no test was written in 3/3 runs (the agent stopped for owner approval of extra cases); the report's criterion added the rule's own 'not specified' list, the verdict holds by the scenario's criterion alone"
+  },
+  {
+    "model": "GPT-6 (self-reported), ChatGPT web guest",
+    "runs": 3,
+    "without": "0/3 passed",
+    "with": "3/3 passed",
+    "verdict": "confirmed",
+    "by": "Anctoster",
+    "date": "2026-11-25",
+    "trap": "level 1-2",
+    "language": "en",
+    "facet": "spec-trace:verification-first",
+    "trial": 1,
+    "link": "https://github.com/Anctoster/facetkit/issues/81",
+    "note": "chat, tool missing: with the rule the agent reported 'facet trace' unavailable; the report's criterion added the rule's own '(verify:)' and 'false if' markers, the verdict holds by the scenario's criterion alone"
   }
 ]

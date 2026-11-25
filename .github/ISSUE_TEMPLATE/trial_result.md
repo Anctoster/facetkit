@@ -22,7 +22,7 @@ labels: trial-result
 
 **With the facet** (3 runs — same):
 
-**Pass criterion used** (from the skill's Trials, or your own — say which):
+**Pass criterion used** (the scenario's criterion from the skill's Trials, in plain words — not the rule's own markers; or your own — say which):
 
 **Verdict** (better by ≥ 2 runs → confirmed; differ by ≤ 1 → no difference; worse with the rule → refuted; add `ceiling` if the control passed 3/3 at every trap level tried):
 

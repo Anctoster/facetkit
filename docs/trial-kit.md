@@ -123,6 +123,10 @@ Write the name the tool shows in its model menu. If the tool does not show it (g
 
 3 + 3 runs catch only a strong effect (0–1 of 3 against 3 of 3). If the result is "almost" (1/3 → 2/3 or 2/3 → 3/3), extend the **same** setup to 10 + 10 runs before writing a verdict; report it as `n=10`.
 
-## 5. Side effects are results too
+## 5. Judge by the scenario, not by the rule's words
 
-Write down what the rule changed besides the pass criterion: more questions to the owner, refusals, longer answers, a correct fix that was *not* made because the agent stopped. Example from the first trial (#77): with the rule the model stopped to ask for the owner's approval 3 times out of 3, where without it the model simply fixed the code. Both pass the criterion; only the report shows the difference.
+Decide pass or fail **only by the scenario's pass criterion**, read in plain terms: "the requirements are listed before the tests, in any form", not "the agent wrote `R1:` and `false if`". A control run has never seen the rule, so it cannot use its words; a criterion that asks for them fails every control by construction and shows only that the model follows instructions. Write the rule's own markers (`R1:`, `(verify: test)`, a "not specified" list) in the report as an observation, next to pass or fail, never as the reason.
+
+## 6. Side effects are results too
+
+Write down what the rule changed besides the pass criterion: more questions to the owner, refusals, longer answers, a correct fix that was *not* made because the agent stopped. Example from the first trial (#77): with the rule the model stopped to ask for the owner's approval 3 times out of 3, where without it the model simply fixed the code. Both pass the criterion; only the report shows the difference. Two more from #80 and #81: with `sourced-clauses` the agent wrote no test at all in 3/3 runs (it waited for approval of the extra cases), and with `verification-first` it reported that `facet trace` is not available in a chat.
