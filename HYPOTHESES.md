@@ -2,7 +2,7 @@
 
 Every facet is a claim about what an agent does differently when it has read the rule. Until somebody runs its trial against a model, the claim is untested. This file is generated (`facet hypotheses --write HYPOTHESES.md`) from the skills and from `trials/results.json`; see [CONTRIBUTING.md](CONTRIBUTING.md#running-a-trial) for how to add a result.
 
-**69 hypotheses · 1 with at least one reported trial · 68 untested**
+**69 hypotheses · 4 with at least one reported trial · 65 untested**
 
 ## anchored-handoff
 
@@ -200,10 +200,10 @@ Trials:
 |---|---|---|---|---|
 | `claim-by-id` | Each test claims one clause by its id | spec-gap, scope-creep | evidence:trace | untested |
 | `example-replay` | Replay the examples through the real entrance | false-green | runs | untested |
-| `numbered-clauses` | Write the request as numbered, refutable clauses | spec-gap | tool:trace | untested |
-| `sourced-clauses` | Every clause points at the words it came from | scope-creep | no footprint | untested |
+| `numbered-clauses` | Write the request as numbered, refutable clauses | spec-gap | tool:trace | GPT-6 (self-reported), ChatGPT web guest: confirmed (3/3 passed vs 0/3 passed, n=3) |
+| `sourced-clauses` | Every clause points at the words it came from | scope-creep | no footprint | GPT-6 (self-reported), ChatGPT web guest: confirmed (3/3 passed vs 0/3 passed, n=3) |
 | `spec-moves-first` | When test and clause disagree, the clause moves first | weakened-test | no footprint | GPT-6 (self-reported), ChatGPT web guest: no difference (3/3 passed vs 3/3 passed, n=3) |
-| `verification-first` | Decide how a clause can be refuted before testing it | spec-gap, false-green | tool:trace | untested |
+| `verification-first` | Decide how a clause can be refuted before testing it | spec-gap, false-green | tool:trace | GPT-6 (self-reported), ChatGPT web guest: confirmed (3/3 passed vs 0/3 passed, n=3) |
 
 Trials:
 
