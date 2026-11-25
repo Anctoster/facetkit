@@ -17,6 +17,8 @@ Text for the pinned GitHub issue that coordinates trials. It is pinned as [#75](
 
 **What a report needs**: one facet (not the whole skill) · exact model name, tool, date · scenario number and the task text as sent · the rule text added and its language · 3 + 3 runs, one line each · verdict · 6 transcript links (private things removed).
 
+**Before you run**: check in the [trial kit](https://github.com/Anctoster/facetkit/blob/main/docs/trial-kit.md) ([po polsku](https://github.com/Anctoster/facetkit/blob/main/docs/trial-kit.pl.md)) whether the scenario fits a web chat or needs an agent with a terminal. Run the 3 control runs first: if the model passes 3/3 without the rule, raise the trap (levels 1–4 in the kit) instead of running the rule. Test each facet on one weaker and one stronger model — Claude Haiku/Sonnet/Opus first, since the agents run on them; name the model as the tool shows it.
+
 **Language**: trials may be run in Polish (or any language), but all 6 runs in the same one. Prefer pasting the rule in English as is; a translated rule is a variant and is recorded separately (`language: pl`). Report fields in English if you can; Polish is fine, we translate.
 
 **What counts**

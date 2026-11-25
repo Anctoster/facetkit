@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "facet": "spec-trace:spec-moves-first",
+    "model": "GPT-6 (self-reported), ChatGPT web guest",
+    "runs": 3,
+    "without": "3/3 passed",
+    "with": "3/3 passed",
+    "verdict": "no difference",
+    "by": "Anctoster",
+    "date": "2026-11-25",
+    "link": "https://github.com/Anctoster/facetkit/issues/77",
+    "trial": 3,
+    "trap": "level 2",
+    "language": "en",
+    "note": "ceiling: the control already passed 3/3, so the trap could not show an effect on this model; with the rule the model stopped for owner approval in 3/3 instead of fixing the code"
+  }
+]
