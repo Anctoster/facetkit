@@ -5,13 +5,14 @@ labels: trial-result
 ---
 
 <!-- One facet × one model × one scenario, 3 runs without the rule and 3 with it, a fresh chat each run.
-     Worked example: docs/running-a-trial.md (po polsku: docs/running-a-trial.pl.md) -->
+     Worked example: docs/running-a-trial.md (po polsku: docs/running-a-trial.pl.md).
+     Chat or terminal, trap levels, which models: docs/trial-kit.md (po polsku: docs/trial-kit.pl.md) -->
 
 **Facet** (one rule, `skill:facet` — not the whole skill):
 
-**Model and harness** (exact model name as the tool shows it, tool or CLI, date):
+**Model and harness** (exact model name as the tool shows it — or `<name> (self-reported)` — tool or CLI, date):
 
-**Trial** (scenario number from the skill's `## Trials`, and the task text as sent, the tempting wrong path included):
+**Trial** (scenario number from the skill's `## Trials`, trap level 1–4, and the task text as sent, the tempting wrong path included):
 
 **Added text** (output of `npx facetkit compose --take <skill>:<facet>`; its language — say if you translated it):
 
@@ -23,6 +24,8 @@ labels: trial-result
 
 **Pass criterion used** (from the skill's Trials, or your own — say which):
 
-**Verdict** (better by ≥ 2 runs → confirmed; differ by ≤ 1 → no difference; worse with the rule → refuted):
+**Verdict** (better by ≥ 2 runs → confirmed; differ by ≤ 1 → no difference; worse with the rule → refuted; add `ceiling` if the control passed 3/3 at every trap level tried):
+
+**Side effects** (what the rule changed besides the criterion: more questions, refusals, a fix not made):
 
 **Transcripts or ledgers** (6 links; remove anything private):

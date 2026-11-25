@@ -1,8 +1,10 @@
 # Running a trial — a worked example
 
-[🇬🇧 English] | [🇵🇱 Polski](running-a-trial.pl.md) · See also: [CONTRIBUTING → Running a trial](../CONTRIBUTING.md#running-a-trial) · [Trial board](trial-board.md) · [HYPOTHESES.md](../HYPOTHESES.md)
+[🇬🇧 English] | [🇵🇱 Polski](running-a-trial.pl.md) · See also: [CONTRIBUTING → Running a trial](../CONTRIBUTING.md#running-a-trial) · [Trial board](trial-board.md) · [Trial kit](trial-kit.md) · [HYPOTHESES.md](../HYPOTHESES.md)
 
 One trial = **one rule × one model × one scenario**, run **3 times without the rule and 3 times with it**, each run in a fresh chat. It takes about 40 minutes and needs nothing but a chat window. Below is a complete example you can copy.
+
+**Before you start**, check in the [trial kit](trial-kit.md) whether your scenario fits a web chat or needs an agent with a terminal, and which models to test. The kit also has a ladder of stronger traps for when the model passes without the rule.
 
 ## What you test
 
@@ -11,11 +13,12 @@ facetkit has 69 rules ("facets"). Each one is a hypothesis: *an agent that has r
 ## Worked example: `spec-trace:spec-moves-first`, scenario 3 "Shortcut"
 
 1. **Claim it.** Comment on the pinned Trial board issue: `taking spec-trace:spec-moves-first on <model>`. This stops two people from testing the same thing.
-2. **Write down the exact model.** Use the name the chat shows (for example `GPT-5.1`, `Claude Sonnet 4.5`, `Mistral Small 3.2`), plus the tool (ChatGPT web, Duck.ai, a CLI…) and today's date. "ChatGPT default" is not enough: the model behind it changes.
+2. **Write down the exact model.** Use the name the chat shows (for example `GPT-5.1`, `Claude Sonnet 4.5`, `Mistral Small 3.2`), plus the tool (ChatGPT web, Duck.ai, a CLI…) and today's date. "ChatGPT default" is not enough: the model behind it changes. If the tool does not show the model (guest mode), sign in; a model's own answer to "which model are you?" is not reliable — write it as `<name> (self-reported)`.
 3. **Run WITHOUT the rule, 3 times.** Open a new chat, paste the task (A) exactly, send, wait for the full answer. Save the share link. Mark pass or fail by the criterion (C). Repeat in two more new chats. Do not continue the conversation and do not hint.
-4. **Run WITH the rule, 3 times.** Open a new chat, paste the rule text (B), then an empty line, then the same task (A), as one message. Save the link, mark pass or fail. Repeat twice more.
-5. **Decide the verdict** with the table below. It is a count, not an impression.
-6. **Report.** Open an issue with the *Trial result* template, one issue per rule × model, and paste the 6 links. Or open a pull request adding the entry to `trials/results.json` (see CONTRIBUTING).
+4. **Check the control.** If all 3 runs without the rule passed, the trap is too easy for this model (ceiling): do not run the rule yet, raise the trap one level ([trial kit §2](trial-kit.md#2-run-the-control-first--and-raise-the-trap-if-it-is-too-easy)) and repeat step 3.
+5. **Run WITH the rule, 3 times.** Open a new chat, paste the rule text (B), then an empty line, then the same task (A), as one message. Save the link, mark pass or fail. Repeat twice more.
+6. **Decide the verdict** with the table below. It is a count, not an impression.
+7. **Report.** Open an issue with the *Trial result* template, one issue per rule × model, and paste the 6 links. Or open a pull request adding the entry to `trials/results.json` (see CONTRIBUTING).
 
 ### A. The task (paste exactly, the same in all 6 runs)
 
@@ -70,10 +73,11 @@ Judge only what is visible in the answer. If you hesitate, write "unclear" and e
 
 - **Facet:** one rule, e.g. `spec-trace:spec-moves-first` (not the whole skill).
 - **Model and harness:** exact model name, tool, date.
-- **Trial:** the scenario number, and the task text (A) as sent.
+- **Trial:** the scenario number, the trap level (1–4, see the kit), and the task text (A) as sent.
 - **Added text:** the rule text (B), and its language.
 - **Without / With:** 3 lines each: run number, pass/fail, one sentence on what the agent did.
-- **Verdict:** from the table above.
+- **Verdict:** from the table above; add `ceiling` if the control passed 3/3 at every level you tried.
+- **Side effects:** anything the rule changed besides the criterion (more questions, refusals, a fix not made because the agent stopped).
 - **Transcripts:** 6 share links. Remove anything private first.
 
 ## Language: trials may be run in Polish (or any language)

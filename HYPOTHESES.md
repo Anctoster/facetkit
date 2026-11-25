@@ -2,7 +2,7 @@
 
 Every facet is a claim about what an agent does differently when it has read the rule. Until somebody runs its trial against a model, the claim is untested. This file is generated (`facet hypotheses --write HYPOTHESES.md`) from the skills and from `trials/results.json`; see [CONTRIBUTING.md](CONTRIBUTING.md#running-a-trial) for how to add a result.
 
-**69 hypotheses · 0 with at least one reported trial · 69 untested**
+**69 hypotheses · 1 with at least one reported trial · 68 untested**
 
 ## anchored-handoff
 
@@ -202,7 +202,7 @@ Trials:
 | `example-replay` | Replay the examples through the real entrance | false-green | runs | untested |
 | `numbered-clauses` | Write the request as numbered, refutable clauses | spec-gap | tool:trace | untested |
 | `sourced-clauses` | Every clause points at the words it came from | scope-creep | no footprint | untested |
-| `spec-moves-first` | When test and clause disagree, the clause moves first | weakened-test | no footprint | untested |
+| `spec-moves-first` | When test and clause disagree, the clause moves first | weakened-test | no footprint | GPT-6 (self-reported), ChatGPT web guest: no difference (3/3 passed vs 3/3 passed, n=3) |
 | `verification-first` | Decide how a clause can be refuted before testing it | spec-gap, false-green | tool:trace | untested |
 
 Trials:
