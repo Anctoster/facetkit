@@ -19,7 +19,7 @@ No dependencies. Node 20+. Works with any agent that can run a shell command; sh
 
 ![One item of work: specification, build, probe, proof, policy gate — evidence accumulates and the assurance level rises](docs/assets/flow.svg)
 
-> **Status: 0.8.0, experimental.** The tools are tested (<!-- count:tests -->349<!-- /count --> tests and a guard benchmark of <!-- count:benchmark -->22<!-- /count --> adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **<!-- count:untested -->69<!-- /count --> untested hypotheses** about agent behaviour — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute: `facet hypotheses --next` says which to try first, [a worked example](docs/running-a-trial.md) shows every step, the pinned [Trial board](docs/trial-board.md) issue says who is testing what, and `HYPOTHESES.md` shows every reported result.
+> **Status: 0.8.0, experimental.** The tools are tested (<!-- count:tests -->349<!-- /count --> tests and a guard benchmark of <!-- count:benchmark -->22<!-- /count --> adversarial cases; the kit is run on itself, see [docs/dogfood.md](docs/dogfood.md)). The skills are **<!-- count:untested -->63<!-- /count --> untested hypotheses** about agent behaviour (6 have first results — see *First results* below) — listed one by one in [HYPOTHESES.md](HYPOTHESES.md), each with the trial that would confirm or kill it. Running a trial is the most useful thing you can contribute: `facet hypotheses --next` says which to try first, [a worked example](docs/running-a-trial.md) shows every step, the pinned [Trial board](docs/trial-board.md) issue says who is testing what, and `HYPOTHESES.md` shows every reported result.
 
 ## 🔬 FacetKit Community Research Program
 
@@ -29,6 +29,10 @@ more reliable, effective and verifiable.
 Join the FacetKit Community Research Program.
 
 [Explore Research Hub](docs/research/README.md)
+
+### First results (November 2026)
+
+Twelve trials of six `spec-trace` rules on two models, and one real defect carried from report to release through the whole flow. On the stronger model five of six rules turned 0/3 into 3/3; on the weaker one only one rule helped — and it was the one the stronger model did not need. The weaker model also showed *compliance theatre*: the rule's words without its behaviour (invented sources, command output it never ran). On the real project the probe, gate and proof steps caught a test that could not fail, a regression of the fix and a swallowed error before release. Numbers, method and lessons: [field report](docs/field-report-2026-11.md) ([po polsku](docs/field-report-2026-11.pl.md)). Wanted next: trials on Claude Haiku and Sonnet, and the 17 scenarios that need a terminal.
 ## Start here
 
 **New to FacetKit?** Three short guides, each usable on its own: **[Quick start](docs/quick-start.md)** — ten minutes on your own code, no agents → **[Project integration](docs/project-integration.md)** — one rule for your own agent, or only the agents you choose (`facet init --agents slice-builder,proof-inspector`) → **[GitHub integration](docs/github-integration.md)** — a check and a comment on every pull request (`facet init --github`).
@@ -369,10 +373,10 @@ Parts are usable alone: the skills without the journal, `facet mutate` and `face
 
 ## What is not proven
 
-- The trials in each `SKILL.md` are written but have not been run against models. Every facet is, until then, a hypothesis about agent behaviour — see [HYPOTHESES.md](HYPOTHESES.md).
+- Most trials in the `SKILL.md` files have not been run yet: 6 of 69 facets have results, all from `spec-trace`, on two models, with 3 + 3 runs each. A facet without results is a hypothesis about agent behaviour — see [HYPOTHESES.md](HYPOTHESES.md). Results so far differ by model, so a verdict holds for the model it was measured on.
 - The plugin manifest follows the published layout but has not been installed from a marketplace yet; run `claude plugin validate plugin` before relying on it.
 - Model assignments, retro thresholds, the half-life of evidence, schedule priors and the 80 % kill-rate rule are defaults chosen by reasoning, not tuned on data.
-- No project has yet closed items through the flow; the trust statements have been exercised only in tests.
+- One real project has closed items through the flow ([field report](docs/field-report-2026-11.md)); the trust statements are not yet calibrated across projects.
 - The similarity measure of `facet audit` is lexical: it catches rewording, not borrowed ideas — those are credited below.
 
 Field reports are the most useful contribution: see [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -393,7 +397,7 @@ Written after studying these projects; none of their text is included.
 
 ## Documentation
 
-[Quick start](docs/quick-start.md) · [Project integration](docs/project-integration.md) · [GitHub integration](docs/github-integration.md) · [How it works, by role](docs/how-it-works.md) · [For testers](docs/for-testers.md) · [For architects](docs/for-architects.md) · [Roadmap to 2.0](docs/roadmap-2.0.md) · [Hypotheses](HYPOTHESES.md) · [Dogfood report](docs/dogfood.md) · [Architecture](docs/architecture.md) · [Governance](docs/governance.md) · [Skill intelligence](docs/skill-intelligence.md) · [Extensions](docs/extensions.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+[Quick start](docs/quick-start.md) · [Running a trial](docs/running-a-trial.md) · [Trial kit](docs/trial-kit.md) · [Field report, Nov 2026](docs/field-report-2026-11.md) · [Project integration](docs/project-integration.md) · [GitHub integration](docs/github-integration.md) · [How it works, by role](docs/how-it-works.md) · [For testers](docs/for-testers.md) · [For architects](docs/for-architects.md) · [Roadmap to 2.0](docs/roadmap-2.0.md) · [Hypotheses](HYPOTHESES.md) · [Dogfood report](docs/dogfood.md) · [Architecture](docs/architecture.md) · [Governance](docs/governance.md) · [Skill intelligence](docs/skill-intelligence.md) · [Extensions](docs/extensions.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ## Licence
 
