@@ -19,7 +19,7 @@ Bez zależności. Node 20+. Działa z każdym agentem, który potrafi uruchomić
 
 ![Jeden element pracy: specyfikacja, budowa, próba, dowód, bramka polityki — dowody przybywają, a poziom pewności rośnie](docs/assets/flow.svg)
 
-> **Stan: 0.8.0, wersja eksperymentalna.** Narzędzia są przetestowane (liczba testów: <!-- count:tests -->349<!-- /count -->, liczba przypadków testu odporności: <!-- count:benchmark -->22<!-- /count -->; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **niesprawdzone hipotezy o zachowaniu agentów (liczba: <!-- count:untested -->69<!-- /count -->)** — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść.
+> **Stan: 0.8.0, wersja eksperymentalna.** Narzędzia są przetestowane (liczba testów: <!-- count:tests -->349<!-- /count -->, liczba przypadków testu odporności: <!-- count:benchmark -->22<!-- /count -->; zestaw jest uruchamiany na samym sobie, zob. [docs/dogfood.md](docs/dogfood.md)). Umiejętności to **niesprawdzone hipotezy o zachowaniu agentów (liczba: <!-- count:untested -->63<!-- /count -->)** — wypisanych pojedynczo w [HYPOTHESES.md](HYPOTHESES.md), każda z próbą, która ją potwierdzi albo obali; 6 ma już pierwsze wyniki — zob. *Pierwsze wyniki* niżej. Przeprowadzenie takiej próby to najcenniejszy wkład, jaki możesz wnieść: [przykład krok po kroku](docs/running-a-trial.pl.md), [zestaw do prób](docs/trial-kit.pl.md).
 
 
 ## 🔬 Badania Społeczności
@@ -30,6 +30,10 @@ stają się bardziej niezawodni, skuteczni i łatwiejsi do zweryfikowania.
 Dołącz do Programu Badawczego Społeczności FacetKit.
 
 [Program Badań Społeczności FacetKit](docs/research/README.pl.md)
+
+### Pierwsze wyniki (listopad 2026)
+
+Dwanaście prób sześciu reguł `spec-trace` na dwóch modelach i jeden prawdziwy błąd przeprowadzony przez cały przepływ od zgłoszenia do wydania. Na mocniejszym modelu pięć z sześciu reguł zmieniło 0/3 w 3/3; słabszemu pomogła tylko jedna — i to ta, której mocniejszy model nie potrzebował. Słabszy model pokazał też *teatr zgodności*: słowa reguły bez jej zachowania (wymyślone źródła, wynik polecenia, którego nie uruchomił). W prawdziwym projekcie kroki probe, gates i proof złapały przed wydaniem test, który nie mógł się nie udać, regresję poprawki i połknięty błąd. Liczby, metoda i wnioski: [raport z użycia](docs/field-report-2026-11.pl.md). Najbardziej potrzebne teraz: próby na Claude Haiku i Sonnet oraz 17 scenariuszy wymagających terminala.
 
 ## Od czego zacząć
 
@@ -279,9 +283,9 @@ Części działają osobno: same umiejętności bez dziennika, `facet mutate` i 
 
 ## Czego nie udowodniono
 
-- Prób zapisanych w każdym `SKILL.md` nie uruchomiono jeszcze na modelach. Do tego czasu każda faseta jest hipotezą — zob. [HYPOTHESES.md](HYPOTHESES.md).
+- Większości prób z plików `SKILL.md` jeszcze nie uruchomiono: wyniki ma 6 z 69 facetów, wszystkie z `spec-trace`, na dwóch modelach, po 3 + 3 uruchomienia. Faseta bez wyników jest hipotezą — zob. [HYPOTHESES.md](HYPOTHESES.md). Dotychczasowe wyniki różnią się między modelami, więc werdykt dotyczy modelu, na którym go zmierzono.
 - Przydział modeli, progi retrospektywy, okres połowicznego zaniku dowodów, założenia harmonogramu i próg 80 % zabitych mutantów to wartości domyślne przyjęte rozumowo, nie dostrojone na danych.
-- Żaden projekt nie zamknął jeszcze elementów przez ten przepływ; stwierdzenia o zaufaniu były ćwiczone tylko w testach.
+- Jeden prawdziwy projekt zamknął elementy przez ten przepływ ([raport z użycia](docs/field-report-2026-11.pl.md)); stwierdzenia o zaufaniu nie są jeszcze skalibrowane na wielu projektach.
 - Manifest wtyczki jest zgodny z opublikowanym układem, ale nie instalowano jej jeszcze z marketplace'u; przed użyciem uruchom `claude plugin validate plugin`.
 
 Raporty z rzeczywistego użycia to najcenniejszy wkład: zob. [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -292,7 +296,7 @@ Zestaw powstał po przestudiowaniu poniższych projektów; nie zawiera ich tekst
 
 ## Dokumentacja
 
-Po polsku: [szybki start](docs/quick-start.pl.md) · [włączenie do projektu](docs/project-integration.pl.md) · [integracja z GitHubem](docs/github-integration.pl.md). Pozostała dokumentacja szczegółowa jest po angielsku: [jak to działa, według ról](docs/how-it-works.md) · [dla testerów](docs/for-testers.md) · [dla architektów](docs/for-architects.md) · [plan do 2.0](docs/roadmap-2.0.md) · [hipotezy](HYPOTHESES.md) · [raport z użycia na sobie](docs/dogfood.md) · [architektura](docs/architecture.md) · [polityka i poziomy](docs/governance.md) · [analityka umiejętności](docs/skill-intelligence.md) · [rozszerzenia](docs/extensions.md) · [jak wydać](RELEASING.md) · [jak współtworzyć](CONTRIBUTING.md) · [bezpieczeństwo](SECURITY.md)
+Po polsku: [szybki start](docs/quick-start.pl.md) · [jak przeprowadzić próbę](docs/running-a-trial.pl.md) · [zestaw do prób](docs/trial-kit.pl.md) · [raport z użycia, XI 2026](docs/field-report-2026-11.pl.md) · [włączenie do projektu](docs/project-integration.pl.md) · [integracja z GitHubem](docs/github-integration.pl.md). Pozostała dokumentacja szczegółowa jest po angielsku: [jak to działa, według ról](docs/how-it-works.md) · [dla testerów](docs/for-testers.md) · [dla architektów](docs/for-architects.md) · [plan do 2.0](docs/roadmap-2.0.md) · [hipotezy](HYPOTHESES.md) · [raport z użycia na sobie](docs/dogfood.md) · [architektura](docs/architecture.md) · [polityka i poziomy](docs/governance.md) · [analityka umiejętności](docs/skill-intelligence.md) · [rozszerzenia](docs/extensions.md) · [jak wydać](RELEASING.md) · [jak współtworzyć](CONTRIBUTING.md) · [bezpieczeństwo](SECURITY.md)
 
 ## Licencja
 
