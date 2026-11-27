@@ -48,6 +48,29 @@ Każdy wynik jest w [`trials/results.json`](../trials/results.json) ze zgłoszen
 - Reguły, które proszą o zapisany znacznik, powinny przejść w narzędzia sprawdzające zachowanie (`skill-sense:graduate-to-tool`): źródło punktu sprawdzane z tekstem zlecenia, odtworzenie przyjmowane tylko z pokwitowaniem uruchomienia.
 - Najważniejsze kolejne próby: na modelach, na których naprawdę działają agenci facetkit — Claude Haiku i Sonnet — oraz 17 scenariuszy z terminalem.
 
+## 3. Aktualizacja, 26 listopada: Claude Haiku 5.5 i Gemma 4 31B
+
+Te same sześć zadań, po 3 + 3 uruchomienia, na dwóch kolejnych modelach — razem 24 wyniki.
+
+| Facet | GPT-6 | Claude Haiku 5.5 | Gemma 4 31B | Mistral Small 4 |
+|---|---|---|---|---|
+| `spec-moves-first` | sufit (3/3 → 3/3) | sufit (3/3 → 3/3) | **confirmed** 0 → 3 | **confirmed** 0 → 2 |
+| `numbered-clauses` | **confirmed** | **confirmed** 0 → 3 | **confirmed** 0 → 2 | no difference |
+| `sourced-clauses` | **confirmed** | **confirmed** 0 → 3 | **confirmed** 0 → 3 | no difference (teatr) |
+| `verification-first` | **confirmed** | **confirmed** 0 → 3 | no difference 0 → 0 | no difference (teatr) |
+| `claim-by-id` | **confirmed** | **confirmed** 0 → 3 | no difference (częściowo) | no difference (częściowo) |
+| `example-replay` | **confirmed** | sufit (3/3 → 3/3) | **confirmed** 0 → 3 | no difference (teatr) |
+
+**Co dodają cztery modele:**
+
+1. **`numbered-clauses` i `sourced-clauses` działają na trzech z czterech modeli**, także na Haiku — modelu, na którym działają tańsze kroki facetkit. To na razie najbardziej odporne reguły.
+2. **`spec-moves-first` pomaga tylko słabszym modelom** (Gemma, Mistral); dwa mocniejsze już zachowują się poprawnie. Zostaje — kosztuje kilka linijek — ale mocniejszy model nie jest dla niej dowodem.
+3. **Ta sama częściowa porażka dwa razy:** na Gemmie i Mistralu `claim-by-id` wykonano w połowie — prefiksy `[R#]` w każdym uruchomieniu, testy bez punktu zostawione w każdym. Pozytywna połowa reguły jest przyjmowana, „usuń albo zaproponuj” — nie. Sprawdzanie osieroconych testów powinno należeć do narzędzia (`facet trace` raportuje orphan claims), nie do prozy.
+4. **`verification-first` przegrywa z presją promptu** na dwóch słabszych modelach („napisz plik testów od razu” wygrywa z regułą). Potrzebuje bramki (`facet trace --plan` przed pierwszym testem), nie zdania.
+5. **Sufity na Haiku** (`spec-moves-first`, `example-replay`): pułapka jest za łatwa dla obecnych modeli Claude; przed kolejną próbą trzeba ją podnieść.
+
+**Dalej:** Claude Sonnet na tych samych sześciu zadaniach; scenariusze z terminalem (czat nie uruchomi `facet trace`, więc część reguł opartą na narzędziu wciąż nie sprawdzono); trudniejsza pułapka dla dwóch sufitów Haiku; pierwsze próby reguł, które facetkit kieruje najczęściej — `claim-ledger`, `anchored-handoff`, `doc-receipts`.
+
 ## Dołącz
 
 Próba zajmuje około 40 minut i wymaga tylko okna czatu. Zacznij od [przykładu krok po kroku](running-a-trial.pl.md) i [zestawu do prób](trial-kit.pl.md), zarezerwuj facet w przypiętym zgłoszeniu Trial board i zgłoś wynik szablonem *Trial result*. „No difference” i „refuted” są tak samo mile widziane jak „confirmed”.

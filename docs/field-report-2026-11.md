@@ -48,6 +48,29 @@ Every result is in [`trials/results.json`](../trials/results.json) with its issu
 - Rules that ask for a written marker should graduate into tools that check the behaviour (`skill-sense:graduate-to-tool`): a clause's source checked against the request text, a replay accepted only with a run receipt.
 - The next trials that matter most are on the models facetkit's agents actually run on — Claude Haiku and Sonnet — and the 17 terminal scenarios.
 
+## 3. Update, 26 November: Claude Haiku 5.5 and Gemma 4 31B
+
+The same six tasks, 3 + 3 runs each, on two more models — 24 results in all.
+
+| Facet | GPT-6 | Claude Haiku 5.5 | Gemma 4 31B | Mistral Small 4 |
+|---|---|---|---|---|
+| `spec-moves-first` | ceiling (3/3 → 3/3) | ceiling (3/3 → 3/3) | **confirmed** 0 → 3 | **confirmed** 0 → 2 |
+| `numbered-clauses` | **confirmed** | **confirmed** 0 → 3 | **confirmed** 0 → 2 | no difference |
+| `sourced-clauses` | **confirmed** | **confirmed** 0 → 3 | **confirmed** 0 → 3 | no difference (theatre) |
+| `verification-first` | **confirmed** | **confirmed** 0 → 3 | no difference 0 → 0 | no difference (theatre) |
+| `claim-by-id` | **confirmed** | **confirmed** 0 → 3 | no difference (partial) | no difference (partial) |
+| `example-replay` | **confirmed** | ceiling (3/3 → 3/3) | **confirmed** 0 → 3 | no difference (theatre) |
+
+**What the four models add:**
+
+1. **`numbered-clauses` and `sourced-clauses` hold on three of four models**, including Haiku — the model facetkit's cheaper steps run on. They are the most robust rules so far.
+2. **`spec-moves-first` helps only weaker models** (Gemma, Mistral); the stronger two already behave. Keep it — it costs a few lines — but a stronger model is not evidence for it.
+3. **The same partial failure twice:** on Gemma and Mistral `claim-by-id` was half-followed — `[R#]` prefixes adopted in every run, tests without a clause kept in every run. The positive half of the rule is taken, the "delete or propose" half is not. The orphan check belongs to a tool (`facet trace` reports orphan claims) rather than to prose.
+4. **`verification-first` fails under prompt pressure** on the two weaker models ("write the test file right away" wins over the rule). It needs a gate (`facet trace --plan` before the first test), not a sentence.
+5. **Ceilings on Haiku** (`spec-moves-first`, `example-replay`): the trap is too easy for current Claude models; raise it before the next run.
+
+**Next:** Claude Sonnet on the same six tasks; the terminal scenarios (a chat cannot run `facet trace`, so the tool-backed half of these rules is still untested); a harder trap for the two Haiku ceilings; first trials of the rules facetkit routes most often — `claim-ledger`, `anchored-handoff`, `doc-receipts`.
+
 ## Join
 
 A trial takes about 40 minutes and a chat window. Start with the [worked example](running-a-trial.md) and the [trial kit](trial-kit.md), claim a facet on the pinned Trial board issue, and report with the *Trial result* template. "No difference" and "refuted" are as welcome as "confirmed".
