@@ -32,9 +32,9 @@ The following summary reflects the repository state reviewed on 2026-11-27.
 
 | Research Metric | Current Status |
 |---|---:|
-| Behavioral hypotheses | 69 |
-| Hypotheses with reported trials | 6 |
-| Hypotheses with controlled experiments | 6 |
+| Behavioral hypotheses | <!-- research:hypotheses -->69<!-- /research --> |
+| Hypotheses with reported trials | <!-- research:tested -->6<!-- /research --> |
+| Hypotheses with controlled experiments | <!-- research:tested -->6<!-- /research --> |
 | Hypotheses with independent replications | 0 |
 | Hypotheses with cross-project evidence | 0 |
 | Hypotheses with established effectiveness | 0 |
@@ -75,9 +75,9 @@ Based on the current hypothesis registry and available experiment records:
 
 | Evidence Level | Hypotheses |
 |---|---:|
-| E0 — Proposed | 63 |
+| E0 — Proposed | <!-- research:e0 -->63<!-- /research --> |
 | E1 — Observed | 0 |
-| E2 — Tested | 6 |
+| E2 — Tested | <!-- research:e2 -->6<!-- /research --> |
 | E3 — Replicated | 0 |
 | E4 — Cross-Project | 0 |
 
@@ -89,18 +89,20 @@ It should therefore not be used to claim that a particular Facet has been valida
 
 ## 5. Results by Hypothesis
 
-Six hypotheses have controlled trials on four models; the other 63 remain `UNTESTED`.
+<!-- research:tested -->6<!-- /research --> hypotheses have controlled trials on <!-- research:models -->4<!-- /research --> models; the other <!-- research:e0 -->63<!-- /research --> remain `UNTESTED`. The table below is generated (`npm run research`) from the trial records.
 
-| Facet | GPT-6 | Claude Haiku 5.5 | Gemma 4 31B | Mistral Small 4 | Status |
+<!-- research:table -->
+| Facet | GPT-6 | Mistral Small 4 | Claude Haiku 5.5 | Gemma 4 31B | Status |
 |---|---|---|---|---|---|
-| `spec-trace:numbered-clauses` | confirmed | confirmed | confirmed | no difference | `MIXED` — supported on 3 of 4 models |
-| `spec-trace:sourced-clauses` | confirmed | confirmed | confirmed | no difference | `MIXED` — supported on 3 of 4 models |
-| `spec-trace:verification-first` | confirmed | confirmed | no difference | no difference | `MIXED` — stronger models only |
-| `spec-trace:claim-by-id` | confirmed | confirmed | no difference (partial) | no difference (partial) | `MIXED` — stronger models only |
-| `spec-trace:example-replay` | confirmed | ceiling | confirmed | no difference | `MIXED` |
-| `spec-trace:spec-moves-first` | ceiling | ceiling | confirmed | confirmed | `MIXED` — weaker models only |
+| `spec-trace:spec-moves-first` | ceiling 3/3 → 3/3 | **confirmed** 0/3 → 2/3 | ceiling 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | `MIXED` — confirmed on 2 of 4 models |
+| `spec-trace:numbered-clauses` | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 2/3 | `MIXED` — confirmed on 3 of 4 models |
+| `spec-trace:sourced-clauses` | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (theatre) | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | `MIXED` — confirmed on 3 of 4 models |
+| `spec-trace:verification-first` | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (theatre) | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 | `MIXED` — confirmed on 2 of 4 models |
+| `spec-trace:claim-by-id` | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (partial) | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (partial) | `MIXED` — confirmed on 2 of 4 models |
+| `spec-trace:example-replay` | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (theatre) | ceiling 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | `MIXED` — confirmed on 2 of 4 models |
+<!-- /research -->
 
-Each cell is 3 runs without the rule and 3 with it, a fresh chat per run, the same task on every model (24 trial records, 2026-11-24…26). "Ceiling": the control already passed 3/3, so the trial could not show an effect. Records: [`trials/results.json`](../../trials/results.json); per-facet view: [`HYPOTHESES.md`](../../HYPOTHESES.md); method and lessons: [field report](../field-report-2026-11.md).
+Each cell is 3 runs without the rule and 3 with it, a fresh chat per run, the same task on every model (<!-- research:records -->24<!-- /research --> trial records, 2026-11-25…26). "Ceiling": the control already passed 3/3, so the trial could not show an effect. Records: [`trials/results.json`](../../trials/results.json) — the single source of truth; the table is derived from it, and where they disagree the records win; per-facet view: [`HYPOTHESES.md`](../../HYPOTHESES.md); method and lessons: [field report](../field-report-2026-11.md).
 
 
 The hypothesis registry is the authoritative source for hypothesis identifiers and descriptions.
@@ -218,7 +220,7 @@ At the current stage:
 
 | Replication Metric | Status |
 |---|---:|
-| Experiments available for replication | 6 |
+| Experiments available for replication | <!-- research:tested -->6<!-- /research --> |
 | Independent replications completed | 0 |
 | Replication failures reported | 0 |
 
@@ -254,11 +256,11 @@ The current research state has several limitations.
 
 ### 10.1 Limited Controlled Evidence
 
-Only 6 of 69 hypotheses have controlled trials, all from one skill (`spec-trace`), with 3 runs per condition, in web chats without tools — the tool-backed half of these rules (`facet trace`) was not exercised.
+Only <!-- research:tested -->6<!-- /research --> of <!-- research:hypotheses -->69<!-- /research --> hypotheses have controlled trials, all from one skill (`spec-trace`), with 3 runs per condition, in web chats without tools — the tool-backed half of these rules (`facet trace`) was not exercised.
 
 ### 10.2 Limited Independent Validation
 
-All 24 trial records come from one contributor; no independent replication is reported yet.
+All <!-- research:records -->24<!-- /research --> trial records come from one contributor; no independent replication is reported yet.
 
 ### 10.3 Observability
 

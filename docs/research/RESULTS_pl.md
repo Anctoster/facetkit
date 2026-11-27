@@ -32,9 +32,9 @@ Poniższe podsumowanie odzwierciedla stan repozytorium sprawdzony 27 listopada 2
 
 | Wskaźnik badawczy | Aktualny stan |
 |---|---:|
-| Hipotezy behawioralne | 69 |
-| Hipotezy z zaraportowanymi próbami | 6 |
-| Hipotezy ocenione w kontrolowanych eksperymentach | 6 |
+| Hipotezy behawioralne | <!-- research:hypotheses -->69<!-- /research --> |
+| Hipotezy z zaraportowanymi próbami | <!-- research:tested -->6<!-- /research --> |
+| Hipotezy ocenione w kontrolowanych eksperymentach | <!-- research:tested -->6<!-- /research --> |
 | Hipotezy z niezależnymi replikacjami | 0 |
 | Hipotezy z dowodami z wielu projektów | 0 |
 | Hipotezy o ustalonej skuteczności | 0 |
@@ -75,9 +75,9 @@ Na podstawie aktualnego rejestru hipotez i dostępnych raportów eksperymentalny
 
 | Poziom dowodów | Liczba hipotez |
 |---|---:|
-| E0 — Proposed | 63 |
+| E0 — Proposed | <!-- research:e0 -->63<!-- /research --> |
 | E1 — Observed | 0 |
-| E2 — Tested | 6 |
+| E2 — Tested | <!-- research:e2 -->6<!-- /research --> |
 | E3 — Replicated | 0 |
 | E4 — Cross-Project | 0 |
 
@@ -89,18 +89,20 @@ Nie należy zatem wykorzystywać go do twierdzenia, że skuteczność konkretneg
 
 ## 5. Wyniki według hipotez
 
-Sześć hipotez ma kontrolowane próby na czterech modelach; pozostałe 63 mają status `UNTESTED`.
+<!-- research:tested -->6<!-- /research --> hipotez ma kontrolowane próby na <!-- research:models -->4<!-- /research --> modelach; pozostałe <!-- research:e0 -->63<!-- /research --> mają status `UNTESTED`. Tabela poniżej jest generowana (`npm run research`) z zapisów prób.
 
-| Facet | GPT-6 | Claude Haiku 5.5 | Gemma 4 31B | Mistral Small 4 | Status |
+<!-- research:table -->
+| Facet | GPT-6 | Mistral Small 4 | Claude Haiku 5.5 | Gemma 4 31B | Status |
 |---|---|---|---|---|---|
-| `spec-trace:numbered-clauses` | confirmed | confirmed | confirmed | no difference | `MIXED` — potwierdzone na 3 z 4 modeli |
-| `spec-trace:sourced-clauses` | confirmed | confirmed | confirmed | no difference | `MIXED` — potwierdzone na 3 z 4 modeli |
-| `spec-trace:verification-first` | confirmed | confirmed | no difference | no difference | `MIXED` — tylko mocniejsze modele |
-| `spec-trace:claim-by-id` | confirmed | confirmed | no difference (częściowo) | no difference (częściowo) | `MIXED` — tylko mocniejsze modele |
-| `spec-trace:example-replay` | confirmed | sufit | confirmed | no difference | `MIXED` |
-| `spec-trace:spec-moves-first` | sufit | sufit | confirmed | confirmed | `MIXED` — tylko słabsze modele |
+| `spec-trace:spec-moves-first` | sufit 3/3 → 3/3 | **confirmed** 0/3 → 2/3 | sufit 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | `MIXED` — potwierdzone na 2 z 4 modeli |
+| `spec-trace:numbered-clauses` | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 2/3 | `MIXED` — potwierdzone na 3 z 4 modeli |
+| `spec-trace:sourced-clauses` | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (teatr) | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | `MIXED` — potwierdzone na 3 z 4 modeli |
+| `spec-trace:verification-first` | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (teatr) | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 | `MIXED` — potwierdzone na 2 z 4 modeli |
+| `spec-trace:claim-by-id` | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (częściowo) | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (częściowo) | `MIXED` — potwierdzone na 2 z 4 modeli |
+| `spec-trace:example-replay` | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (teatr) | sufit 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | `MIXED` — potwierdzone na 2 z 4 modeli |
+<!-- /research -->
 
-Każda komórka to 3 uruchomienia bez reguły i 3 z regułą, nowy czat przy każdym uruchomieniu, to samo zadanie na każdym modelu (24 zapisy prób, 24–26.11.2026). „Sufit”: kontrola już dała 3/3, więc próba nie mogła pokazać efektu. Zapisy: [`trials/results.json`](../../trials/results.json); widok według facetów: [`HYPOTHESES.md`](../../HYPOTHESES.md); metoda i wnioski: [raport z użycia](../field-report-2026-11.pl.md).
+Każda komórka to 3 uruchomienia bez reguły i 3 z regułą, nowy czat przy każdym uruchomieniu, to samo zadanie na każdym modelu (<!-- research:records -->24<!-- /research --> zapisy prób, 25–26.11.2026). „Sufit”: kontrola już dała 3/3, więc próba nie mogła pokazać efektu. Zapisy: [`trials/results.json`](../../trials/results.json) — jedyne źródło prawdy; tabela jest z niego wyprowadzona, a przy rozbieżności rozstrzygają zapisy; widok według facetów: [`HYPOTHESES.md`](../../HYPOTHESES.md); metoda i wnioski: [raport z użycia](../field-report-2026-11.pl.md).
 
 
 Źródłem prawdy w zakresie identyfikatorów i opisów hipotez jest rejestr:
@@ -216,7 +218,7 @@ Aktualny stan:
 
 | Wskaźnik replikacji | Stan |
 |---|---:|
-| Eksperymenty dostępne do replikacji | 6 |
+| Eksperymenty dostępne do replikacji | <!-- research:tested -->6<!-- /research --> |
 | Zakończone niezależne replikacje | 0 |
 | Zgłoszone nieudane replikacje | 0 |
 
@@ -252,11 +254,11 @@ Aktualny stan badań ma kilka ograniczeń.
 
 ### 10.1. Ograniczona liczba kontrolowanych dowodów
 
-Tylko 6 z 69 hipotez ma kontrolowane próby, wszystkie z jednej umiejętności (`spec-trace`), po 3 uruchomienia na warunek, w czatach webowych bez narzędzi — część reguł oparta na narzędziu (`facet trace`) nie była sprawdzana.
+Tylko <!-- research:tested -->6<!-- /research --> z <!-- research:hypotheses -->69<!-- /research --> hipotez ma kontrolowane próby, wszystkie z jednej umiejętności (`spec-trace`), po 3 uruchomienia na warunek, w czatach webowych bez narzędzi — część reguł oparta na narzędziu (`facet trace`) nie była sprawdzana.
 
 ### 10.2. Ograniczona niezależna walidacja
 
-Wszystkie 24 zapisy prób pochodzą od jednej osoby; niezależnej replikacji jeszcze nie zgłoszono.
+Wszystkie <!-- research:records -->24<!-- /research --> zapisy prób pochodzą od jednej osoby; niezależnej replikacji jeszcze nie zgłoszono.
 
 ### 10.3. Obserwowalność
 
