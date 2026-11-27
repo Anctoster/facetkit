@@ -5,8 +5,10 @@ The journal engine calls these when a step ends DONE; domain.json says what they
   H1 an OK is accepted only from a results file with the shipped tool's receipt - the engine's evidence rule.
   H2 checkFiles: the files that hold the checks (thresholds, rules, the domain file) are hashed when a step
      starts and compared when it ends; a change needs `approve-checks <step> --by <person>`.
-  H4 placeholders: rules over the item's JSON files (a readback, a scene digest) for what stands where the
-     work should be - a zone without a name, an element on the default layer, a default material.
+  H4 placeholders: rules over the item's JSON files (a model snapshot, a scene digest) for what stands where the
+     work should be - a zone without a name, an element on the default layer, a default material. A file the
+     rule says a step writes ("after") must be there when that step ends; a file that cannot be read is refused:
+     what was not read is not known to be clean.
   H9 the step's handoff (a .md file of work/<ITEM>/ written during the step) names every criterion of the
      step: "<id>: done", "<id>: blocked - why", "<id>: partial - what is left".
 """
@@ -44,16 +46,25 @@ def _items(data, rule):
     return [data] if isinstance(data, dict) else []
 
 
-def placeholders(work, rules):
-    """H4: what in the item's JSON files stands where the work should be: ["<what>: <where>", ...]."""
-    out = []
+def placeholders(work, rules, step=None):
+    """H4: what in the item's JSON files stands where the work should be: ["<what>: <where>", ...].
+    A file that `step` was to write and did not, or one that cannot be read, is itself a finding."""
+    out, said = [], set()
     for rule in rules or []:
-        path = os.path.join(work, rule.get("file", ""))
+        name = rule.get("file", "")
+        path = os.path.join(work, name)
         if not os.path.isfile(path):
+            if step and step in (rule.get("after") or []) and name not in said:
+                out.append("%s was to be written by this step and is not there" % name)
+                said.add(name)
             continue
         try:
-            data = json.load(open(path, encoding="utf-8"))
-        except ValueError:
+            with open(path, encoding="utf-8-sig") as h:
+                data = json.load(h)
+        except (ValueError, UnicodeDecodeError) as e:
+            if name not in said:
+                out.append("%s cannot be read (%s): what was not read is not known to be clean" % (name, str(e)[:60]))
+                said.add(name)
             continue
         field = rule.get("field", "key")
         for row in _items(data, rule):
