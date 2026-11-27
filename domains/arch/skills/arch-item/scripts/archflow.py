@@ -1378,8 +1378,14 @@ def main():
         if a.status == "DONE" and a.step not in ("order", "proof"):
             work = os.path.join(a.root, "work", s["item"])
             bad = []
-            approved = any(e["type"] == "checks.ok" and e.get("step") == a.step and e["n"] > started["n"] for e in evs if e.get("item") == s["item"])
-            if gates.changed_checks(a.root, CHECK_FILES, started.get("checks")) and not approved:
+            # H2 is measured from the step's first start in this item: running it again must not make a change look old.
+            # An approval covers the state the person saw (its hash), whatever restarts follow, and nothing changed after it.
+            first = next(e for e in evs if e["type"] == "start" and e.get("item") == s["item"] and e["step"] == a.step)
+            now = gates.checks_hash(a.root, CHECK_FILES)
+            approved = any(e["type"] == "checks.ok" and e.get("step") == a.step and
+                           (e.get("checks") == now if e.get("checks") else e["n"] > started["n"])  # approvals of earlier versions: as they were
+                           for e in evs if e.get("item") == s["item"])
+            if first.get("checks") is not None and now != first.get("checks") and not approved:
                 bad.append("H2 %s changed the files that hold its checks (%s) - undo it, or a person approves: approve-checks %s --by <name> --note \"why\"" % (a.step, ", ".join(CHECK_FILES), a.step))
             bad += ["H4 " + x for x in gates.placeholders(work, PLACEHOLDERS, a.step)[:8]]
             if owned:
@@ -1410,8 +1416,8 @@ def main():
         agents = {started[-1].get("agent")} | {x.get("agent") for x in s["steps"]} | {x.get("else", {}).get("agent") for x in s["steps"]}
         if a.by in agents:
             die("Refused: an agent of this route cannot approve a change to its own checks - a person of another role does.")
-        j.add("checks.ok", item=s["item"], step=a.step, by=a.by, note=a.note[:300])
-        print("change of the checks during %s approved by %s" % (a.step, a.by))
+        j.add("checks.ok", item=s["item"], step=a.step, by=a.by, note=a.note[:300], checks=gates.checks_hash(a.root, CHECK_FILES))
+        print("change of the checks during %s approved by %s - for the files as they are now; a further change needs a new approval" % (a.step, a.by))
     elif a.cmd == "echo":
         s = need(j, routes)
         lst = approved_list(j.events(), s["item"])
