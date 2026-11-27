@@ -4,7 +4,8 @@
 The journal engine calls these when a step ends DONE; domain.json says what they look for.
   H1 an OK is accepted only from a results file with the shipped tool's receipt - the engine's evidence rule.
   H2 checkFiles: the files that hold the checks (thresholds, rules, the domain file) are hashed when a step
-     starts and compared when it ends; a change needs `approve-checks <step> --by <person>`.
+     first starts in an item and compared whenever it ends; a change needs `approve-checks <step> --by <person>`,
+     and the approval covers exactly the state the person saw.
   H4 placeholders: rules over the item's JSON files (a model snapshot, a scene digest) for what stands where the
      work should be - a zone without a name, an element on the default layer, a default material. A file the
      rule says a step writes ("after") must be there when that step ends; a file that cannot be read is refused:

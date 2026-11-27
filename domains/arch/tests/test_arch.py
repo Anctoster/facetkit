@@ -1045,6 +1045,40 @@ class GatesAfterTheField(unittest.TestCase):
         self.f("start", "work", ok=True)
         self.f("end", "work", "--status", "DONE", ok=True)
 
+    def loosen(self, value):
+        with open(os.path.join(self.root, "project.json"), "w", encoding="utf-8") as h:
+            json.dump({"tolerances": {"length_m": value}, "scripts": {}}, h)
+
+    def test_F12_a_restart_does_not_launder_a_change_of_the_checks(self):
+        self.open_item("R-1", "audit")
+        self.f("start", "readback", ok=True)
+        self.snapshot([{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}])
+        self.loosen(0.5)  # a looser threshold, during the step
+        self.f("end", "readback", "--status", "BLOCKED", "--question", "Archicad did not answer", ok=True)
+        self.f("start", "readback", ok=True)  # run again: the change must still be seen
+        self.assertIn("H2 readback changed the files that hold its checks", self.f("end", "readback", "--status", "DONE", ok=False))
+
+    def test_F12_an_approval_survives_a_restart_of_the_step_but_not_a_new_change(self):
+        self.open_item("R-2", "audit")
+        self.f("start", "readback", ok=True)
+        self.snapshot([{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}])
+        self.loosen(0.02)
+        self.f("approve-checks", "readback", "--by", "architect", "--note", "the template had the wrong tolerance", ok=True)
+        self.f("end", "readback", "--status", "BLOCKED", "--question", "Archicad did not answer", ok=True)
+        self.f("start", "readback", ok=True)
+        self.f("end", "readback", "--status", "BLOCKED", "--question", "again", ok=True)
+        self.f("start", "readback", ok=True)
+        self.f("end", "readback", "--status", "DONE", ok=True)
+
+    def test_F12_an_approval_covers_the_change_that_was_shown_not_the_next_one(self):
+        self.open_item("R-3", "audit")
+        self.f("start", "readback", ok=True)
+        self.snapshot([{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}])
+        self.loosen(0.03)
+        self.f("approve-checks", "readback", "--by", "architect", "--note", "0.03 is right", ok=True)
+        self.loosen(0.5)  # changed again after the approval
+        self.assertIn("H2 readback changed the files that hold its checks", self.f("end", "readback", "--status", "DONE", ok=False))
+
 
 if __name__ == "__main__":
     unittest.main()
