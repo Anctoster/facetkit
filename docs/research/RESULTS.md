@@ -93,14 +93,14 @@ Six hypotheses have controlled trials on four models; the other 63 remain `UNTES
 
 | Facet | GPT-6 | Claude Haiku 5.5 | Gemma 4 31B | Mistral Small 4 | Status |
 |---|---|---|---|---|---|
-| `spec-trace:numbered-clauses` | confirmed | confirmed | confirmed | no difference | `MIXED` — supported on 3 of 4 models |
-| `spec-trace:sourced-clauses` | confirmed | confirmed | confirmed | no difference | `MIXED` — supported on 3 of 4 models |
-| `spec-trace:verification-first` | confirmed | confirmed | no difference | no difference | `MIXED` — stronger models only |
-| `spec-trace:claim-by-id` | confirmed | confirmed | no difference (partial) | no difference (partial) | `MIXED` — stronger models only |
-| `spec-trace:example-replay` | confirmed | ceiling | confirmed | no difference | `MIXED` |
-| `spec-trace:spec-moves-first` | ceiling | ceiling | confirmed | confirmed | `MIXED` — weaker models only |
+| `spec-trace:spec-moves-first` | ceiling 3/3 → 3/3 | ceiling 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 2/3 | `MIXED` — weaker models only |
+| `spec-trace:numbered-clauses` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 2/3 | no difference 0/3 → 0/3 | `MIXED` — 3 of 4 models |
+| `spec-trace:sourced-clauses` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (theatre) | `MIXED` — 3 of 4 models |
+| `spec-trace:verification-first` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 | no difference 0/3 → 0/3 (theatre) | `MIXED` — stronger models only |
+| `spec-trace:claim-by-id` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (partial) | no difference 0/3 → 0/3 (partial) | `MIXED` — stronger models only |
+| `spec-trace:example-replay` | **confirmed** 0/3 → 3/3 | ceiling 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (theatre) | `MIXED` |
 
-Each cell is 3 runs without the rule and 3 with it, a fresh chat per run, the same task on every model (24 trial records, 2026-11-24…26). "Ceiling": the control already passed 3/3, so the trial could not show an effect. Records: [`trials/results.json`](../../trials/results.json); per-facet view: [`HYPOTHESES.md`](../../HYPOTHESES.md); method and lessons: [field report](../field-report-2026-11.md).
+Each cell is 3 runs without the rule and 3 with it, a fresh chat per run, the same task on every model (24 trial records, 2026-11-25…26). "Ceiling": the control already passed 3/3, so the trial could not show an effect. Records: [`trials/results.json`](../../trials/results.json) — the single source of truth; the table is derived from it, and where they disagree the records win; per-facet view: [`HYPOTHESES.md`](../../HYPOTHESES.md); method and lessons: [field report](../field-report-2026-11.md).
 
 
 The hypothesis registry is the authoritative source for hypothesis identifiers and descriptions.
