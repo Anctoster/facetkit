@@ -2,7 +2,7 @@
 """spec_compare - is the Archicad model what the description says? Compares spec.json with a
 readback taken from Archicad after the build.
 
-readback.json (written by the readback script from the Archicad API):
+snapshot.json (written by the readback step: the registered procedure through the Archicad API, or ifc_read.py):
   {"elements": [{"id": "<spec id stored on the element>", "type": "wall|door|window|slab|zone|...",
                  "layer": "<Archicad layer name>", "story": "P0", "length": 10.0, "thickness": 0.4,
                  "width": 0.9, "area": 23.4, "number": "0.01"}],

@@ -607,7 +607,10 @@ class Flow(unittest.TestCase):
         for st in [x["id"] for x in rt["steps"]]:
             if st == "proof":
                 break
-            f("start", st, ok=True); f("end", st, "--status", "DONE", "--tokens", str(tokens), ok=True)
+            f("start", st, ok=True)
+            if st == "readback":  # the readback step writes the model snapshot (H4 refuses a readback without one)
+                write(os.path.join(root, "work", name, "snapshot.json"), json.dumps({"elements": [{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}]}))
+            f("end", st, "--status", "DONE", "--tokens", str(tokens), ok=True)
             if st == "order":
                 f("brief", "approve", "--by", "architect" if rt["approve_brief"] else "auto", ok=True)
         f("start", "proof", ok=True)
@@ -663,7 +666,9 @@ class Flow(unittest.TestCase):
         f("start", "order", ok=True); f("end", "order", "--status", "DONE", ok=True)
         write(os.path.join(root, "work", "S-1", "brief.md"), "# Brief\nroute: rules\n\n## Goal\nx\n\n## Reference\nnone\n\n## Scope\nx\n\n## Fixed\nx\n\n## Acceptance\n1. Limits hold [check: rules.values]\n\n## Views\nnone\n\n## Decisions\nx\n\n## Budget\nx\n")
         f("brief", "approve", "--by", "architect", ok=True)
-        f("start", "readback", ok=True); f("end", "readback", "--status", "DONE", ok=True)
+        f("start", "readback", ok=True)
+        write(os.path.join(root, "work", "S-1", "snapshot.json"), json.dumps({"elements": [{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}]}))
+        f("end", "readback", "--status", "DONE", ok=True)
         f("start", "proof", ok=True)
         rules = os.path.join(root, "rules.json")
         write(rules, json.dumps({"rules": []}))
@@ -987,6 +992,60 @@ class WindowsLock(unittest.TestCase):
         self.assertFalse(os.path.exists(j.path + ".lock"))
 
 
+
+class GatesAfterTheField(unittest.TestCase):
+    """Stage 0 of the plan of 27.11: the gates must not stop the owner for nothing (F11, F12),
+    and must not let through what they did not read (F1)."""
+
+    def setUp(self):
+        self.root = os.path.join(tempfile.mkdtemp(), "a")
+        self.f("init")
+
+    def f(self, *a, ok=None):
+        r = subprocess.run([sys.executable, os.path.join(SCRIPTS, "archflow.py"), "--root", self.root, *a], capture_output=True, text=True)
+        if ok is not None:
+            self.assertEqual(r.returncode == 0, ok, "%s -> %s%s" % (a, r.stdout, r.stderr))
+        return r.stdout + r.stderr
+
+    def open_item(self, item, route, project=None):
+        with open(os.path.join(self.root, "project.json"), "w", encoding="utf-8") as h:
+            json.dump(project or {"tolerances": {"length_m": 0.01}, "scripts": {}}, h)
+        self.f("open", item, "--route", route, ok=True)
+        self.f("start", "order", ok=True); self.f("end", "order", "--status", "DONE", ok=True)
+        with open(os.path.join(self.root, "routes.json"), encoding="utf-8") as h:
+            checks = json.load(h)["routes"][route]["checks"]
+        self.work = os.path.join(self.root, "work", item)
+        with open(os.path.join(self.work, "brief.md"), "w", encoding="utf-8") as b:
+            b.write("# Brief\nroute: %s\n\n## Goal\nx\n\n## Reference\nnone\n\n## Scope\nx\n\n## Fixed\nnone\n\n## Acceptance\n%s\n\n## Views\nnone\n\n## Decisions\nx\n\n## Budget\n10 runs\n"
+                    % (route, "\n".join("%d. holds [check: %s]" % (i + 1, c) for i, c in enumerate(checks))))
+        self.f("brief", "approve", "--by", "architect", ok=True)
+
+    def snapshot(self, elements, raw=None):
+        with open(os.path.join(self.work, "snapshot.json"), "w", encoding="utf-8") as h:
+            h.write(raw if raw is not None else json.dumps({"elements": elements}))
+    def test_F1_the_snapshot_is_checked_under_the_name_the_operator_writes(self):
+        self.open_item("S-1", "audit")
+        self.f("start", "readback", ok=True)
+        self.snapshot([{"id": "W1", "type": "wall", "layer": "Warstwa ARCHICAD"}, {"id": "Z1", "type": "zone", "name": ""}])
+        out = self.f("end", "readback", "--status", "DONE", ok=False)
+        self.assertIn("H4 element on the default layer: W1", out)
+        self.assertIn("H4 zone without a name: Z1", out)
+
+    def test_F1_a_readback_that_wrote_no_snapshot_or_an_unreadable_one_is_refused(self):
+        self.open_item("S-2", "audit")
+        self.f("start", "readback", ok=True)
+        self.assertIn("snapshot.json was to be written by this step and is not there", self.f("end", "readback", "--status", "DONE", ok=False))
+        self.snapshot(None, raw='{"elements": [')
+        self.assertIn("snapshot.json cannot be read", self.f("end", "readback", "--status", "DONE", ok=False), "what was not read is not known to be clean")
+        self.snapshot([{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}])
+        self.f("end", "readback", "--status", "DONE", ok=True)
+
+    def test_F1_a_step_that_does_not_write_a_snapshot_is_not_asked_for_one(self):
+        self.open_item("S-3", "estimate")
+        self.f("start", "work", ok=True)
+        self.f("end", "work", "--status", "DONE", ok=True)
+
+
 if __name__ == "__main__":
     unittest.main()
 
@@ -1086,18 +1145,18 @@ class Snapshots(unittest.TestCase):
         spec = load("spec.example.json")
         json.dump(spec, open(os.path.join(state, "spec.json"), "w"))
         back = readback_of(spec)
-        json.dump(back, open(os.path.join(state, "readback.json"), "w"))
+        json.dump(back, open(os.path.join(state, "snapshot.json"), "w"))
         one = lambda *a: subprocess.run([sys.executable, os.path.join(SCRIPTS, "check_one.py"), *a], capture_output=True, text=True).returncode
-        run = lambda check: one(check, "--in", state, "--", "spec_compare.py", os.path.join(state, "spec.json"), os.path.join(state, "readback.json"))
+        run = lambda check: one(check, "--in", state, "--", "spec_compare.py", os.path.join(state, "spec.json"), os.path.join(state, "snapshot.json"))
         self.assertEqual(run("model.counts"), 0)
         back["elements"].pop(0)
-        json.dump(back, open(os.path.join(state, "readback.json"), "w"))
+        json.dump(back, open(os.path.join(state, "snapshot.json"), "w"))
         self.assertEqual(run("model.counts"), 1)
         self.assertEqual(run("no.such.check"), 2)
         empty = tempfile.mkdtemp()
         json.dump({"model.layers": {"status": "FAIL"}, "_receipt": {"tool": "model_audit.py"}}, open(os.path.join(empty, "audit.json"), "w"))
         json.dump({"model.layers": {"status": "OK"}}, open(os.path.join(empty, "a_typed.json"), "w"))
-        self.assertEqual(one("model.layers", "--in", empty, "--", "spec_compare.py", os.path.join(empty, "spec.json"), os.path.join(empty, "readback.json")), 1,
+        self.assertEqual(one("model.layers", "--in", empty, "--", "spec_compare.py", os.path.join(empty, "spec.json"), os.path.join(empty, "snapshot.json")), 1,
                          "no inputs for the tool: the state's results file with a receipt answers; a file without one is not taken")
         json.dump({"junction.step": {"status": "OK", "value": 0.08}, "_receipt": {}}, open(os.path.join(empty, "stage.json"), "w"))
         self.assertEqual(one("junction.step", "--in", empty, "--op", "<=", "--value", "0.05"), 1, "the criterion's threshold, not the tool's")
@@ -1129,14 +1188,14 @@ class Gates(unittest.TestCase):
                   open(os.path.join(work, "echo.json"), "w"))
         f("echo", "check", "work", ok=True)
         json.dump({"tolerances": {"length_m": 0.5}}, open(os.path.join(root, "project.json"), "w"))  # a looser threshold, during the work
-        json.dump({"elements": [{"id": "W1", "type": "wall", "layer": "Warstwa ARCHICAD"}, {"id": "Z1", "type": "zone", "name": ""}]}, open(os.path.join(work, "readback.json"), "w"))
+        json.dump({"elements": [{"id": "W1", "type": "wall", "layer": "Warstwa ARCHICAD"}, {"id": "Z1", "type": "zone", "name": ""}]}, open(os.path.join(work, "snapshot.json"), "w"))
         out = f("end", "work", "--status", "DONE", ok=False)
         for line in ("H2 work changed the files that hold its checks", "H4 element on the default layer: W1", "H4 zone without a name: Z1", "H9 criterion A1 has no status",
                      "A1 A1: no OK of model.layers with its receipt written during work"):
             self.assertIn(line, out)
         self.assertIn("cannot approve a change to its own checks", f("approve-checks", "work", "--by", "model-operator", "--note", "x", ok=False))
         f("approve-checks", "work", "--by", "architect", "--note", "the tolerance was wrong in the template", ok=True)
-        json.dump({"elements": [{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}, {"id": "Z1", "type": "zone", "name": "Salon"}]}, open(os.path.join(work, "readback.json"), "w"))
+        json.dump({"elements": [{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}, {"id": "Z1", "type": "zone", "name": "Salon"}]}, open(os.path.join(work, "snapshot.json"), "w"))
         open(os.path.join(work, "build.md"), "w", encoding="utf-8").write("# build\n- A1: done\n")
         json.dump({"model.layers": {"status": "FAIL"}}, open(os.path.join(work, "typed.json"), "w"))
         self.assertIn("A1 A1: no OK of model.layers", f("end", "work", "--status", "DONE", ok=False), "a results file without a receipt does not count")

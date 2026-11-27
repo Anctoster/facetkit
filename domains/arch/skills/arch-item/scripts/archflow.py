@@ -1381,7 +1381,7 @@ def main():
             approved = any(e["type"] == "checks.ok" and e.get("step") == a.step and e["n"] > started["n"] for e in evs if e.get("item") == s["item"])
             if gates.changed_checks(a.root, CHECK_FILES, started.get("checks")) and not approved:
                 bad.append("H2 %s changed the files that hold its checks (%s) - undo it, or a person approves: approve-checks %s --by <name> --note \"why\"" % (a.step, ", ".join(CHECK_FILES), a.step))
-            bad += ["H4 " + x for x in gates.placeholders(work, PLACEHOLDERS)[:8]]
+            bad += ["H4 " + x for x in gates.placeholders(work, PLACEHOLDERS, a.step)[:8]]
             if owned:
                 bad += ["H9 " + x for x in gates.criteria_status(work, owned, started.get("at", 0))]
                 # A1 (plan 2.11): each measured criterion of the step has an OK of its tool, with the receipt, written during the step
