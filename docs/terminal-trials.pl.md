@@ -9,7 +9,7 @@ Uruchomienie w terminalu to inne środowisko niż czat: Claude Code dodaje włas
 ```bash
 npm i -g @anthropic-ai/claude-code      # jeśli nie ma; potem jednorazowe logowanie: claude
 mkdir -p ~/facet-trials && cd ~/facet-trials
-npx --yes facetkit --version
+npx --yes facetkit compose --take spec-trace:numbered-clauses | head -3   # wypisuje tekst reguły
 ```
 
 **Izolacja.** Próba ma widzieć tylko zadanie. Przed uruchomieniami upewnij się, że nic się nie przedostaje: opróżnij albo zmień nazwę `~/.claude/CLAUDE.md` i uruchamiaj każdą sesję w **nowym pustym folderze poza jakimkolwiek repozytorium** (`CLAUDE.md` z folderu nadrzędnego też jest czytany).

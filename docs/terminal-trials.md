@@ -9,7 +9,7 @@ A terminal run is a different harness from a chat run: Claude Code adds its own 
 ```bash
 npm i -g @anthropic-ai/claude-code      # if not installed; then sign in once: claude
 mkdir -p ~/facet-trials && cd ~/facet-trials
-npx --yes facetkit --version
+npx --yes facetkit compose --take spec-trace:numbered-clauses | head -3   # prints the rule text
 ```
 
 **Isolation.** A trial must see only the task. Before the runs, make sure no instructions leak in: empty or rename `~/.claude/CLAUDE.md`, and run every session in a **new empty folder outside any repository** (a parent folder's `CLAUDE.md` is read too).

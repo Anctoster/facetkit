@@ -6,7 +6,7 @@ Ta strona odpowiada na trzy pytania przed startem: **czy próbę da się zrobić
 
 ## 1. Jakie narzędzie do jakiej próby
 
-Każdy skill ma trzy scenariusze prób (w jego `SKILL.md` → `## Trials`, także w [HYPOTHESES.md](../HYPOTHESES.md)). Scenariusz nadaje się do **czatu**, gdy całą sytuację da się wkleić jako tekst, a zaliczenie widać w odpowiedzi. Potrzebny jest **agent z terminalem** (Claude Code, Codex CLI, Aider… z pobranym repozytorium facetkit albo małym projektem), gdy zaliczenie to coś, co agent musi *zrobić*: uruchomić polecenie, przeczytać plik, użyć narzędzia `facet`.
+Każdy skill ma trzy scenariusze prób (w jego `SKILL.md` → `## Trials`, także w [HYPOTHESES.md](../HYPOTHESES.md)). Scenariusz nadaje się do **czatu**, gdy całą sytuację da się wkleić jako tekst, a zaliczenie widać w odpowiedzi. Potrzebny jest **agent z terminalem** (Claude Code, Codex CLI, Aider… z pobranym repozytorium facetkit albo małym projektem), gdy zaliczenie to coś, co agent musi *zrobić*: uruchomić polecenie, przeczytać plik, użyć narzędzia `facet`. Krok po kroku dla Claude Code, także na Claude Sonnet: [próby w terminalu](terminal-trials.pl.md).
 
 `czat*` znaczy: możliwe w czacie, jeśli wkleisz wynik narzędzia (log, raport testów, listę wspomnień) jako tekst; agent może wtedy tylko *powiedzieć*, co by uruchomił, więc oceniasz odpowiedź i piszesz w zgłoszeniu, że to była symulacja.
 
