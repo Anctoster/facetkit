@@ -1,4 +1,4 @@
-# Raport z użycia, listopad 2026 — jeden prawdziwy projekt, dwanaście prób
+# Raport z użycia, listopad 2026 — jeden prawdziwy projekt, dwadzieścia cztery próby
 
 [🇬🇧 English](field-report-2026-11.md) | [🇵🇱 Polski] · Zobacz też: [HYPOTHESES.md](../HYPOTHESES.md) · [Zestaw do prób](trial-kit.pl.md) · [facetkit na samym sobie](dogfood.md)
 
