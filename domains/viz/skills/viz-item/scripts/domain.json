@@ -3,6 +3,11 @@
   "artifacts": [
     "work/<ITEM>/**"
   ],
+  "checkKeysIgnored": {
+    "project.json": [
+      "scripts"
+    ]
+  },
   "checkFiles": [
     "project.json",
     "domain.json",

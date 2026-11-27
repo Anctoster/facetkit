@@ -29,7 +29,7 @@ Loop, one slice at a time - one criterion, one defect class or one object group:
 4. Re-run the checks the brief names. Copy the lines before and after into `work/<ITEM>/build.md`.
 5. `vizflow.py note "done: ...; next: ..."`.
 
-When the checks are green: write the script's path into `project.json` → `scripts` under the mode's name - a proposal, not a registration: the coordinator registers the exact text in the journal after the inspector's PASS (`vizflow.py script register`); until then, and again after any edit, the step stays yours - and finish `build.md`: scripts written, numbers before and after, what you could not verify.
+When the checks are green: write the script's path into `project.json` → `scripts` under the mode's name - a proposal, not a registration: the coordinator registers the exact text in the journal after the inspector's PASS (`vizflow.py script register`); until then, and again after any edit, the step stays yours - and finish `build.md`: scripts written, numbers before and after, what you could not verify. Writing that path is the only change of `project.json` a working step may make without a person's approval: any other key holds checks, and changing it stops the step at `approve-checks`.
 
 Rules:
 - Write your own code against Blender's documented Python API. Do not paste recipes from skill collections or forums: they are written for other versions and other scenes, and they fail silently. Where the API differs between versions, read `bpy.app.version` and say which versions you handled.

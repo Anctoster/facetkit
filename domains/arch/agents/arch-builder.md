@@ -28,7 +28,7 @@ Loop, one slice at a time (walls of one story; then openings; then slabs; then z
 3. Read back what was made and run the matching tool (`spec_compare.py`, `sheets_check.py`). Copy the lines before and after into `work/<ITEM>/build.md`.
 4. Only then run the slice for the whole story or set.
 
-When the tools are green: write the procedure's path into `project.json` → `scripts` under the mode's name and give its file name in your final message. That is a proposal, not a registration: the coordinator registers the exact text in the journal after the inspector's PASS (`archflow.py script register`). Until then, and again after any edit, the step stays yours.
+When the tools are green: write the procedure's path into `project.json` → `scripts` under the mode's name and give its file name in your final message. That is a proposal, not a registration: the coordinator registers the exact text in the journal after the inspector's PASS (`archflow.py script register`). Until then, and again after any edit, the step stays yours. Writing that path is the only change of `project.json` a working step may make without a person's approval: any other key holds checks, and changing it stops the step at `approve-checks`.
 
 Rules:
 - Write your own procedure against the commands the installed API reports. Do not rely on recipes from other tools or other versions.

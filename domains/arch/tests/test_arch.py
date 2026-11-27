@@ -1079,6 +1079,26 @@ class GatesAfterTheField(unittest.TestCase):
         self.loosen(0.5)  # changed again after the approval
         self.assertIn("H2 readback changed the files that hold its checks", self.f("end", "readback", "--status", "DONE", ok=False))
 
+    def test_F11_the_builder_naming_its_procedure_is_not_a_change_of_the_checks(self):
+        self.open_item("B-1", "audit")
+        self.f("start", "readback", ok=True)
+        self.snapshot([{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}])
+        with open(os.path.join(self.root, "project.json"), "w", encoding="utf-8") as h:
+            json.dump({"tolerances": {"length_m": 0.01}, "scripts": {"readback": "tools/project/readback.py"}}, h)  # what the builder is told to do
+        self.f("end", "readback", "--status", "DONE", ok=True)
+
+    def test_F11_any_other_change_of_project_json_still_is(self):
+        self.open_item("B-2", "audit")
+        self.f("start", "readback", ok=True)
+        self.snapshot([{"id": "W1", "type": "wall", "layer": "A-SC-ZEWN"}])
+        with open(os.path.join(self.root, "project.json"), "w", encoding="utf-8") as h:
+            json.dump({"tolerances": {"length_m": 0.5}, "scripts": {"readback": "tools/project/readback.py"}}, h)  # and a looser threshold
+        self.assertIn("H2 readback changed the files that hold its checks", self.f("end", "readback", "--status", "DONE", ok=False))
+
+    def loosen(self, value):
+        with open(os.path.join(self.root, "project.json"), "w", encoding="utf-8") as h:
+            json.dump({"tolerances": {"length_m": value}, "scripts": {}}, h)
+
 
 if __name__ == "__main__":
     unittest.main()
