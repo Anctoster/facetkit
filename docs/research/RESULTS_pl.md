@@ -78,7 +78,7 @@ Na podstawie aktualnego rejestru hipotez i dostępnych raportów eksperymentalny
 | E0 — Proposed | <!-- research:e0 -->63<!-- /research --> |
 | E1 — Observed | 0 |
 | E2 — Tested | <!-- research:e2 -->6<!-- /research --> |
-| E3 — Replicated | 0 |
+| E3 — Replicated | <!-- research:e3 -->0<!-- /research --> |
 | E4 — Cross-Project | 0 |
 
 Sześć przetestowanych hipotez to facety `spec-trace` (sekcja 5). Pozostają na poziomie E2: wszystkie dotychczasowe próby przeprowadziła jedna osoba, więc żadna nie jest niezależną replikacją. Raport terenowy z własnego użycia (sekcja 6) ma charakter obserwacyjny i nie stanowi kontrolowanego eksperymentu.
@@ -119,6 +119,15 @@ Każda komórka to 3 uruchomienia bez reguły i 3 z regułą, nowy czat przy ka�
 | `MIXED` | Wyniki różnią się w zależności od warunków |
 | `INCONCLUSIVE` | Dowody są niewystarczające do sformułowania wiarygodnego wniosku |
 | `NOT_REPLICATED` | Nie udało się odtworzyć wcześniej opublikowanego wyniku |
+
+Status w tabeli jest obliczany z zapisów (`scripts/research.mjs`), nigdy ustawiany ręcznie, według tych kryteriów — sufit (kontrola już z pełnym wynikiem) liczy się jako brak informacji:
+
+- `SUPPORTED`: co najmniej 2 modele, każdy potwierdził;
+- `MIXED`: co najmniej 2 modele, część potwierdziła, część nie;
+- `NOT_SUPPORTED`: co najmniej 2 modele, żaden nie potwierdził, bez sufitu;
+- `INCONCLUSIVE`: mniej niż 2 modele albo żaden model nie potwierdził, a niektóre trafiły na sufit.
+
+E3 (zreplikowane) liczy się tylko wtedy, gdy druga osoba potwierdzi ten sam facet na tym samym modelu. `NOT_REPLICATED` ustawia się dopiero po nieudanej takiej próbie.
 
 Status `SUPPORTED` nie oznacza, że hipoteza została uniwersalnie udowodniona.
 
@@ -219,7 +228,7 @@ Aktualny stan:
 | Wskaźnik replikacji | Stan |
 |---|---:|
 | Eksperymenty dostępne do replikacji | <!-- research:tested -->6<!-- /research --> |
-| Zakończone niezależne replikacje | 0 |
+| Zakończone niezależne replikacje | <!-- research:replications -->0<!-- /research --> |
 | Zgłoszone nieudane replikacje | 0 |
 
 Niepowodzenie replikacji nie jest powodem do usunięcia pierwotnego eksperymentu.

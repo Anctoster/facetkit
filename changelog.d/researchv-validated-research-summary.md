@@ -1,0 +1,3 @@
+### Changed
+- **`npm run research` validates before it writes**, and CI fails on any of: an invalid record in `trials/results.json` (missing field, unknown facet or verdict, scores out of `runs`, a verdict that does not follow from the scores — e.g. "confirmed" without a higher score — or a duplicate); a stale generated block in `docs/research/RESULTS*.md` or in the "First results" paragraph of both READMEs (counts, model list and per-rule confirmations are now generated there too); a cell in a dated field report that contradicts the records.
+- **Statuses follow written criteria** (RESULTS §5): `SUPPORTED` needs at least 2 models all confirming; one model is `INCONCLUSIVE`; a ceiling counts as showing nothing; E3 only with a second contributor's confirmation.

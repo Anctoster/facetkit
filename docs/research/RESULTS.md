@@ -78,7 +78,7 @@ Based on the current hypothesis registry and available experiment records:
 | E0 — Proposed | <!-- research:e0 -->63<!-- /research --> |
 | E1 — Observed | 0 |
 | E2 — Tested | <!-- research:e2 -->6<!-- /research --> |
-| E3 — Replicated | 0 |
+| E3 — Replicated | <!-- research:e3 -->0<!-- /research --> |
 | E4 — Cross-Project | 0 |
 
 The six tested hypotheses are the `spec-trace` facets (section 5). They stay at E2: all trials so far were run by one contributor, so none counts as an independent replication. The field report on dogfood use (section 6) is observational and does not constitute a controlled experiment.
@@ -121,6 +121,15 @@ See:
 | `MIXED` | Results vary across conditions |
 | `INCONCLUSIVE` | Evidence is insufficient for a meaningful conclusion |
 | `NOT_REPLICATED` | A previously reported result was not reproduced |
+
+The status in the table is computed from the records (`scripts/research.mjs`), never set by hand, with these criteria — a ceiling (the control already at full marks) counts as showing nothing:
+
+- `SUPPORTED`: at least 2 models, every one confirmed;
+- `MIXED`: at least 2 models, some confirmed and some not;
+- `NOT_SUPPORTED`: at least 2 models, none confirmed, no ceiling;
+- `INCONCLUSIVE`: fewer than 2 models, or no model confirmed while some hit a ceiling.
+
+E3 (replicated) is counted only when a second contributor confirms the same facet on the same model. `NOT_REPLICATED` is set only after such an attempt fails.
 
 A `SUPPORTED` status does not mean that a hypothesis is universally proven.
 
@@ -221,7 +230,7 @@ At the current stage:
 | Replication Metric | Status |
 |---|---:|
 | Experiments available for replication | <!-- research:tested -->6<!-- /research --> |
-| Independent replications completed | 0 |
+| Independent replications completed | <!-- research:replications -->0<!-- /research --> |
 | Replication failures reported | 0 |
 
 A replication failure is not a reason to remove the original experiment.
