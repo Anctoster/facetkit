@@ -1,4 +1,4 @@
-# Field report, November 2026 — one real project, twelve trials
+# Field report, November 2026 — one real project, twenty-four trials
 
 [🇬🇧 English] | [🇵🇱 Polski](field-report-2026-11.pl.md) · See also: [HYPOTHESES.md](../HYPOTHESES.md) · [Trial kit](trial-kit.md) · [facetkit on facetkit](dogfood.md)
 
