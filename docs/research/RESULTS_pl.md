@@ -93,14 +93,14 @@ Sześć hipotez ma kontrolowane próby na czterech modelach; pozostałe 63 mają
 
 | Facet | GPT-6 | Claude Haiku 5.5 | Gemma 4 31B | Mistral Small 4 | Status |
 |---|---|---|---|---|---|
-| `spec-trace:numbered-clauses` | confirmed | confirmed | confirmed | no difference | `MIXED` — potwierdzone na 3 z 4 modeli |
-| `spec-trace:sourced-clauses` | confirmed | confirmed | confirmed | no difference | `MIXED` — potwierdzone na 3 z 4 modeli |
-| `spec-trace:verification-first` | confirmed | confirmed | no difference | no difference | `MIXED` — tylko mocniejsze modele |
-| `spec-trace:claim-by-id` | confirmed | confirmed | no difference (częściowo) | no difference (częściowo) | `MIXED` — tylko mocniejsze modele |
-| `spec-trace:example-replay` | confirmed | sufit | confirmed | no difference | `MIXED` |
-| `spec-trace:spec-moves-first` | sufit | sufit | confirmed | confirmed | `MIXED` — tylko słabsze modele |
+| `spec-trace:spec-moves-first` | sufit 3/3 → 3/3 | sufit 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 2/3 | `MIXED` — tylko słabsze modele |
+| `spec-trace:numbered-clauses` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 2/3 | no difference 0/3 → 0/3 | `MIXED` — 3 z 4 modeli |
+| `spec-trace:sourced-clauses` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (teatr) | `MIXED` — 3 z 4 modeli |
+| `spec-trace:verification-first` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 | no difference 0/3 → 0/3 (teatr) | `MIXED` — tylko mocniejsze modele |
+| `spec-trace:claim-by-id` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (częściowo) | no difference 0/3 → 0/3 (częściowo) | `MIXED` — tylko mocniejsze modele |
+| `spec-trace:example-replay` | **confirmed** 0/3 → 3/3 | sufit 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (teatr) | `MIXED` |
 
-Każda komórka to 3 uruchomienia bez reguły i 3 z regułą, nowy czat przy każdym uruchomieniu, to samo zadanie na każdym modelu (24 zapisy prób, 24–26.11.2026). „Sufit”: kontrola już dała 3/3, więc próba nie mogła pokazać efektu. Zapisy: [`trials/results.json`](../../trials/results.json); widok według facetów: [`HYPOTHESES.md`](../../HYPOTHESES.md); metoda i wnioski: [raport z użycia](../field-report-2026-11.pl.md).
+Każda komórka to 3 uruchomienia bez reguły i 3 z regułą, nowy czat przy każdym uruchomieniu, to samo zadanie na każdym modelu (24 zapisy prób, 25–26.11.2026). „Sufit”: kontrola już dała 3/3, więc próba nie mogła pokazać efektu. Zapisy: [`trials/results.json`](../../trials/results.json) — jedyne źródło prawdy; tabela jest z niego wyprowadzona, a przy rozbieżności rozstrzygają zapisy; widok według facetów: [`HYPOTHESES.md`](../../HYPOTHESES.md); metoda i wnioski: [raport z użycia](../field-report-2026-11.pl.md).
 
 
 Źródłem prawdy w zakresie identyfikatorów i opisów hipotez jest rejestr:

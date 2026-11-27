@@ -54,12 +54,12 @@ Te same sześć zadań, po 3 + 3 uruchomienia, na dwóch kolejnych modelach — 
 
 | Facet | GPT-6 | Claude Haiku 5.5 | Gemma 4 31B | Mistral Small 4 |
 |---|---|---|---|---|
-| `spec-moves-first` | sufit (3/3 → 3/3) | sufit (3/3 → 3/3) | **confirmed** 0 → 3 | **confirmed** 0 → 2 |
-| `numbered-clauses` | **confirmed** | **confirmed** 0 → 3 | **confirmed** 0 → 2 | no difference |
-| `sourced-clauses` | **confirmed** | **confirmed** 0 → 3 | **confirmed** 0 → 3 | no difference (teatr) |
-| `verification-first` | **confirmed** | **confirmed** 0 → 3 | no difference 0 → 0 | no difference (teatr) |
-| `claim-by-id` | **confirmed** | **confirmed** 0 → 3 | no difference (częściowo) | no difference (częściowo) |
-| `example-replay` | **confirmed** | sufit (3/3 → 3/3) | **confirmed** 0 → 3 | no difference (teatr) |
+| `spec-moves-first` | sufit 3/3 → 3/3 | sufit 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 2/3 |
+| `numbered-clauses` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 2/3 | no difference 0/3 → 0/3 |
+| `sourced-clauses` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (teatr) |
+| `verification-first` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 | no difference 0/3 → 0/3 (teatr) |
+| `claim-by-id` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (częściowo) | no difference 0/3 → 0/3 (częściowo) |
+| `example-replay` | **confirmed** 0/3 → 3/3 | sufit 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (teatr) |
 
 **Co dodają cztery modele:**
 

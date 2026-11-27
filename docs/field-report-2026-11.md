@@ -54,12 +54,12 @@ The same six tasks, 3 + 3 runs each, on two more models — 24 results in all.
 
 | Facet | GPT-6 | Claude Haiku 5.5 | Gemma 4 31B | Mistral Small 4 |
 |---|---|---|---|---|
-| `spec-moves-first` | ceiling (3/3 → 3/3) | ceiling (3/3 → 3/3) | **confirmed** 0 → 3 | **confirmed** 0 → 2 |
-| `numbered-clauses` | **confirmed** | **confirmed** 0 → 3 | **confirmed** 0 → 2 | no difference |
-| `sourced-clauses` | **confirmed** | **confirmed** 0 → 3 | **confirmed** 0 → 3 | no difference (theatre) |
-| `verification-first` | **confirmed** | **confirmed** 0 → 3 | no difference 0 → 0 | no difference (theatre) |
-| `claim-by-id` | **confirmed** | **confirmed** 0 → 3 | no difference (partial) | no difference (partial) |
-| `example-replay` | **confirmed** | ceiling (3/3 → 3/3) | **confirmed** 0 → 3 | no difference (theatre) |
+| `spec-moves-first` | ceiling 3/3 → 3/3 | ceiling 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 2/3 |
+| `numbered-clauses` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 2/3 | no difference 0/3 → 0/3 |
+| `sourced-clauses` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (theatre) |
+| `verification-first` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 | no difference 0/3 → 0/3 (theatre) |
+| `claim-by-id` | **confirmed** 0/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (partial) | no difference 0/3 → 0/3 (partial) |
+| `example-replay` | **confirmed** 0/3 → 3/3 | ceiling 3/3 → 3/3 | **confirmed** 0/3 → 3/3 | no difference 0/3 → 0/3 (theatre) |
 
 **What the four models add:**
 
