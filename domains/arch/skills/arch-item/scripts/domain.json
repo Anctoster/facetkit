@@ -1,5 +1,6 @@
 {
  "artifacts": ["work/<ITEM>/**"],
+ "checkKeysIgnored": {"project.json": ["scripts"]},
  "checkFiles": ["project.json", "domain.json", "routes.json", "rules*.json", "tools/sheets.*.json", "tools/impact*.json"],
  "placeholders": [
   {"what": "zone without a name", "file": "snapshot.json", "after": ["readback"], "list": "elements", "where": {"type": "zone"}, "field": "name", "empty": true},

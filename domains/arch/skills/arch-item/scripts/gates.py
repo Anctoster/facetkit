@@ -5,7 +5,8 @@ The journal engine calls these when a step ends DONE; domain.json says what they
   H1 an OK is accepted only from a results file with the shipped tool's receipt - the engine's evidence rule.
   H2 checkFiles: the files that hold the checks (thresholds, rules, the domain file) are hashed when a step
      first starts in an item and compared whenever it ends; a change needs `approve-checks <step> --by <person>`,
-     and the approval covers exactly the state the person saw.
+     and the approval covers exactly the state the person saw. Keys named in checkKeysIgnored (the path of a
+     procedure the builder proposes in project.json) are not checks: the journal's registry by hash guards them.
   H4 placeholders: rules over the item's JSON files (a model snapshot, a scene digest) for what stands where the
      work should be - a zone without a name, an element on the default layer, a default material. A file the
      rule says a step writes ("after") must be there when that step ends; a file that cannot be read is refused:
@@ -16,7 +17,23 @@ The journal engine calls these when a step ends DONE; domain.json says what they
 import fnmatch, hashlib, json, os, re
 
 
-def checks_hash(root, patterns):
+def _content(path, rel, ignore):
+    """The bytes a check file is judged by: a JSON file without the keys `ignore` names for it."""
+    with open(path, "rb") as f:
+        raw = f.read()
+    keys = [k for pat, ks in (ignore or {}).items() if fnmatch.fnmatch(rel, pat) for k in ks]
+    if not keys:
+        return raw
+    try:
+        data = json.loads(raw.decode("utf-8-sig"))
+    except ValueError:
+        return raw  # an unreadable file is judged by its bytes: any change of it counts
+    if not isinstance(data, dict):
+        return raw
+    return json.dumps({k: v for k, v in data.items() if k not in keys}, sort_keys=True, ensure_ascii=False).encode("utf-8")
+
+
+def checks_hash(root, patterns, ignore=None):
     """One hash over the files the patterns name, relative to the domain root (sorted paths and contents)."""
     h = hashlib.sha256()
     for dirpath, dirs, files in os.walk(root):
@@ -25,13 +42,12 @@ def checks_hash(root, patterns):
             rel = os.path.relpath(os.path.join(dirpath, name), root).replace(os.sep, "/")
             if any(fnmatch.fnmatch(rel, p) for p in patterns):
                 h.update(rel.encode("utf-8") + b"\0")
-                with open(os.path.join(dirpath, name), "rb") as f:
-                    h.update(hashlib.sha256(f.read()).digest())
+                h.update(hashlib.sha256(_content(os.path.join(dirpath, name), rel, ignore)).digest())
     return h.hexdigest()
 
 
-def changed_checks(root, patterns, before):
-    return before is not None and checks_hash(root, patterns) != before
+def changed_checks(root, patterns, before, ignore=None):
+    return before is not None and checks_hash(root, patterns, ignore) != before
 
 
 def _items(data, rule):

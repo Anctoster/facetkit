@@ -1121,6 +1121,7 @@ def cmd_cost(j, routes, a):
 BUILTIN_MODES = ("pack", "preview", "render")  # modes whose tool ships with the plugin
 # FacetKit plan 2.10: the files that hold the checks (H2) and what stands where work should be (H4); domain.json may name its own
 CHECK_FILES = ["project.json", "domain.json", "routes.json"]
+CHECK_KEYS_IGNORED = {"project.json": ["scripts"]}  # a proposed procedure path is not a check: the registry by hash guards what runs
 PLACEHOLDERS = []
 # A domain file next to this script replaces the routes, the checks and the project template:
 # the same journal engine serves any kind of work whose result can be checked.
@@ -1133,6 +1134,7 @@ if os.path.exists(_DOMAIN):
     PROJECT_TEMPLATE = _d.get("project", PROJECT_TEMPLATE)
     BUILTIN_MODES = tuple(_d.get("builtin_modes", BUILTIN_MODES))
     CHECK_FILES = _d.get("checkFiles", CHECK_FILES)
+    CHECK_KEYS_IGNORED = _d.get("checkKeysIgnored", CHECK_KEYS_IGNORED)
     PLACEHOLDERS = _d.get("placeholders", PLACEHOLDERS)
 
 
@@ -1359,7 +1361,7 @@ def main():
         step = next((x for x in s["steps"] if x["id"] == a.step), None) or die("No step '%s' on this route." % a.step)
         agent, model, _ = model_for(a.root, s, step)
         j.add("start", item=s["item"], step=a.step, agent=agent, model=model, forced=a.force,
-              checks=gates.checks_hash(a.root, CHECK_FILES), at=round(time.time(), 3))
+              checks=gates.checks_hash(a.root, CHECK_FILES, CHECK_KEYS_IGNORED), at=round(time.time(), 3))
         snapshot_state(a.root, s["item"], a.step)
         print("started %s (%s on %s)" % (a.step, agent, model))
     elif a.cmd == "end":
@@ -1381,7 +1383,7 @@ def main():
             # H2 is measured from the step's first start in this item: running it again must not make a change look old.
             # An approval covers the state the person saw (its hash), whatever restarts follow, and nothing changed after it.
             first = next(e for e in evs if e["type"] == "start" and e.get("item") == s["item"] and e["step"] == a.step)
-            now = gates.checks_hash(a.root, CHECK_FILES)
+            now = gates.checks_hash(a.root, CHECK_FILES, CHECK_KEYS_IGNORED)
             approved = any(e["type"] == "checks.ok" and e.get("step") == a.step and
                            (e.get("checks") == now if e.get("checks") else e["n"] > started["n"])  # approvals of earlier versions: as they were
                            for e in evs if e.get("item") == s["item"])
@@ -1416,7 +1418,7 @@ def main():
         agents = {started[-1].get("agent")} | {x.get("agent") for x in s["steps"]} | {x.get("else", {}).get("agent") for x in s["steps"]}
         if a.by in agents:
             die("Refused: an agent of this route cannot approve a change to its own checks - a person of another role does.")
-        j.add("checks.ok", item=s["item"], step=a.step, by=a.by, note=a.note[:300], checks=gates.checks_hash(a.root, CHECK_FILES))
+        j.add("checks.ok", item=s["item"], step=a.step, by=a.by, note=a.note[:300], checks=gates.checks_hash(a.root, CHECK_FILES, CHECK_KEYS_IGNORED))
         print("change of the checks during %s approved by %s - for the files as they are now; a further change needs a new approval" % (a.step, a.by))
     elif a.cmd == "echo":
         s = need(j, routes)
