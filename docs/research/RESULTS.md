@@ -1,8 +1,8 @@
 # FacetKit Research Results
 
-**Version:** 0.1  
-**Status:** Initial Research Summary  
-**Last Updated:** 2026-11-21
+**Version:** 0.2  
+**Status:** First controlled trials  
+**Last Updated:** 2026-11-27
 
 ---
 
@@ -28,13 +28,13 @@ A hypothesis is not considered validated merely because it is implemented, docum
 
 ## 2. Current Research Status
 
-The following summary reflects the repository state reviewed on 2026-11-21.
+The following summary reflects the repository state reviewed on 2026-11-27.
 
 | Research Metric | Current Status |
 |---|---:|
 | Behavioral hypotheses | 69 |
-| Hypotheses with reported trials | 0 |
-| Hypotheses with controlled experiments | 0 |
+| Hypotheses with reported trials | 6 |
+| Hypotheses with controlled experiments | 6 |
 | Hypotheses with independent replications | 0 |
 | Hypotheses with cross-project evidence | 0 |
 | Hypotheses with established effectiveness | 0 |
@@ -75,13 +75,13 @@ Based on the current hypothesis registry and available experiment records:
 
 | Evidence Level | Hypotheses |
 |---|---:|
-| E0 — Proposed | 69 |
+| E0 — Proposed | 63 |
 | E1 — Observed | 0 |
-| E2 — Tested | 0 |
+| E2 — Tested | 6 |
 | E3 — Replicated | 0 |
 | E4 — Cross-Project | 0 |
 
-The project has an existing field report, but it is observational and does not constitute a controlled experiment.
+The six tested hypotheses are the `spec-trace` facets (section 5). They stay at E2: all trials so far were run by one contributor, so none counts as an independent replication. The field report on dogfood use (section 6) is observational and does not constitute a controlled experiment.
 
 It should therefore not be used to claim that a particular Facet has been validated.
 
@@ -89,7 +89,19 @@ It should therefore not be used to claim that a particular Facet has been valida
 
 ## 5. Results by Hypothesis
 
-At the current stage, the behavioral hypotheses remain untested through the formal experiment process.
+Six hypotheses have controlled trials on four models; the other 63 remain `UNTESTED`.
+
+| Facet | GPT-6 | Claude Haiku 5.5 | Gemma 4 31B | Mistral Small 4 | Status |
+|---|---|---|---|---|---|
+| `spec-trace:numbered-clauses` | confirmed | confirmed | confirmed | no difference | `MIXED` — supported on 3 of 4 models |
+| `spec-trace:sourced-clauses` | confirmed | confirmed | confirmed | no difference | `MIXED` — supported on 3 of 4 models |
+| `spec-trace:verification-first` | confirmed | confirmed | no difference | no difference | `MIXED` — stronger models only |
+| `spec-trace:claim-by-id` | confirmed | confirmed | no difference (partial) | no difference (partial) | `MIXED` — stronger models only |
+| `spec-trace:example-replay` | confirmed | ceiling | confirmed | no difference | `MIXED` |
+| `spec-trace:spec-moves-first` | ceiling | ceiling | confirmed | confirmed | `MIXED` — weaker models only |
+
+Each cell is 3 runs without the rule and 3 with it, a fresh chat per run, the same task on every model (24 trial records, 2026-11-24…26). "Ceiling": the control already passed 3/3, so the trial could not show an effect. Records: [`trials/results.json`](../../trials/results.json); per-facet view: [`HYPOTHESES.md`](../../HYPOTHESES.md); method and lessons: [field report](../field-report-2026-11.md).
+
 
 The hypothesis registry is the authoritative source for hypothesis identifiers and descriptions.
 
@@ -177,7 +189,7 @@ These questions should inform the design of future controlled experiments.
 
 ## 7. Controlled Experiments
 
-No controlled experiment results are currently reported in the research registry.
+The first controlled trials cover six `spec-trace` facets on four models (section 5). Main findings: a rule's effect depends on the model in both directions — `spec-moves-first` helped only the weaker models, which the stronger ones did not need; on weaker models rules were often followed only in words (invented sources, command output that was never run) or half-followed (`claim-by-id`: clause ids adopted, tests without a clause kept), so rules that ask for a written marker should graduate into tool checks.
 
 A controlled experiment should include:
 
@@ -206,7 +218,7 @@ At the current stage:
 
 | Replication Metric | Status |
 |---|---:|
-| Experiments available for replication | 0 |
+| Experiments available for replication | 6 |
 | Independent replications completed | 0 |
 | Replication failures reported | 0 |
 
@@ -242,11 +254,11 @@ The current research state has several limitations.
 
 ### 10.1 Limited Controlled Evidence
 
-The behavioral hypotheses have not yet been evaluated through a systematic set of controlled experiments.
+Only 6 of 69 hypotheses have controlled trials, all from one skill (`spec-trace`), with 3 runs per condition, in web chats without tools — the tool-backed half of these rules (`facet trace`) was not exercised.
 
 ### 10.2 Limited Independent Validation
 
-There are no reported independent replications in the current research registry.
+All 24 trial records come from one contributor; no independent replication is reported yet.
 
 ### 10.3 Observability
 
@@ -272,7 +284,15 @@ Results obtained in one project or task type should not automatically be general
 
 The next stage of FacetKit research should focus on establishing reliable evidence.
 
-Recommended priorities:
+Next trials, in order (2026-11-27):
+
+1. Claude Sonnet on the same six `spec-trace` tasks — the model most facetkit steps run on.
+2. The same facets in a terminal agent with `facet trace` available.
+3. A harder trap for the two ceilings on Claude Haiku (`spec-moves-first`, `example-replay`).
+4. First trials of the rules facetkit routes most often: `doc-receipts`, `anchored-handoff`, `claim-ledger:threshold-guard`.
+5. Independent replication of any confirmed cell by a second contributor.
+
+General priorities:
 
 ### Priority 1 — Establish the Experiment Process
 
