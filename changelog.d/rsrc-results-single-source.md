@@ -1,2 +1,0 @@
-### Fixed
-- **Trial numbers in the docs match the records.** The READMEs claimed 0/3 → 3/3 on three models for `numbered-clauses` and `sourced-clauses`; `numbered-clauses` on Gemma 4 31B is 0/3 → 2/3. The four-model tables in the field report and in `docs/research/RESULTS*.md` now show every cell's numbers, derived from `trials/results.json`, which is named as the single source of truth; the RESULTS date range is corrected to 2026-11-25…26.

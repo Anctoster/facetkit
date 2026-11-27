@@ -1,0 +1,4 @@
+### Added
+- **`npm run research`** writes the per-model table and the evidence counts of `docs/research/RESULTS.md` and `RESULTS_pl.md` from `trials/results.json` (between `<!-- research:… -->` markers, like `npm run counts` for the READMEs); `test/research-results.test.mjs` fails CI when a trial is added without regenerating them. Statuses are derived: `SUPPORTED` when every model confirmed, `NOT_SUPPORTED` when none did and none hit a ceiling, `MIXED` otherwise.
+### Fixed
+- **Trial numbers in the docs match the records.** The READMEs claimed 0/3 → 3/3 on three models for `numbered-clauses` and `sourced-clauses`; `numbered-clauses` on Gemma 4 31B is 0/3 → 2/3. The four-model tables in the field report and in `docs/research/RESULTS*.md` now show every cell's numbers, derived from `trials/results.json`, which is named as the single source of truth; the RESULTS date range is corrected to 2026-11-25…26.

@@ -42,6 +42,7 @@ A complete example to copy, with the task, the rule text, the pass criterion and
    `verdict` is `confirmed`, `no difference` or `refuted`. A "no difference" is as welcome as a confirmation: it is how the collection gets shorter.
    ```bash
    node bin/facet hypotheses --write HYPOTHESES.md
+   npm run research   # the table and counts in docs/research/RESULTS*.md
    ```
 5. Open a pull request with the entry, or an issue with the label `trial-result` if you prefer us to add it.
 
