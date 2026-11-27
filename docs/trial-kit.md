@@ -6,7 +6,7 @@ This page answers three questions before you start: **can I run this trial in a 
 
 ## 1. Which tool for which trial
 
-Every skill has three trial scenarios (in its `SKILL.md` → `## Trials`, also in [HYPOTHESES.md](../HYPOTHESES.md)). A scenario fits a **web chat** when the whole situation can be pasted as text and the pass is visible in the answer. It needs an **agent with a terminal** (Claude Code, Codex CLI, Aider…, with the facetkit repository or a small project checked out) when the pass is something the agent must *do*: run a command, read a file, use a `facet` tool.
+Every skill has three trial scenarios (in its `SKILL.md` → `## Trials`, also in [HYPOTHESES.md](../HYPOTHESES.md)). A scenario fits a **web chat** when the whole situation can be pasted as text and the pass is visible in the answer. It needs an **agent with a terminal** (Claude Code, Codex CLI, Aider…, with the facetkit repository or a small project checked out) when the pass is something the agent must *do*: run a command, read a file, use a `facet` tool. Step by step for Claude Code, including Claude Sonnet: [terminal trials](terminal-trials.md).
 
 `chat*` means: possible in a chat if you paste the tool output (a log, a test report, a recall list) as text; the agent can then only *say* what it would run, so judge the answer, and say in the report that it was simulated.
 
